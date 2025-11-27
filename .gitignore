@@ -205,3 +205,35 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Environment
+.env
+*.env
+
+# Virtual environment
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Data files
+sample_data/*.csv
+sample_data/*.xlsx
+*.csv
+*.xlsx
+
+# Output files
+output/
+exports/
+*.pdf
+
+# Cache
+__pycache__/
+*.pyc
+.pytest_cache/
+.coverage
+htmlcov/
