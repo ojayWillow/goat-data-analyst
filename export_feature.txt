@@ -1,0 +1,37 @@
+﻿# Add this export button script to your reports
+# This adds a download CSV button to the interactive table
+
+Add the following button before the table in the HTML:
+<button onclick="exportToCSV()" style="margin-bottom: 16px; padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px;">
+    📥 Export Current View as CSV
+</button>
+
+And add this JavaScript function at the end:
+function exportToCSV() {
+    const table = document.getElementById("dataTable");
+    const rows = Array.from(table.rows).filter(row => !row.classList.contains("hidden"));
+    
+    let csv = "Column,Type,Missing %,Unique,Issues\n";
+    
+    rows.forEach(row => {
+        const cells = Array.from(row.cells);
+        const rowData = cells.map(cell => {
+            let text = cell.textContent.trim();
+            // Handle commas in text
+            if (text.includes(",")) {
+                text = `"${text}"`;
+            }
+            return text;
+        });
+        csv += rowData.join(",") + "\n";
+    });
+    
+    // Download
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "data_quality_export.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+}

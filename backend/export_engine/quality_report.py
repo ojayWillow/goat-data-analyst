@@ -1,6 +1,6 @@
 ﻿"""
-Data Quality Report Generator - Enhanced with Visualizations
-Exports profiling results as HTML and Markdown reports with visual elements
+COMPLETE Data Quality Report Generator - FINAL VERSION
+With full interactivity + working download function
 """
 
 from typing import Dict, Any
@@ -9,7 +9,7 @@ import os
 
 
 class QualityReportGenerator:
-    """Generates data quality reports in multiple formats with visualizations"""
+    """Generates data quality reports in multiple formats with full interactivity"""
     
     def __init__(self, profile: Dict[str, Any], quality_report: Dict[str, Any]):
         self.profile = profile
@@ -97,7 +97,7 @@ class QualityReportGenerator:
         return '\n'.join(md)
     
     def generate_html(self) -> str:
-        """Generate enhanced HTML report with visualizations"""
+        """Generate fully interactive HTML report with download"""
         
         # Score color and label
         if self.quality['score'] >= 90:
@@ -117,19 +117,16 @@ class QualityReportGenerator:
             score_label = 'NEEDS WORK'
             gauge_color = '#ef4444'
         
-        # Generate column type chart bars
+        # Generate visualizations
         type_chart_html = self._generate_type_chart_html()
-        
-        # Generate missing data bars
         missing_data_html = self._generate_missing_data_html()
         
-        html = f"""
-<!DOCTYPE html>
+        html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Data Quality Report</title>
+    <title>Data Quality Report - Interactive</title>
     <style>
         * {{
             margin: 0;
@@ -179,7 +176,6 @@ class QualityReportGenerator:
             font-size: 20px;
         }}
         
-        /* Quality Score Gauge */
         .score-container {{
             text-align: center;
             padding: 20px;
@@ -233,7 +229,6 @@ class QualityReportGenerator:
             margin-top: 12px;
         }}
         
-        /* Metrics Grid */
         .metrics-grid {{
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -259,14 +254,20 @@ class QualityReportGenerator:
             color: #1e293b;
         }}
         
-        /* Column Type Chart */
-        .type-chart {{
-            margin-top: 20px;
-        }}
         .type-bar {{
             display: flex;
             align-items: center;
             margin-bottom: 12px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }}
+        .type-bar:hover {{
+            background: #f8fafc;
+        }}
+        .type-bar.active {{
+            background: #e0e7ff;
         }}
         .type-label {{
             width: 120px;
@@ -301,10 +302,6 @@ class QualityReportGenerator:
             color: #64748b;
         }}
         
-        /* Missing Data Visualization */
-        .missing-viz {{
-            margin-top: 20px;
-        }}
         .missing-bar {{
             display: flex;
             align-items: center;
@@ -337,7 +334,6 @@ class QualityReportGenerator:
             font-weight: 600;
         }}
         
-        /* Issue Cards */
         .issue {{
             background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
             border-left: 4px solid #ef4444;
@@ -363,7 +359,41 @@ class QualityReportGenerator:
             box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
         }}
         
-        /* Table */
+        .search-box {{
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 16px;
+            transition: border-color 0.2s;
+        }}
+        .search-box:focus {{
+            outline: none;
+            border-color: #3b82f6;
+        }}
+        
+        .btn {{
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+            transition: all 0.2s;
+            margin-bottom: 16px;
+        }}
+        .btn:hover {{
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }}
+        
+        .table-container {{
+            overflow-x: auto;
+        }}
         table {{
             width: 100%;
             border-collapse: separate;
@@ -379,12 +409,22 @@ class QualityReportGenerator:
             text-transform: uppercase;
             color: #475569;
             border-bottom: 2px solid #e2e8f0;
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.2s;
+        }}
+        th:hover {{
+            background: #e2e8f0;
         }}
         th:first-child {{
             border-top-left-radius: 8px;
         }}
         th:last-child {{
             border-top-right-radius: 8px;
+        }}
+        th::after {{
+            content: ' ↕';
+            opacity: 0.3;
         }}
         td {{
             padding: 12px;
@@ -397,8 +437,10 @@ class QualityReportGenerator:
         tr:last-child td {{
             border-bottom: none;
         }}
+        tr.hidden {{
+            display: none;
+        }}
         
-        /* Badges */
         .badge {{
             display: inline-block;
             padding: 4px 10px;
@@ -414,7 +456,28 @@ class QualityReportGenerator:
         .badge-boolean {{ background: #fce7f3; color: #9f1239; }}
         .badge-id {{ background: #f3f4f6; color: #374151; }}
         
-        /* Animation */
+        .filter-info {{
+            padding: 12px;
+            background: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }}
+        .filter-info button {{
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 4px 12px;
+            border-radius: 4px;
+            margin-left: 8px;
+            cursor: pointer;
+            font-size: 12px;
+        }}
+        .filter-info button:hover {{
+            background: #2563eb;
+        }}
+        
         @keyframes fadeIn {{
             from {{ opacity: 0; transform: translateY(10px); }}
             to {{ opacity: 1; transform: translateY(0); }}
@@ -426,11 +489,10 @@ class QualityReportGenerator:
 </head>
 <body>
     <div class="header">
-        <h1>📊 Data Quality Report</h1>
+        <h1>📊 Data Quality Report - Interactive</h1>
         <div class="timestamp">Generated: {self.timestamp}</div>
     </div>
     
-    <!-- Quality Score Gauge -->
     <div class="card">
         <div class="score-container">
             <div class="gauge">
@@ -445,7 +507,6 @@ class QualityReportGenerator:
         </div>
     </div>
     
-    <!-- Dataset Summary -->
     <div class="card">
         <h2>📈 Dataset Summary</h2>
         <div class="metrics-grid">
@@ -468,15 +529,13 @@ class QualityReportGenerator:
         </div>
     </div>
     
-    <!-- Column Type Distribution -->
     <div class="card">
-        <h2>📊 Column Type Distribution</h2>
-        <div class="type-chart">
+        <h2>📊 Column Type Distribution (Click to Filter)</h2>
+        <div class="type-chart" id="typeChart">
             {type_chart_html}
         </div>
     </div>
     
-    <!-- Missing Data Visualization -->
     {missing_data_html}
 """
         
@@ -490,31 +549,55 @@ class QualityReportGenerator:
         # Warnings
         if self.quality['warnings']:
             html += '<div class="card"><h2>⚠️ Warnings</h2>'
-            for i, warning in enumerate(self.quality['warnings'][:10], 1):  # Show top 10
+            for i, warning in enumerate(self.quality['warnings'][:10], 1):
                 html += f'<div class="warning"><strong>{i}.</strong> {warning}</div>'
             if len(self.quality['warnings']) > 10:
                 html += f'<div class="warning"><em>... and {len(self.quality["warnings"]) - 10} more warnings</em></div>'
             html += '</div>'
         
-        # Column details table
-        html += '<div class="card"><h2>📋 Column Details</h2><table><thead><tr>'
-        html += '<th>Column</th><th>Type</th><th>Missing</th><th>Unique</th><th>Issues</th>'
-        html += '</tr></thead><tbody>'
+        # Column Details with Download
+        html += '''
+<div class="card">
+    <h2>📋 Column Details (Interactive)</h2>
+    <button class="btn" onclick="exportTableToCSV()">📥 Download Filtered Data as CSV</button>
+    <input type="text" class="search-box" id="searchBox" placeholder="🔍 Search columns...">
+    <div class="filter-info" id="filterInfo" style="display: none;">
+        Filtering by: <strong id="filterType"></strong>
+        <button onclick="clearFilter()">Clear Filter</button>
+    </div>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th onclick="sortTable(0)">Column</th>
+                    <th onclick="sortTable(1)">Type</th>
+                    <th onclick="sortTable(2)">Missing</th>
+                    <th onclick="sortTable(3)">Unique</th>
+                    <th onclick="sortTable(4)">Issues</th>
+                </tr>
+            </thead>
+            <tbody id="dataTable">
+'''
         
         for col in self.profile['columns']:
             col_type_badge = f'badge-{col["type"]}'
-            issues_str = ', '.join(col['quality_issues']) if col['quality_issues'] else '✓ No issues'
+            issues_str = ', '.join(col['quality_issues']) if col['quality_issues'] else '✓'
             html += f'''
-            <tr>
-                <td><strong>{col['name']}</strong></td>
-                <td><span class="badge {col_type_badge}">{col['type']}</span></td>
-                <td>{col['missing_pct']:.1f}%</td>
-                <td>{col['unique']:,}</td>
-                <td style="font-size: 12px; color: #64748b;">{issues_str}</td>
-            </tr>
+                <tr data-type="{col['type']}">
+                    <td><strong>{col['name']}</strong></td>
+                    <td><span class="badge {col_type_badge}">{col['type']}</span></td>
+                    <td>{col['missing_pct']:.1f}%</td>
+                    <td>{col['unique']:,}</td>
+                    <td style="font-size: 12px; color: #64748b;">{issues_str}</td>
+                </tr>
             '''
         
-        html += '</tbody></table></div>'
+        html += '''
+            </tbody>
+        </table>
+    </div>
+</div>
+'''
         
         # Recommendations
         recommendations = self._generate_recommendations()
@@ -524,17 +607,129 @@ class QualityReportGenerator:
                 html += f'<div class="recommendation"><strong>{i}.</strong> {rec}</div>'
             html += '</div>'
         
+        # Complete JavaScript
         html += """
-</body>
-</html>
+<script>
+let currentFilter = null;
+let sortDirection = {};
+
+// Type filter
+document.querySelectorAll('.type-bar').forEach(bar => {
+    bar.addEventListener('click', function() {
+        const type = this.dataset.type;
+        if (currentFilter === type) {
+            clearFilter();
+        } else {
+            filterByType(type);
+        }
+    });
+});
+
+function filterByType(type) {
+    currentFilter = type;
+    document.querySelectorAll('.type-bar').forEach(b => {
+        b.classList.toggle('active', b.dataset.type === type);
+    });
+    document.querySelectorAll('#dataTable tr').forEach(row => {
+        if (row.dataset.type === type) {
+            row.classList.remove('hidden');
+        } else {
+            row.classList.add('hidden');
+        }
+    });
+    document.getElementById('filterInfo').style.display = 'block';
+    document.getElementById('filterType').textContent = type;
+}
+
+function clearFilter() {
+    currentFilter = null;
+    document.querySelectorAll('.type-bar').forEach(b => {
+        b.classList.remove('active');
+    });
+    document.querySelectorAll('#dataTable tr').forEach(row => {
+        row.classList.remove('hidden');
+    });
+    document.getElementById('filterInfo').style.display = 'none';
+}
+
+document.getElementById('searchBox').addEventListener('input', function(e) {
+    const searchTerm = e.target.value.toLowerCase();
+    document.querySelectorAll('#dataTable tr').forEach(row => {
+        const text = row.textContent.toLowerCase();
+        const matchesSearch = text.includes(searchTerm);
+        const matchesFilter = !currentFilter || row.dataset.type === currentFilter;
+        if (matchesSearch && matchesFilter) {
+            row.classList.remove('hidden');
+        } else {
+            row.classList.add('hidden');
+        }
+    });
+});
+
+function sortTable(columnIndex) {
+    const table = document.getElementById('dataTable');
+    const rows = Array.from(table.rows);
+    if (!sortDirection[columnIndex]) {
+        sortDirection[columnIndex] = 'asc';
+    } else {
+        sortDirection[columnIndex] = sortDirection[columnIndex] === 'asc' ? 'desc' : 'asc';
+    }
+    const direction = sortDirection[columnIndex];
+    rows.sort((a, b) => {
+        let aValue = a.cells[columnIndex].textContent.trim();
+        let bValue = b.cells[columnIndex].textContent.trim();
+        if (columnIndex === 2 || columnIndex === 3) {
+            aValue = parseFloat(aValue.replace(/[^0-9.-]/g, '')) || 0;
+            bValue = parseFloat(bValue.replace(/[^0-9.-]/g, '')) || 0;
+        }
+        if (direction === 'asc') {
+            return aValue > bValue ? 1 : -1;
+        } else {
+            return aValue < bValue ? 1 : -1;
+        }
+    });
+    rows.forEach(row => table.appendChild(row));
+}
+
+function exportTableToCSV() {
+    try {
+        const table = document.getElementById('dataTable');
+        const rows = Array.from(table.querySelectorAll('tr')).filter(row => row.style.display !== 'none');
+        if (rows.length === 0) {
+            alert('No data to export');
+            return;
+        }
+        let csv = 'Column,Type,Missing %,Unique,Issues\\n';
+        rows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            const rowData = Array.from(cells).map(cell => {
+                let text = cell.textContent.trim().replace(/\\s+/g, ' ');
+                if (text.includes(',') || text.includes('"')) {
+                    text = '"' + text.replace(/"/g, '""') + '"';
+                }
+                return text;
+            });
+            csv += rowData.join(',') + '\\n';
+        });
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'quality_report_' + Date.now() + '.csv';
+        link.click();
+        URL.revokeObjectURL(url);
+    } catch (error) {
+        alert('Export error: ' + error.message);
+    }
+}
+</script>
 """
         
+        html += "</body></html>"
         return html
     
     def _generate_type_chart_html(self) -> str:
-        """Generate HTML for column type distribution chart"""
         max_count = max(self.profile['type_summary'].values()) if self.profile['type_summary'] else 1
-        
         html_parts = []
         colors = {
             'numeric': '#3b82f6',
@@ -544,129 +739,66 @@ class QualityReportGenerator:
             'boolean': '#ec4899',
             'id': '#6b7280',
         }
-        
         for col_type, count in sorted(self.profile['type_summary'].items(), key=lambda x: x[1], reverse=True):
             width_pct = (count / max_count) * 100
             color = colors.get(col_type, '#3b82f6')
-            
-            html_parts.append(f'''
-            <div class="type-bar">
-                <div class="type-label">{col_type.title()}</div>
-                <div class="type-bar-container">
-                    <div class="type-bar-fill" style="width: {width_pct}%; background: {color};">{count}</div>
-                </div>
-                <div class="type-count">{count}</div>
-            </div>
-            ''')
-        
+            html_parts.append(f'<div class="type-bar" data-type="{col_type}"><div class="type-label">{col_type.title()}</div><div class="type-bar-container"><div class="type-bar-fill" style="width: {width_pct}%; background: {color};">{count}</div></div><div class="type-count">{count}</div></div>')
         return ''.join(html_parts)
     
     def _generate_missing_data_html(self) -> str:
-        """Generate HTML for missing data visualization"""
-        # Get columns with missing data
         cols_with_missing = [col for col in self.profile['columns'] if col['missing_pct'] > 0]
-        
         if not cols_with_missing:
-            return '<div class="card"><h2>✅ No Missing Data</h2><p>All columns are complete - excellent data quality!</p></div>'
-        
-        # Sort by missing percentage descending
+            return '<div class="card"><h2>✅ No Missing Data</h2></div>'
         cols_with_missing.sort(key=lambda x: x['missing_pct'], reverse=True)
-        
         html_parts = ['<div class="card"><h2>❓ Missing Data by Column</h2><div class="missing-viz">']
-        
-        for col in cols_with_missing[:15]:  # Show top 15
+        for col in cols_with_missing[:15]:
             missing_pct = col['missing_pct']
-            
-            # Color based on severity
-            if missing_pct > 50:
-                color = '#ef4444'  # Red
-            elif missing_pct > 20:
-                color = '#f59e0b'  # Orange
-            else:
-                color = '#3b82f6'  # Blue
-            
-            html_parts.append(f'''
-            <div class="missing-bar">
-                <div class="col-name" title="{col['name']}">{col['name']}</div>
-                <div class="missing-bar-container">
-                    <div class="missing-bar-fill" style="width: {missing_pct}%; background: {color};"></div>
-                </div>
-                <div class="missing-pct">{missing_pct:.1f}%</div>
-            </div>
-            ''')
-        
+            color = '#ef4444' if missing_pct > 50 else '#f59e0b' if missing_pct > 20 else '#3b82f6'
+            html_parts.append(f'<div class="missing-bar"><div class="col-name" title="{col["name"]}">{col["name"]}</div><div class="missing-bar-container"><div class="missing-bar-fill" style="width: {missing_pct}%; background: {color};"></div></div><div class="missing-pct">{missing_pct:.1f}%</div></div>')
         if len(cols_with_missing) > 15:
-            html_parts.append(f'<p style="margin-top: 12px; color: #64748b; font-size: 13px;"><em>... and {len(cols_with_missing) - 15} more columns with missing data</em></p>')
-        
+            html_parts.append(f'<p style="margin-top: 12px; color: #64748b; font-size: 13px;"><em>... and {len(cols_with_missing) - 15} more</em></p>')
         html_parts.append('</div></div>')
-        
         return ''.join(html_parts)
     
+    def _generate_table_data_json(self) -> str:
+        import json
+        data = [{'name': col['name'], 'type': col['type'], 'missing_pct': col['missing_pct'], 'unique': col['unique'], 'issues': col['quality_issues']} for col in self.profile['columns']]
+        return json.dumps(data)
+    
     def _generate_recommendations(self) -> list:
-        """Generate actionable recommendations based on quality report"""
-        
         recommendations = []
-        
-        # High missing data
-        high_missing_cols = [col['name'] for col in self.profile['columns'] 
-                            if col['missing_pct'] > 50]
+        high_missing_cols = [col['name'] for col in self.profile['columns'] if col['missing_pct'] > 50]
         if high_missing_cols:
-            recommendations.append(
-                f"🔴 **High missing data:** Consider removing or imputing columns: {', '.join(high_missing_cols[:3])}"
-            )
-        
-        # Constant columns
-        constant_cols = [col['name'] for col in self.profile['columns'] 
-                        if col['unique'] == 1]
+            recommendations.append(f"🔴 **High missing data:** {', '.join(high_missing_cols[:3])}")
+        constant_cols = [col['name'] for col in self.profile['columns'] if col['unique'] == 1]
         if constant_cols:
-            recommendations.append(
-                f"🔴 **Constant columns:** Remove these columns as they provide no information: {', '.join(constant_cols)}"
-            )
-        
-        # High cardinality categoricals
-        high_card_cols = [col['name'] for col in self.profile['columns'] 
-                         if 'HIGH_CARDINALITY' in col['quality_issues']]
+            recommendations.append(f"🔴 **Constant columns:** {', '.join(constant_cols)}")
+        high_card_cols = [col['name'] for col in self.profile['columns'] if 'HIGH_CARDINALITY' in col['quality_issues']]
         if high_card_cols:
-            recommendations.append(
-                f"🟡 **High cardinality:** Consider grouping rare categories in: {', '.join(high_card_cols[:3])}"
-            )
-        
-        # Many outliers
-        outlier_cols = [col['name'] for col in self.profile['columns'] 
-                       if 'MANY_OUTLIERS' in col['quality_issues']]
+            recommendations.append(f"🟡 **High cardinality:** {', '.join(high_card_cols[:3])}")
+        outlier_cols = [col['name'] for col in self.profile['columns'] if 'MANY_OUTLIERS' in col['quality_issues']]
         if outlier_cols:
-            recommendations.append(
-                f"🟡 **Outliers detected:** Review and handle outliers in: {', '.join(outlier_cols[:3])}"
-            )
-        
-        # Good quality
+            recommendations.append(f"🟡 **Outliers:** {', '.join(outlier_cols[:3])}")
         if self.quality['score'] >= 90:
-            recommendations.append("✅ **Great data quality!** Your dataset is ready for analysis.")
-        
+            recommendations.append("✅ **Great quality!** Dataset ready for analysis.")
         return recommendations
     
     def save_markdown(self, filepath: str):
-        """Save report as Markdown file"""
         md_content = self.generate_markdown()
         with open(filepath, 'w', encoding='utf-8') as f:
             f.write(md_content)
         print(f"✅ Markdown report saved: {filepath}")
     
     def save_html(self, filepath: str):
-        """Save report as HTML file"""
         html_content = self.generate_html()
         with open(filepath, 'w', encoding='utf-8') as f:
             f.write(html_content)
         print(f"✅ HTML report saved: {filepath}")
     
     def save_both(self, base_filename: str, output_dir: str = 'output'):
-        """Save both Markdown and HTML reports"""
         os.makedirs(output_dir, exist_ok=True)
-        
         md_path = os.path.join(output_dir, f"{base_filename}.md")
         html_path = os.path.join(output_dir, f"{base_filename}.html")
-        
         self.save_markdown(md_path)
         self.save_html(html_path)
-        
         return md_path, html_path
