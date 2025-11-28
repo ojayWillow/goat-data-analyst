@@ -182,7 +182,7 @@ class EnhancedQualityReportGenerator:
         
         # Dataset overview
         columns = self.profile.get('columns', {})
-        row_count = self.profile.get('row_count', 0)
+        row_count = self.domain_result.get('row_count', 0) if self.domain_result else self.profile.get('row_count', 0)
         
         html += f'''
             <!-- Dataset Overview -->
@@ -305,7 +305,7 @@ class EnhancedQualityReportGenerator:
         # Entities
         if entities:
             html += '<h3>🔍 Detected Entities</h3><div style="display: flex; flex-wrap: wrap; gap: 10px; margin: 15px 0;">'
-            for entity in entities[:12]:
+            for entity in entities:
                 html += f'<span style="background: #667eea; color: white; padding: 8px 16px; border-radius: 20px; font-size: 14px;">{entity}</span>'
             if len(entities) > 12:
                 html += f'<span style="background: #e0e0e0; padding: 8px 16px; border-radius: 20px;">+{len(entities)-12} more</span>'
@@ -320,3 +320,5 @@ class EnhancedQualityReportGenerator:
         
         html += '</div>'
         return html
+
+
