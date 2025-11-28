@@ -62,34 +62,63 @@ class UltimateReportGenerator:
         entities = self.domain_result.get('detected_entities', [])
         all_scores = self.domain_result.get('all_scores', {})
         
-        # Wrap in .card for consistent styling
-        html = '<div class="card">'
-        html += '<h2>🎯 Domain Intelligence</h2>'
-        html += f'<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 12px; color: white; margin-bottom: 20px;"><div style="display: flex; justify-content: space-between;"><div><div style="opacity: 0.9;">Domain</div><div style="font-size: 32px; font-weight: bold;">{domain}</div></div><div style="text-align: right;"><div style="opacity: 0.9;">Confidence</div><div style="font-size: 32px; font-weight: bold;">{confidence:.0%}</div></div></div></div>'
+        # Compact card styling
+        html = '<div class="card" style="padding: 20px; margin-bottom: 20px;">'
+        html += '<h2 style="margin-bottom: 16px; font-size: 20px;">🎯 Domain Intelligence</h2>'
         
+        # Compact header - side by side
+        html += f'<div style="display: flex; gap: 20px; margin-bottom: 16px;">'
+        html += f'<div style="flex: 1; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 16px; border-radius: 8px; color: white; text-align: center;">'
+        html += f'<div style="font-size: 12px; opacity: 0.9; margin-bottom: 4px;">Domain</div>'
+        html += f'<div style="font-size: 24px; font-weight: bold;">{domain}</div>'
+        html += f'</div>'
+        html += f'<div style="flex: 1; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 16px; border-radius: 8px; color: white; text-align: center;">'
+        html += f'<div style="font-size: 12px; opacity: 0.9; margin-bottom: 4px;">Confidence</div>'
+        html += f'<div style="font-size: 24px; font-weight: bold;">{confidence:.0%}</div>'
+        html += f'</div>'
+        html += f'</div>'
+        
+        # Top 3 confidence scores only (compact)
         if all_scores:
-            html += '<h3>Confidence Scores</h3><div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">'
-            for d_name, score_val in sorted(all_scores.items(), key=lambda x: x[1], reverse=True):
+            html += '<div style="background: #f8f9fa; padding: 12px; border-radius: 6px; margin-bottom: 12px;">'
+            sorted_scores = sorted(all_scores.items(), key=lambda x: x[1], reverse=True)[:3]
+            for d_name, score_val in sorted_scores:
                 pct = score_val * 100
                 bar_color = '#667eea' if score_val > 0 else '#e0e0e0'
-                html += f'<div style="margin-bottom: 10px;"><div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 3px;"><span>{d_name.title()}</span><span>{score_val:.1%}</span></div><div style="background: #e0e0e0; height: 6px; border-radius: 3px;"><div style="background: {bar_color}; height: 100%; width: {pct}%;"></div></div></div>'
+                html += f'<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">'
+                html += f'<div style="min-width: 100px; font-size: 11px; font-weight: 600;">{d_name.title()}</div>'
+                html += f'<div style="flex: 1; background: #e0e0e0; height: 4px; border-radius: 2px;"><div style="background: {bar_color}; height: 100%; width: {pct}%;"></div></div>'
+                html += f'<div style="min-width: 40px; text-align: right; font-size: 11px; font-weight: 600;">{score_val:.0%}</div>'
+                html += f'</div>'
             html += '</div>'
         
-        html += '<h3>Detected Entities</h3><div style="display: flex; flex-wrap: wrap; gap: 10px;">'
-        for entity in entities:
-            html += f'<span style="background: #667eea; color: white; padding: 6px 12px; border-radius: 16px; font-size: 12px;">{entity}</span>'
-        html += '</div>'
-        html += '</div>'  # Close .card
+        # Entities - compact badges
+        if entities:
+            html += '<div style="display: flex; flex-wrap: wrap; gap: 6px;">'
+            for entity in entities[:8]:  # Limit to 8 entities
+                html += f'<span style="background: #667eea; color: white; padding: 4px 10px; border-radius: 12px; font-size: 11px;">{entity}</span>'
+            if len(entities) > 8:
+                html += f'<span style="background: #e0e0e0; color: #666; padding: 4px 10px; border-radius: 12px; font-size: 11px;">+{len(entities) - 8} more</span>'
+            html += '</div>'
         
+        html += '</div>'
         return html
     
     def _insights_html(self) -> str:
-        # Wrap in .card for consistent styling
-        html = '<div class="card">'
-        html += '<h2>💡 AI Insights</h2>'
-        for i, insight in enumerate(self.insights, 1):
-            html += f'<div style="background: #f0f7ff; padding: 12px; margin-bottom: 10px; border-left: 4px solid #667eea; border-radius: 4px;"><strong style="color: #667eea;">Insight {i}:</strong> {insight}</div>'
-        html += '</div>'  # Close .card
+        # Compact insights
+        html = '<div class="card" style="padding: 20px; margin-bottom: 20px;">'
+        html += '<h2 style="margin-bottom: 12px; font-size: 20px;">💡 AI Insights</h2>'
+        
+        # Show max 3 insights, compact format
+        for i, insight in enumerate(self.insights[:3], 1):
+            html += f'<div style="background: #f0f7ff; padding: 10px; margin-bottom: 8px; border-left: 3px solid #667eea; border-radius: 4px; font-size: 13px;">'
+            html += f'<strong style="color: #667eea;">{i}.</strong> {insight}'
+            html += f'</div>'
+        
+        if len(self.insights) > 3:
+            html += f'<div style="text-align: center; color: #666; font-size: 12px; margin-top: 8px;">+{len(self.insights) - 3} more insights</div>'
+        
+        html += '</div>'
         return html
     
     def _analytics_html(self) -> str:
@@ -97,18 +126,43 @@ class UltimateReportGenerator:
         summary = analytics.get('summary', {})
         numeric = analytics.get('numeric_analysis', {})
         
-        # Wrap in .card for consistent styling
-        html = '<div class="card">'
-        html += '<h2>📊 Data Analytics</h2>'
-        html += '<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px;">'
-        html += f'<div style="background: #f8f9fa; padding: 12px; border-radius: 8px; text-align: center;"><div style="font-size: 20px; font-weight: bold; color: #667eea;">{summary.get("rows", 0):,}</div><div style="font-size: 12px; color: #666;">Rows</div></div>'
-        html += f'<div style="background: #f8f9fa; padding: 12px; border-radius: 8px; text-align: center;"><div style="font-size: 20px; font-weight: bold; color: #667eea;">{summary.get("columns", 0)}</div><div style="font-size: 12px; color: #666;">Columns</div></div>'
-        html += f'<div style="background: #f8f9fa; padding: 12px; border-radius: 8px; text-align: center;"><div style="font-size: 20px; font-weight: bold; color: #667eea;">{summary.get("missing_percentage", 0):.1f}%</div><div style="font-size: 12px; color: #666;">Missing</div></div>'
+        # Compact analytics
+        html = '<div class="card" style="padding: 20px; margin-bottom: 20px;">'
+        html += '<h2 style="margin-bottom: 12px; font-size: 20px;">📊 Data Analytics</h2>'
+        
+        # Compact stats grid
+        html += '<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 12px;">'
+        html += f'<div style="background: #f8f9fa; padding: 10px; border-radius: 6px; text-align: center;">'
+        html += f'<div style="font-size: 18px; font-weight: bold; color: #667eea;">{summary.get("rows", 0):,}</div>'
+        html += f'<div style="font-size: 10px; color: #666; margin-top: 2px;">Rows</div></div>'
+        
+        html += f'<div style="background: #f8f9fa; padding: 10px; border-radius: 6px; text-align: center;">'
+        html += f'<div style="font-size: 18px; font-weight: bold; color: #667eea;">{summary.get("columns", 0)}</div>'
+        html += f'<div style="font-size: 10px; color: #666; margin-top: 2px;">Columns</div></div>'
+        
+        html += f'<div style="background: #f8f9fa; padding: 10px; border-radius: 6px; text-align: center;">'
+        html += f'<div style="font-size: 18px; font-weight: bold; color: #667eea;">{summary.get("missing_percentage", 0):.1f}%</div>'
+        html += f'<div style="font-size: 10px; color: #666; margin-top: 2px;">Missing</div></div>'
+        
+        # Add memory usage
+        total_memory = sum(col.get('memory_mb', 0) for col in numeric.values()) if numeric else 0
+        html += f'<div style="background: #f8f9fa; padding: 10px; border-radius: 6px; text-align: center;">'
+        html += f'<div style="font-size: 18px; font-weight: bold; color: #667eea;">{total_memory:.1f}MB</div>'
+        html += f'<div style="font-size: 10px; color: #666; margin-top: 2px;">Memory</div></div>'
+        
         html += '</div>'
         
-        html += '<h3>Column Statistics (Sample)</h3>'
-        for col_name, stats in list(numeric.items())[:3]:
-            html += f'<div style="background: #f8f9fa; padding: 12px; margin-bottom: 8px; border-radius: 8px;"><div style="font-weight: bold; font-size: 12px; margin-bottom: 8px;">{col_name}</div><div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; font-size: 11px;"><div>Mean: {stats["mean"]:.2f}</div><div>Min: {stats["min"]:.2f}</div><div>Max: {stats["max"]:.2f}</div><div>Std: {stats["std_dev"]:.2f}</div></div></div>'
+        # Show only 2 columns stats (most compact)
+        if numeric:
+            for col_name, stats in list(numeric.items())[:2]:
+                html += f'<div style="background: #f8f9fa; padding: 10px; margin-bottom: 6px; border-radius: 6px;">'
+                html += f'<div style="font-weight: 600; font-size: 11px; margin-bottom: 6px; color: #667eea;">{col_name}</div>'
+                html += f'<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; font-size: 10px; color: #666;">'
+                html += f'<div>μ: {stats["mean"]:.1f}</div>'
+                html += f'<div>min: {stats["min"]:.1f}</div>'
+                html += f'<div>max: {stats["max"]:.1f}</div>'
+                html += f'<div>σ: {stats["std_dev"]:.1f}</div>'
+                html += f'</div></div>'
         
-        html += '</div>'  # Close .card
+        html += '</div>'
         return html
