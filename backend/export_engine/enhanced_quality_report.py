@@ -1,67 +1,46 @@
 ﻿"""
-Enhanced Quality Report Generator with Domain Detection (Fixed)
+Enhanced Quality Report Generator with Domain Detection & Analytics
 """
 
 from typing import Dict
 import pandas as pd
 from backend.data_processing.profiler import DataProfiler
 from backend.domain_detection.domain_detector import DomainDetector
-import html
+from backend.analytics.simple_analytics import SimpleAnalytics
 
 
 class EnhancedQualityReportGenerator:
-    """
-    Enhanced Quality Report Generator with domain intelligence.
-    Generates beautiful HTML reports with data quality + domain detection.
-    """
+    """Enhanced reports with domain + analytics intelligence."""
     
     def __init__(self, profile: Dict, quality_report: Dict):
-        """Initialize with profile and quality data."""
+        """Initialize."""
         self.profile = profile
         self.quality_report = quality_report
         self.domain_detector = DomainDetector()
+        self.analytics_engine = SimpleAnalytics()
         self.domain_result = None
+        self.analytics_result = None
     
     def generate_html(self, output_path: str, df: pd.DataFrame = None) -> str:
-        """
-        Generate enhanced HTML report.
-        
-        Args:
-            output_path: Where to save the HTML
-            df: DataFrame for domain detection (optional)
-            
-        Returns:
-            Path to generated report
-        """
-        # Detect domain if DataFrame provided
+        """Generate enhanced HTML report."""
         if df is not None:
             self.domain_result = self.domain_detector.detect_domain(df)
+            self.analytics_result = self.analytics_engine.analyze_dataset(df)
         
-        # Build complete HTML
         html_content = self._build_complete_html()
         
-        # Save
         with open(output_path, 'w', encoding='utf-8') as f:
             f.write(html_content)
         
         return output_path
     
     def _build_complete_html(self) -> str:
-        """Build the complete HTML report."""
+        """Build complete HTML report."""
         
         score = self.quality_report.get('score', 0)
         issues = self.quality_report.get('issues', [])
         
-        # Determine score color
-        if score >= 90:
-            score_color = '#10b981'
-            gauge_color = '#10b981'
-        elif score >= 70:
-            score_color = '#f59e0b'
-            gauge_color = '#f59e0b'
-        else:
-            score_color = '#ef4444'
-            gauge_color = '#ef4444'
+        score_color = '#10b981' if score >= 90 else '#f59e0b' if score >= 70 else '#ef4444'
         
         html = f'''<!DOCTYPE html>
 <html lang="en">
@@ -92,7 +71,6 @@ class EnhancedQualityReportGenerator:
             text-align: center;
         }}
         .header h1 {{ font-size: 36px; margin-bottom: 10px; }}
-        .header p {{ opacity: 0.9; font-size: 16px; }}
         .content {{ padding: 30px; }}
         .section {{
             background: white;
@@ -112,20 +90,6 @@ class EnhancedQualityReportGenerator:
             font-size: 18px;
             margin: 20px 0 15px 0;
             color: #555;
-        }}
-        .gauge-container {{
-            text-align: center;
-            padding: 30px;
-        }}
-        .gauge {{
-            font-size: 72px;
-            font-weight: bold;
-            color: {score_color};
-        }}
-        .gauge-label {{
-            font-size: 18px;
-            color: #666;
-            margin-top: 10px;
         }}
         .stat-grid {{
             display: grid;
@@ -149,71 +113,45 @@ class EnhancedQualityReportGenerator:
             margin-top: 8px;
             font-size: 14px;
         }}
-        .issue-item {{
-            background: #fff3cd;
-            border-left: 4px solid #ffc107;
-            padding: 15px;
-            margin-bottom: 10px;
-            border-radius: 4px;
-        }}
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>📊 Enhanced Data Quality Report</h1>
-            <p>Comprehensive analysis with AI-powered domain intelligence</p>
+            <h1>Enhanced Data Quality Report</h1>
+            <p>Comprehensive analysis with domain intelligence</p>
         </div>
         
         <div class="content">
             <!-- Quality Score -->
             <div class="section">
-                <h2>⭐ Overall Quality Score</h2>
-                <div class="gauge-container">
-                    <div class="gauge">{score}/100</div>
-                    <div class="gauge-label">Data Quality Score</div>
+                <h2>Overall Quality Score</h2>
+                <div style="text-align: center; padding: 30px;">
+                    <div style="font-size: 72px; font-weight: bold; color: {score_color};">{score}/100</div>
+                    <div style="color: #666; margin-top: 10px;">Data Quality Score</div>
                 </div>
             </div>
 '''
         
         # Add domain section if available
         if self.domain_result:
-            html += self._generate_domain_section_html(self.domain_result)
+            html += self._get_domain_section()
         
-        # Dataset overview
-        columns = self.profile.get('columns', {})
-        row_count = self.domain_result.get('row_count', 0) if self.domain_result else self.profile.get('row_count', 0)
+        # Add analytics section if available
+        if self.analytics_result:
+            html += self._get_analytics_section()
         
-        html += f'''
-            <!-- Dataset Overview -->
-            <div class="section">
-                <h2>📁 Dataset Overview</h2>
-                <div class="stat-grid">
-                    <div class="stat-card">
-                        <div class="stat-value">{row_count:,}</div>
-                        <div class="stat-label">Total Rows</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">{len(columns)}</div>
-                        <div class="stat-label">Total Columns</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">{score}</div>
-                        <div class="stat-label">Quality Score</div>
-                    </div>
-                </div>
-            </div>
-'''
+        # Add dataset overview
+        html += self._get_dataset_overview()
         
-        # Issues section
+        # Add issues section
         if issues:
             html += '''
             <div class="section">
-                <h2>⚠️ Quality Issues</h2>
+                <h2>Quality Issues</h2>
 '''
             for issue in issues:
-                html += f'<div class="issue-item">{html.escape(str(issue))}</div>'
-            
+                html += f'<div style="background: #fff3cd; padding: 15px; margin-bottom: 10px; border-left: 4px solid #ffc107; border-radius: 4px;">{issue}</div>'
             html += '</div>'
         
         html += '''
@@ -224,42 +162,28 @@ class EnhancedQualityReportGenerator:
         
         return html
     
-    def _generate_domain_section_html(self, domain_result: Dict) -> str:
-        """Generate domain intelligence section."""
-        if not domain_result or domain_result.get('primary_domain') == 'unknown':
+    def _get_domain_section(self) -> str:
+        """Domain intelligence section."""
+        if not self.domain_result or self.domain_result.get('primary_domain') == 'unknown':
             return ""
         
-        domain = domain_result['primary_domain']
-        confidence = domain_result['confidence']
-        entities = domain_result.get('detected_entities', [])
-        recommendations = domain_result.get('recommendations', [])
-        all_scores = domain_result.get('all_scores', {})
-        
-        domain_icons = {
-            'e-commerce': '🛒', 'finance': '💰', 'crm': '👥',
-            'healthcare': '🏥', 'hr': '👔', 'logistics': '📦', 'marketing': '📢'
-        }
-        
-        icon = domain_icons.get(domain, '📊')
+        domain = self.domain_result['primary_domain']
+        confidence = self.domain_result['confidence']
+        entities = self.domain_result.get('detected_entities', [])
         
         html = f'''
             <div class="section">
-                <h2>{icon} Domain Intelligence</h2>
+                <h2>Domain Intelligence</h2>
                 
-                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-                            padding: 30px; border-radius: 12px; color: white; margin-bottom: 25px;">
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 12px; color: white; margin-bottom: 25px;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div>
                             <div style="font-size: 16px; opacity: 0.9;">Detected Domain</div>
-                            <div style="font-size: 42px; font-weight: bold; margin-top: 8px;">
-                                {domain.upper().replace('-', ' ')}
-                            </div>
+                            <div style="font-size: 42px; font-weight: bold; margin-top: 8px;">{domain.upper()}</div>
                         </div>
                         <div style="text-align: right;">
                             <div style="font-size: 16px; opacity: 0.9;">Confidence</div>
-                            <div style="font-size: 42px; font-weight: bold; margin-top: 8px;">
-                                {confidence:.0%}
-                            </div>
+                            <div style="font-size: 42px; font-weight: bold; margin-top: 8px;">{confidence:.0%}</div>
                         </div>
                     </div>
                 </div>
@@ -269,56 +193,86 @@ class EnhancedQualityReportGenerator:
                         <div class="stat-value">{len(entities)}</div>
                         <div class="stat-label">Domain Entities</div>
                     </div>
+                </div>
+                
+                <h3>Detected Entities</h3>
+                <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+'''
+        
+        for entity in entities:
+            html += f'<span style="background: #667eea; color: white; padding: 8px 16px; border-radius: 20px; font-size: 14px;">{entity}</span>'
+        
+        html += '''
+                </div>
+            </div>
+'''
+        return html
+    
+    def _get_analytics_section(self) -> str:
+        """Analytics insights section."""
+        analytics = self.analytics_result
+        summary = analytics.get('summary', {})
+        numeric = analytics.get('numeric_analysis', {})
+        
+        html = f'''
+            <div class="section">
+                <h2>Data Analytics</h2>
+                
+                <div class="stat-grid">
                     <div class="stat-card">
-                        <div class="stat-value">{len(recommendations)}</div>
-                        <div class="stat-label">AI Recommendations</div>
+                        <div class="stat-value">{summary.get('rows', 0):,}</div>
+                        <div class="stat-label">Total Rows</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-value">{len([s for s in all_scores.values() if s > 0])}</div>
-                        <div class="stat-label">Domains Analyzed</div>
+                        <div class="stat-value">{summary.get('columns', 0)}</div>
+                        <div class="stat-label">Total Columns</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">{summary.get('missing_percentage', 0):.1f}%</div>
+                        <div class="stat-label">Missing Data</div>
+                    </div>
+                </div>
+                
+                <h3>Numeric Columns (Sample)</h3>
+'''
+        
+        for i, (col_name, stats) in enumerate(list(numeric.items())[:3]):
+            html += f'''
+                <div style="background: #f8f9fa; padding: 15px; margin-bottom: 10px; border-radius: 8px;">
+                    <div style="font-weight: bold; margin-bottom: 10px;">{col_name}</div>
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; font-size: 14px;">
+                        <div>Mean: {stats['mean']:.2f}</div>
+                        <div>Min: {stats['min']:.2f}</div>
+                        <div>Max: {stats['max']:.2f}</div>
+                        <div>Std Dev: {stats['std_dev']:.2f}</div>
                     </div>
                 </div>
 '''
         
-        # Domain scores
-        if all_scores:
-            html += '<h3>📊 Domain Confidence Scores</h3><div style="margin: 20px 0;">'
-            sorted_scores = sorted(all_scores.items(), key=lambda x: x[1], reverse=True)
-            for domain_name, score in sorted_scores:
-                percentage = score * 100
-                bar_color = '#667eea' if domain_name == domain else '#e0e0e0'
-                html += f'''
-                <div style="margin-bottom: 15px;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                        <span style="font-weight: {'bold' if domain_name == domain else 'normal'};">
-                            {domain_icons.get(domain_name, '📊')} {domain_name.replace('-', ' ').title()}
-                        </span>
-                        <span style="font-weight: bold;">{score:.1%}</span>
-                    </div>
-                    <div style="background: #f0f0f0; border-radius: 4px; height: 10px;">
-                        <div style="background: {bar_color}; height: 100%; width: {percentage}%; border-radius: 4px;"></div>
-                    </div>
-                </div>
-                '''
-            html += '</div>'
-        
-        # Entities
-        if entities:
-            html += '<h3>🔍 Detected Entities</h3><div style="display: flex; flex-wrap: wrap; gap: 10px; margin: 15px 0;">'
-            for entity in entities:
-                html += f'<span style="background: #667eea; color: white; padding: 8px 16px; border-radius: 20px; font-size: 14px;">{entity}</span>'
-            if len(entities) > 12:
-                html += f'<span style="background: #e0e0e0; padding: 8px 16px; border-radius: 20px;">+{len(entities)-12} more</span>'
-            html += '</div>'
-        
-        # Recommendations
-        if recommendations:
-            html += '<h3>💡 AI Recommendations</h3><div style="margin-top: 15px;">'
-            for i, rec in enumerate(recommendations, 1):
-                html += f'<div style="background: #f8f9fa; padding: 15px; margin-bottom: 10px; border-left: 4px solid #667eea; border-radius: 4px;"><strong>#{i}</strong> {rec}</div>'
-            html += '</div>'
-        
         html += '</div>'
         return html
-
-
+    
+    def _get_dataset_overview(self) -> str:
+        """Dataset overview section."""
+        row_count = self.domain_result.get('row_count', 0) if self.domain_result else 0
+        col_count = len(self.profile.get('columns', {}))
+        
+        return f'''
+            <div class="section">
+                <h2>Dataset Overview</h2>
+                <div class="stat-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">{row_count:,}</div>
+                        <div class="stat-label">Total Rows</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">{col_count}</div>
+                        <div class="stat-label">Total Columns</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">{self.quality_report.get('score', 0)}</div>
+                        <div class="stat-label">Quality Score</div>
+                    </div>
+                </div>
+            </div>
+'''
