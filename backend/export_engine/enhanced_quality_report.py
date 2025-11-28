@@ -1,0 +1,322 @@
+﻿"""
+Enhanced Quality Report Generator with Domain Detection (Fixed)
+"""
+
+from typing import Dict
+import pandas as pd
+from backend.data_processing.profiler import DataProfiler
+from backend.domain_detection.domain_detector import DomainDetector
+import html
+
+
+class EnhancedQualityReportGenerator:
+    """
+    Enhanced Quality Report Generator with domain intelligence.
+    Generates beautiful HTML reports with data quality + domain detection.
+    """
+    
+    def __init__(self, profile: Dict, quality_report: Dict):
+        """Initialize with profile and quality data."""
+        self.profile = profile
+        self.quality_report = quality_report
+        self.domain_detector = DomainDetector()
+        self.domain_result = None
+    
+    def generate_html(self, output_path: str, df: pd.DataFrame = None) -> str:
+        """
+        Generate enhanced HTML report.
+        
+        Args:
+            output_path: Where to save the HTML
+            df: DataFrame for domain detection (optional)
+            
+        Returns:
+            Path to generated report
+        """
+        # Detect domain if DataFrame provided
+        if df is not None:
+            self.domain_result = self.domain_detector.detect_domain(df)
+        
+        # Build complete HTML
+        html_content = self._build_complete_html()
+        
+        # Save
+        with open(output_path, 'w', encoding='utf-8') as f:
+            f.write(html_content)
+        
+        return output_path
+    
+    def _build_complete_html(self) -> str:
+        """Build the complete HTML report."""
+        
+        score = self.quality_report.get('score', 0)
+        issues = self.quality_report.get('issues', [])
+        
+        # Determine score color
+        if score >= 90:
+            score_color = '#10b981'
+            gauge_color = '#10b981'
+        elif score >= 70:
+            score_color = '#f59e0b'
+            gauge_color = '#f59e0b'
+        else:
+            score_color = '#ef4444'
+            gauge_color = '#ef4444'
+        
+        html = f'''<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Data Quality Report</title>
+    <style>
+        * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+        body {{ 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }}
+        .container {{
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #f8fafc;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }}
+        .header {{
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }}
+        .header h1 {{ font-size: 36px; margin-bottom: 10px; }}
+        .header p {{ opacity: 0.9; font-size: 16px; }}
+        .content {{ padding: 30px; }}
+        .section {{
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }}
+        .section h2 {{ 
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #333;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }}
+        .section h3 {{
+            font-size: 18px;
+            margin: 20px 0 15px 0;
+            color: #555;
+        }}
+        .gauge-container {{
+            text-align: center;
+            padding: 30px;
+        }}
+        .gauge {{
+            font-size: 72px;
+            font-weight: bold;
+            color: {score_color};
+        }}
+        .gauge-label {{
+            font-size: 18px;
+            color: #666;
+            margin-top: 10px;
+        }}
+        .stat-grid {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }}
+        .stat-card {{
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }}
+        .stat-value {{
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+        }}
+        .stat-label {{
+            color: #666;
+            margin-top: 8px;
+            font-size: 14px;
+        }}
+        .issue-item {{
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Enhanced Data Quality Report</h1>
+            <p>Comprehensive analysis with AI-powered domain intelligence</p>
+        </div>
+        
+        <div class="content">
+            <!-- Quality Score -->
+            <div class="section">
+                <h2>⭐ Overall Quality Score</h2>
+                <div class="gauge-container">
+                    <div class="gauge">{score}/100</div>
+                    <div class="gauge-label">Data Quality Score</div>
+                </div>
+            </div>
+'''
+        
+        # Add domain section if available
+        if self.domain_result:
+            html += self._generate_domain_section_html(self.domain_result)
+        
+        # Dataset overview
+        columns = self.profile.get('columns', {})
+        row_count = self.profile.get('row_count', 0)
+        
+        html += f'''
+            <!-- Dataset Overview -->
+            <div class="section">
+                <h2>📁 Dataset Overview</h2>
+                <div class="stat-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">{row_count:,}</div>
+                        <div class="stat-label">Total Rows</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">{len(columns)}</div>
+                        <div class="stat-label">Total Columns</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">{score}</div>
+                        <div class="stat-label">Quality Score</div>
+                    </div>
+                </div>
+            </div>
+'''
+        
+        # Issues section
+        if issues:
+            html += '''
+            <div class="section">
+                <h2>⚠️ Quality Issues</h2>
+'''
+            for issue in issues:
+                html += f'<div class="issue-item">{html.escape(str(issue))}</div>'
+            
+            html += '</div>'
+        
+        html += '''
+        </div>
+    </div>
+</body>
+</html>'''
+        
+        return html
+    
+    def _generate_domain_section_html(self, domain_result: Dict) -> str:
+        """Generate domain intelligence section."""
+        if not domain_result or domain_result.get('primary_domain') == 'unknown':
+            return ""
+        
+        domain = domain_result['primary_domain']
+        confidence = domain_result['confidence']
+        entities = domain_result.get('detected_entities', [])
+        recommendations = domain_result.get('recommendations', [])
+        all_scores = domain_result.get('all_scores', {})
+        
+        domain_icons = {
+            'e-commerce': '🛒', 'finance': '💰', 'crm': '👥',
+            'healthcare': '🏥', 'hr': '👔', 'logistics': '📦', 'marketing': '📢'
+        }
+        
+        icon = domain_icons.get(domain, '📊')
+        
+        html = f'''
+            <div class="section">
+                <h2>{icon} Domain Intelligence</h2>
+                
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                            padding: 30px; border-radius: 12px; color: white; margin-bottom: 25px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="font-size: 16px; opacity: 0.9;">Detected Domain</div>
+                            <div style="font-size: 42px; font-weight: bold; margin-top: 8px;">
+                                {domain.upper().replace('-', ' ')}
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 16px; opacity: 0.9;">Confidence</div>
+                            <div style="font-size: 42px; font-weight: bold; margin-top: 8px;">
+                                {confidence:.0%}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stat-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">{len(entities)}</div>
+                        <div class="stat-label">Domain Entities</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">{len(recommendations)}</div>
+                        <div class="stat-label">AI Recommendations</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">{len([s for s in all_scores.values() if s > 0])}</div>
+                        <div class="stat-label">Domains Analyzed</div>
+                    </div>
+                </div>
+'''
+        
+        # Domain scores
+        if all_scores:
+            html += '<h3>📊 Domain Confidence Scores</h3><div style="margin: 20px 0;">'
+            sorted_scores = sorted(all_scores.items(), key=lambda x: x[1], reverse=True)
+            for domain_name, score in sorted_scores:
+                percentage = score * 100
+                bar_color = '#667eea' if domain_name == domain else '#e0e0e0'
+                html += f'''
+                <div style="margin-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                        <span style="font-weight: {'bold' if domain_name == domain else 'normal'};">
+                            {domain_icons.get(domain_name, '📊')} {domain_name.replace('-', ' ').title()}
+                        </span>
+                        <span style="font-weight: bold;">{score:.1%}</span>
+                    </div>
+                    <div style="background: #f0f0f0; border-radius: 4px; height: 10px;">
+                        <div style="background: {bar_color}; height: 100%; width: {percentage}%; border-radius: 4px;"></div>
+                    </div>
+                </div>
+                '''
+            html += '</div>'
+        
+        # Entities
+        if entities:
+            html += '<h3>🔍 Detected Entities</h3><div style="display: flex; flex-wrap: wrap; gap: 10px; margin: 15px 0;">'
+            for entity in entities[:12]:
+                html += f'<span style="background: #667eea; color: white; padding: 8px 16px; border-radius: 20px; font-size: 14px;">{entity}</span>'
+            if len(entities) > 12:
+                html += f'<span style="background: #e0e0e0; padding: 8px 16px; border-radius: 20px;">+{len(entities)-12} more</span>'
+            html += '</div>'
+        
+        # Recommendations
+        if recommendations:
+            html += '<h3>💡 AI Recommendations</h3><div style="margin-top: 15px;">'
+            for i, rec in enumerate(recommendations, 1):
+                html += f'<div style="background: #f8f9fa; padding: 15px; margin-bottom: 10px; border-left: 4px solid #667eea; border-radius: 4px;"><strong>#{i}</strong> {rec}</div>'
+            html += '</div>'
+        
+        html += '</div>'
+        return html
