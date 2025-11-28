@@ -3,6 +3,7 @@ Data Profiler - Auto-detect column types and generate data quality reports
 """
 
 import pandas as pd
+import warnings
 import numpy as np
 from typing import Dict, List, Any
 from datetime import datetime
@@ -41,15 +42,18 @@ class DataProfiler:
         # Check if datetime
         if pd.api.types.is_datetime64_any_dtype(series):
             return 'datetime'
-        
-        # Try to parse as datetime
+
+        # Try to parse as datetime (suppress noisy pandas UserWarning)
         if series.dtype == object:
             sample = series.dropna().head(100)
             try:
-                pd.to_datetime(sample, errors='raise')
+                with warnings.catch_warnings():
+                    warnings.filterwarnings('ignore', category=UserWarning)
+                    pd.to_datetime(sample, errors='raise', infer_datetime_format=True)
                 return 'datetime'
-            except:
+            except Exception:
                 pass
+
         
         # Check if it's an ID column (high uniqueness)
         if series.dtype == object:
@@ -284,3 +288,80 @@ def profile_dataframe(df: pd.DataFrame) -> Dict[str, Any]:
     """Quick function to profile a dataframe"""
     profiler = DataProfiler()
     return profiler.profile_dataframe(df)
+
+
+
+
+    def _is_datetime_column(self, series: pd.Series) -> bool:
+        """
+        Robust detection of datetime-like columns.
+
+        Strategy:
+        - If dtype is already datetime64, accept.
+        - For object columns:
+          - Sample non-null values (up to 200).
+          - Try several explicit datetime formats.
+          - Require a high proportion (e.g. 85%) of successful parses.
+          - As a fallback, try pandas generic parsing once, also with a threshold.
+        """
+        # If it's already a datetime dtype, accept immediately
+        if pd.api.types.is_datetime64_any_dtype(series):
+            return True
+
+        if series.dtype != object:
+            return False
+
+        # Get a representative sample of non-null strings
+        sample = series.dropna().astype(str).head(200)
+        if sample.empty:
+            return False
+
+        total = len(sample)
+
+        # Very short strings are unlikely to be real dates
+        avg_len = sample.map(len).mean()
+        if avg_len < 4:
+            return False
+
+        # Common datetime formats to test
+        candidate_formats = [
+            "%Y-%m-%d",
+            "%Y-%m-%d %H:%M:%S",
+            "%Y-%m-%dT%H:%M:%S",
+            "%d/%m/%Y",
+            "%m/%d/%Y",
+            "%d.%m.%Y",
+            "%Y/%m/%d",
+            "%Y%m%d",
+        ]
+
+        threshold = 0.85  # minimum fraction of sample values that must parse
+
+        # Try explicit formats first
+        for fmt in candidate_formats:
+            try:
+                parsed = pd.to_datetime(sample, format=fmt, errors="coerce")
+            except Exception:
+                continue
+
+            success_ratio = parsed.notna().sum() / total
+            if success_ratio >= threshold:
+                return True
+
+        # Fallback: let pandas infer, but do it once and with warnings suppressed, and still require a threshold
+        try:
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", category=UserWarning)
+                parsed = pd.to_datetime(sample, errors="coerce", infer_datetime_format=True)
+            success_ratio = parsed.notna().sum() / total
+            if success_ratio >= threshold:
+                return True
+        except Exception:
+            return False
+
+        return False
+
+
+
+
+

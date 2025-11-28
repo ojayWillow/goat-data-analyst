@@ -1,4 +1,4 @@
-"""
+﻿"""
 PRODUCTION-GRADE Data Quality Report Generator v2.0
 
 This module generates interactive, professional data quality reports
@@ -168,7 +168,7 @@ class QualityReportGenerator:
             if len(high_missing_cols) > 3:
                 cols_str += f" (+{len(high_missing_cols) - 3} more)"
             recommendations.append(
-                f"🔴 **High missing data:** {cols_str}. "
+                f" **High missing data:** {cols_str}. "
                 f"Consider imputation or investigate data collection issues."
             )
         
@@ -179,7 +179,7 @@ class QualityReportGenerator:
         ]
         if constant_cols:
             recommendations.append(
-                f"🔴 **Constant columns detected:** {', '.join(constant_cols)}. "
+                f" **Constant columns detected:** {', '.join(constant_cols)}. "
                 f"These provide no information and should be removed."
             )
         
@@ -193,7 +193,7 @@ class QualityReportGenerator:
             if len(high_card_cols) > 3:
                 cols_str += f" (+{len(high_card_cols) - 3} more)"
             recommendations.append(
-                f"🟡 **High cardinality columns:** {cols_str}. "
+                f" **High cardinality columns:** {cols_str}. "
                 f"Consider grouping or binning for analysis."
             )
         
@@ -207,7 +207,7 @@ class QualityReportGenerator:
             if len(outlier_cols) > 3:
                 cols_str += f" (+{len(outlier_cols) - 3} more)"
             recommendations.append(
-                f"🟡 **Outliers detected:** {cols_str}. "
+                f" **Outliers detected:** {cols_str}. "
                 f"Review for data entry errors or valid edge cases."
             )
         
@@ -221,19 +221,19 @@ class QualityReportGenerator:
             if len(moderate_missing_cols) > 3:
                 cols_str += f" (+{len(moderate_missing_cols) - 3} more)"
             recommendations.append(
-                f"🟡 **Moderate missing data:** {cols_str}. "
+                f" **Moderate missing data:** {cols_str}. "
                 f"Monitor these columns during analysis."
             )
         
         # Positive feedback for high quality
         if self.quality['score'] >= self.config.EXCELLENT_THRESHOLD:
             recommendations.append(
-                "✅ **Excellent data quality!** Your dataset is clean and ready for analysis. "
+                " **Excellent data quality!** Your dataset is clean and ready for analysis. "
                 "No critical issues detected."
             )
         elif self.quality['score'] >= self.config.GOOD_THRESHOLD and not recommendations:
             recommendations.append(
-                "✅ **Good data quality!** Minor issues detected but dataset is suitable for analysis."
+                " **Good data quality!** Minor issues detected but dataset is suitable for analysis."
             )
         
         return recommendations[:self.config.MAX_RECOMMENDATIONS]
@@ -248,12 +248,12 @@ class QualityReportGenerator:
         logger.info("Generating Markdown report")
         
         md = []
-        md.append("# 📊 Data Quality Report\n")
+        md.append("#  Data Quality Report\n")
         md.append(f"**Generated:** {self.timestamp}\n")
         md.append("---\n")
         
         # Overall Summary
-        md.append("## 📈 Overall Summary\n")
+        md.append("##  Overall Summary\n")
         md.append(f"- **Rows:** {self.profile['overall']['rows']:,}")
         md.append(f"- **Columns:** {self.profile['overall']['columns']}")
         md.append(f"- **Memory:** {self.profile['overall']['memory_mb']:.2f} MB")
@@ -263,34 +263,34 @@ class QualityReportGenerator:
                   f"({self._get_score_label()})\n")
         
         # Column Type Summary
-        md.append("## 📋 Column Types\n")
+        md.append("##  Column Types\n")
         for col_type, count in sorted(self.profile['type_summary'].items()):
             md.append(f"- **{col_type.title()}:** {count} columns")
         md.append("")
         
         # Quality Assessment
-        md.append("## ✅ Quality Assessment\n")
+        md.append("##  Quality Assessment\n")
         score = self.quality['score']
         
         if score >= self.config.EXCELLENT_THRESHOLD:
-            md.append("🎉 **EXCELLENT** - Your data is in great shape!\n")
+            md.append(" **EXCELLENT** - Your data is in great shape!\n")
         elif score >= self.config.GOOD_THRESHOLD:
-            md.append("✅ **GOOD** - Your data quality is acceptable with minor issues.\n")
+            md.append(" **GOOD** - Your data quality is acceptable with minor issues.\n")
         elif score >= self.config.FAIR_THRESHOLD:
-            md.append("⚠️ **FAIR** - Your data has some quality issues that should be addressed.\n")
+            md.append(" **FAIR** - Your data has some quality issues that should be addressed.\n")
         else:
-            md.append("🚨 **POOR** - Your data has serious quality issues requiring immediate attention.\n")
+            md.append(" **POOR** - Your data has serious quality issues requiring immediate attention.\n")
         
         # Issues
         if self.quality['issues']:
-            md.append("### 🚨 Critical Issues\n")
+            md.append("###  Critical Issues\n")
             for i, issue in enumerate(self.quality['issues'], 1):
                 md.append(f"{i}. {issue}")
             md.append("")
         
         # Warnings
         if self.quality['warnings']:
-            md.append("### ⚠️ Warnings\n")
+            md.append("###  Warnings\n")
             for i, warning in enumerate(self.quality['warnings'][:self.config.MAX_WARNINGS_DISPLAY], 1):
                 md.append(f"{i}. {warning}")
             if len(self.quality['warnings']) > self.config.MAX_WARNINGS_DISPLAY:
@@ -299,7 +299,7 @@ class QualityReportGenerator:
             md.append("")
         
         # Column Details
-        md.append("## 📊 Column Details\n")
+        md.append("##  Column Details\n")
         md.append("| Column | Type | Missing | Unique | Issues |")
         md.append("|--------|------|---------|--------|--------|")
         
@@ -313,13 +313,13 @@ class QualityReportGenerator:
         md.append("")
         
         # Recommendations
-        md.append("## 💡 Recommendations\n")
+        md.append("##  Recommendations\n")
         recommendations = self._generate_recommendations()
         if recommendations:
             for i, rec in enumerate(recommendations, 1):
                 md.append(f"{i}. {rec}")
         else:
-            md.append("✅ No major recommendations - your data looks good!")
+            md.append(" No major recommendations - your data looks good!")
         
         md.append("")
         md.append("---")
@@ -366,13 +366,13 @@ class QualityReportGenerator:
         ]
         
         if not cols_with_missing:
-            return '<div class="card"><h2>✅ No Missing Data</h2><p style="color: #64748b;">All columns are complete!</p></div>'
+            return '<div class="card"><h2> No Missing Data</h2><p style="color: #64748b;">All columns are complete!</p></div>'
         
         cols_with_missing.sort(key=lambda x: x['missing_pct'], reverse=True)
         
         html_parts = [
             '<div class="card">',
-            '<h2>❓ Missing Data by Column</h2>',
+            '<h2> Missing Data by Column</h2>',
             '<div class="missing-viz">'
         ]
         
@@ -428,7 +428,7 @@ class QualityReportGenerator:
             if col['quality_issues']:
                 issues_str = self._sanitize_html(', '.join(col['quality_issues']))
             else:
-                issues_str = '✓'
+                issues_str = ''
             
             rows.append(
                 f'<tr data-type="{col_type}">'
@@ -797,7 +797,7 @@ class QualityReportGenerator:
         }
         
         th::after {
-            content: ' ↕';
+            content: ' ';
             opacity: 0.3;
         }
         
@@ -1315,7 +1315,7 @@ class QualityReportGenerator:
     </div>
     
     <div class="header">
-        <h1>📊 Data Quality Report</h1>
+        <h1> Data Quality Report</h1>
         <div class="timestamp">Generated: {self.timestamp}</div>
     </div>
     
@@ -1339,7 +1339,7 @@ class QualityReportGenerator:
     </div>
     
     <div class="card">
-        <h2>📈 Dataset Summary</h2>
+        <h2> Dataset Summary</h2>
         <div class="metrics-grid">
             <div class="metric-box">
                 <div class="metric-label">Total Rows</div>
@@ -1361,7 +1361,7 @@ class QualityReportGenerator:
     </div>
     
     <div class="card">
-        <h2>📊 Column Type Distribution (Click to Filter)</h2>
+        <h2> Column Type Distribution (Click to Filter)</h2>
         <div class="type-chart">
             {type_chart_html}
         </div>
@@ -1371,14 +1371,14 @@ class QualityReportGenerator:
 """)
             
             if self.quality.get('issues'):
-                html_parts.append('<div class="card"><h2>🚨 Critical Issues</h2>')
+                html_parts.append('<div class="card"><h2> Critical Issues</h2>')
                 for issue in self.quality['issues']:
                     issue_safe = self._sanitize_html(issue)
-                    html_parts.append(f'<div class="issue"><strong>⚠️</strong> {issue_safe}</div>')
+                    html_parts.append(f'<div class="issue"><strong></strong> {issue_safe}</div>')
                 html_parts.append('</div>')
             
             if self.quality.get('warnings'):
-                html_parts.append('<div class="card"><h2>⚠️ Warnings</h2>')
+                html_parts.append('<div class="card"><h2> Warnings</h2>')
                 display_warnings = self.quality['warnings'][:self.config.MAX_WARNINGS_DISPLAY]
                 for i, warning in enumerate(display_warnings, 1):
                     warning_safe = self._sanitize_html(warning)
@@ -1393,31 +1393,31 @@ class QualityReportGenerator:
             
             html_parts.append(f"""
     <div class="card">
-        <h2>📋 Column Details (Interactive)</h2>
+        <h2> Column Details (Interactive)</h2>
         
         <div class="controls">
             <button class="btn" onclick="exportTableToCSV()" title="Download visible data as CSV">
-                📥 Download CSV
+                 Download CSV
             </button>
             <button class="btn btn-secondary" onclick="exportToJSON()" title="Download visible data as JSON">
-                📦 Download JSON
+                 Download JSON
             </button>
             <button class="btn btn-secondary" onclick="copyToClipboard()" title="Copy visible data to clipboard">
-                📋 Copy Data
+                 Copy Data
             </button>
             <button class="btn btn-success" onclick="downloadHTMLReport()" title="Download full HTML report">
-                💾 Save Full Report
+                 Save Full Report
             </button>
         </div>
         
         <input type="text" 
                class="search-box" 
                id="searchBox" 
-               placeholder="🔍 Search columns by name, type, or issues...">
+               placeholder=" Search columns by name, type, or issues...">
         
         <div class="filter-info" id="filterInfo" style="display: none;">
             <span>Filtering by: <strong id="filterType"></strong></span>
-            <button onclick="clearFilter()">✕ Clear Filter</button>
+            <button onclick="clearFilter()"> Clear Filter</button>
         </div>
         
         <div class="table-container">
@@ -1441,7 +1441,7 @@ class QualityReportGenerator:
             
             recommendations = self._generate_recommendations()
             if recommendations:
-                html_parts.append('<div class="card"><h2>💡 Actionable Recommendations</h2>')
+                html_parts.append('<div class="card"><h2> Actionable Recommendations</h2>')
                 for i, rec in enumerate(recommendations, 1):
                     rec_safe = self._sanitize_html(rec)
                     html_parts.append(f'<div class="recommendation"><strong>{i}.</strong> {rec_safe}</div>')
@@ -1476,7 +1476,7 @@ class QualityReportGenerator:
                 f.write(md_content)
             
             logger.info(f"Markdown report saved successfully: {filepath}")
-            print(f"✅ Markdown report saved: {filepath}")
+            print(f" Markdown report saved: {filepath}")
             
         except Exception as e:
             logger.error(f"Error saving markdown report: {str(e)}", exc_info=True)
@@ -1491,7 +1491,7 @@ class QualityReportGenerator:
                 f.write(html_content)
             
             logger.info(f"HTML report saved successfully: {filepath}")
-            print(f"✅ HTML report saved: {filepath}")
+            print(f" HTML report saved: {filepath}")
             
         except Exception as e:
             logger.error(f"Error saving HTML report: {str(e)}", exc_info=True)
@@ -1509,12 +1509,14 @@ class QualityReportGenerator:
             self.save_html(html_path)
             
             logger.info(f"Both reports saved successfully in {output_dir}")
-            print(f"\n✅ Reports saved successfully:")
-            print(f"   📄 Markdown: {md_path}")
-            print(f"   🌐 HTML: {html_path}")
+            print(f"\n Reports saved successfully:")
+            print(f"    Markdown: {md_path}")
+            print(f"    HTML: {html_path}")
             
             return md_path, html_path
             
         except Exception as e:
             logger.error(f"Error saving reports: {str(e)}", exc_info=True)
             raise IOError(f"Failed to save reports: {str(e)}")
+
+

@@ -64,7 +64,7 @@ class UltimateReportGenerator:
         
         # Compact card styling
         html = '<div class="card" style="padding: 20px; margin-bottom: 20px;">'
-        html += '<h2 style="margin-bottom: 16px; font-size: 20px;">🎯 Domain Intelligence</h2>'
+        html += '<h2 style="margin-bottom: 16px; font-size: 20px;">Domain Intelligence</h2>'
         
         # Compact header - side by side
         html += f'<div style="display: flex; gap: 20px; margin-bottom: 16px;">'
@@ -107,7 +107,7 @@ class UltimateReportGenerator:
     def _insights_html(self) -> str:
         # Compact insights
         html = '<div class="card" style="padding: 20px; margin-bottom: 20px;">'
-        html += '<h2 style="margin-bottom: 12px; font-size: 20px;">💡 AI Insights</h2>'
+        html += '<h2 style="margin-bottom: 12px; font-size: 20px;">AI Insights</h2>'
         
         # Show max 3 insights, compact format
         for i, insight in enumerate(self.insights[:3], 1):
@@ -128,7 +128,7 @@ class UltimateReportGenerator:
         
         # Compact analytics
         html = '<div class="card" style="padding: 20px; margin-bottom: 20px;">'
-        html += '<h2 style="margin-bottom: 12px; font-size: 20px;">📊 Data Analytics</h2>'
+        html += '<h2 style="margin-bottom: 12px; font-size: 20px;">Data Analytics</h2>'
         
         # Compact stats grid
         html += '<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 12px;">'
@@ -158,11 +158,13 @@ class UltimateReportGenerator:
                 html += f'<div style="background: #f8f9fa; padding: 10px; margin-bottom: 6px; border-radius: 6px;">'
                 html += f'<div style="font-weight: 600; font-size: 11px; margin-bottom: 6px; color: #667eea;">{col_name}</div>'
                 html += f'<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; font-size: 10px; color: #666;">'
-                html += f'<div>μ: {stats["mean"]:.1f}</div>'
+                html += f'<div>: {stats["mean"]:.1f}</div>'
                 html += f'<div>min: {stats["min"]:.1f}</div>'
                 html += f'<div>max: {stats["max"]:.1f}</div>'
-                html += f'<div>σ: {stats["std_dev"]:.1f}</div>'
+                html += f'<div>: {stats["std_dev"]:.1f}</div>'
                 html += f'</div></div>'
         
         html += '</div>'
         return html
+
+
