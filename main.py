@@ -125,9 +125,11 @@ async def analyze_csv(file: UploadFile = File(...)):
 @app.post("/analyze/html")
 async def analyze_csv_html(file: UploadFile = File(...)):
     """
-    Analyze uploaded CSV and return the full HTML report.
+    Analyze uploaded CSV and return the full HTML report with AI insights.
     """
     import traceback
+    import os
+    os.environ.setdefault('GROQ_API_KEY', 'dummy')
 
     try:
         if not file.filename.lower().endswith(".csv"):
@@ -143,7 +145,25 @@ async def analyze_csv_html(file: UploadFile = File(...)):
         profile = profiler.profile_dataframe(df)
         quality = profiler.get_quality_report()
 
+        # NEW: Add domain detection + AI insights
+        from backend.domain_detection.domain_detector import DomainDetector
+        from backend.analytics.simple_analytics import SimpleAnalytics
+        from backend.analytics.ai_insights import AIInsightsEngine
+
+        detector = DomainDetector()
+        domain_result = detector.detect_domain(df)
+        domain = domain_result.get('primary_domain') if domain_result else None
+
+        analytics = SimpleAnalytics()
+        analytics_summary = analytics.analyze_dataset(df)
+
+        ai_engine = AIInsightsEngine()
+        ai_results = ai_engine.generate_insights(df, domain, analytics_summary)
+
         generator = UltimateReportGenerator(profile, quality, df)
+        generator.domain = domain
+        generator.analytics_summary = analytics_summary
+        generator.ai_insights = ai_results['ai_insights']
         html = generator.generate_html()
 
         return HTMLResponse(content=html)
@@ -158,9 +178,3 @@ async def analyze_csv_html(file: UploadFile = File(...)):
         print("❌ ERROR in /analyze/html:", repr(e))
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Report generation failed: {str(e)}")
-
-
-if __name__ == "__main__":
-    import uvicorn
-
-    uvicorn.run(app, host="0.0.0.0", port=8000)
