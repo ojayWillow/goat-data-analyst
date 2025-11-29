@@ -18,209 +18,218 @@ class DomainPattern:
 
 
 class DomainPatterns:
-    """
-    Library of domain-specific patterns for automatic classification.
-    Production-ready domain detection patterns.
-    """
-    
+    """Collection of all domain patterns and utility methods."""
+
     # E-COMMERCE PATTERNS
     ECOMMERCE = DomainPattern(
         name="e-commerce",
         keywords={
-            'product', 'item', 'sku', 'catalog', 'inventory',
-            'price', 'cost', 'retail', 'wholesale', 'discount',
-            'category', 'brand', 'manufacturer', 'model',
+            # Product identity
+            'product', 'product_id', 'product_name',
+
+            # Pricing and discounts
+            'price', 'discounted_price', 'actual_price', 'discount', 'discount_percentage',
+
+            # Categorization
+            'category',
+
+            # Ratings and reviews
+            'rating', 'rating_count',
+            'review', 'review_id', 'review_title', 'review_content',
+
+            # Users / customers
+            'user', 'user_id', 'user_name',
+
+            # Core e-commerce actions
             'order', 'cart', 'checkout', 'purchase', 'transaction',
-            'quantity', 'qty', 'amount', 'total', 'subtotal',
-            'shipping', 'delivery', 'fulfillment',
-            'customer', 'buyer', 'shopper', 'user',
-            'revenue', 'sales', 'conversion', 'commission'
+
+            # Fulfillment
+            'shipping', 'delivery'
         },
         data_patterns={
-            'currency', 'product_id', 'order_id', 'sku_format',
-            'price_format', 'quantity_numeric'
+            r'\$\d+\.\d{2}',          # Price format
+            r'USD|EUR|GBP|INR',       # Currency codes
+            r'SKU-\d+',               # SKU format
         },
         relationships=[
-            ('order_id', 'product_id'),
-            ('customer_id', 'order_id'),
-            ('product_id', 'price')
+            ('order', 'customer'),
+            ('order', 'product'),
+            ('customer', 'review'),
         ],
-        weight=1.0
+        weight=1.2
     )
-    
     # FINANCE PATTERNS
     FINANCE = DomainPattern(
         name="finance",
         keywords={
-            'transaction', 'payment', 'transfer', 'withdrawal',
-            'deposit', 'balance', 'amount', 'debit', 'credit',
-            'account', 'portfolio', 'investment', 'loan',
-            'interest', 'rate', 'apr', 'yield', 'dividend',
-            'bank', 'branch', 'routing', 'swift', 'iban',
-            'checking', 'savings', 'statement',
-            'revenue', 'expense', 'profit', 'loss', 'equity',
-            'asset', 'liability', 'cash_flow'
+            'account', 'balance', 'credit', 'debit', 'transaction',
+            'payment', 'deposit', 'withdrawal', 'transfer',
+            'interest', 'principal', 'apr', 'rate',
+            'loan', 'mortgage', 'investment', 'portfolio',
+            'bank', 'branch', 'routing', 'swift',
+            'currency', 'exchange', 'forex',
+            'statement', 'ledger', 'journal',
+            'revenue', 'expense', 'profit', 'loss',
+            'asset', 'liability', 'equity',
+            'invoice', 'receipt', 'voucher'
         },
         data_patterns={
-            'currency', 'account_number', 'transaction_id',
-            'decimal_precision', 'balance_format'
+            r'\$\d{1,3}(,\d{3})*\.\d{2}',  # Money format
+            r'[A-Z]{3}',                  # Currency codes
         },
         relationships=[
-            ('account_id', 'transaction_id'),
-            ('account_id', 'balance'),
-            ('transaction_id', 'amount')
+            ('account', 'transaction'),
+            ('loan', 'payment'),
         ],
-        weight=1.0
+        weight=1.1
     )
-    
+
     # CRM PATTERNS
     CRM = DomainPattern(
         name="crm",
         keywords={
-            'customer', 'client', 'contact', 'prospect', 'lead',
-            'account', 'company', 'organization',
-            'email', 'phone', 'mobile', 'address', 'communication',
-            'call', 'meeting', 'appointment', 'interaction',
-            'opportunity', 'deal', 'pipeline', 'stage', 'funnel',
-            'quote', 'proposal', 'contract', 'close',
-            'score', 'rating', 'status', 'priority', 'segment',
-            'lifetime_value', 'ltv', 'churn', 'retention'
+            'customer', 'client', 'contact', 'lead', 'prospect',
+            'account', 'opportunity', 'deal', 'pipeline',
+            'campaign', 'marketing', 'email', 'call', 'meeting',
+            'stage', 'status', 'priority', 'owner',
+            'activity', 'task', 'note', 'comment',
+            'first_name', 'last_name', 'full_name',
+            'email_address', 'phone', 'mobile',
+            'company', 'organization', 'title', 'role',
+            'source', 'channel', 'referral',
+            'conversion', 'qualification', 'closed_won', 'closed_lost'
         },
-        data_patterns={
-            'email_format', 'phone_format', 'contact_id',
-            'lead_score', 'deal_value'
-        },
+        data_patterns=set(),
         relationships=[
-            ('customer_id', 'contact_id'),
-            ('lead_id', 'opportunity_id'),
-            ('account_id', 'deal_id')
+            ('account', 'contact'),
+            ('deal', 'contact'),
         ],
         weight=1.0
     )
-    
+
     # HEALTHCARE PATTERNS
     HEALTHCARE = DomainPattern(
         name="healthcare",
         keywords={
-            'patient', 'medical', 'health', 'clinical',
-            'diagnosis', 'symptom', 'condition', 'disease',
-            'prescription', 'medication', 'drug', 'dosage',
-            'treatment', 'procedure', 'surgery', 'therapy',
+            'patient', 'diagnosis', 'treatment', 'medication',
+            'prescription', 'dosage', 'pharmacy',
             'doctor', 'physician', 'nurse', 'provider',
-            'specialist', 'practitioner',
-            'hospital', 'clinic', 'ward', 'department',
-            'admission', 'discharge', 'appointment', 'visit',
-            'record', 'chart', 'lab', 'test', 'result',
-            'vital', 'blood_pressure', 'temperature'
+            'hospital', 'clinic', 'facility',
+            'appointment', 'visit', 'admission', 'discharge',
+            'symptom', 'condition', 'disease', 'disorder',
+            'lab', 'test', 'result', 'value',
+            'insurance', 'claim', 'coverage', 'copay',
+            'vital', 'blood_pressure', 'heart_rate', 'temperature',
+            'medical_record', 'chart', 'history'
         },
-        data_patterns={
-            'patient_id', 'medical_record_number', 'icd_code',
-            'medication_name', 'date_of_birth'
-        },
+        data_patterns=set(),
         relationships=[
-            ('patient_id', 'diagnosis_id'),
-            ('patient_id', 'prescription_id'),
-            ('doctor_id', 'patient_id')
+            ('patient', 'appointment'),
+            ('patient', 'diagnosis'),
         ],
         weight=1.0
     )
-    
-    # HR PATTERNS
-    HR = DomainPattern(
-        name="hr",
-        keywords={
-            'employee', 'staff', 'worker', 'personnel',
-            'hire', 'termination', 'onboard', 'offboard',
-            'salary', 'wage', 'compensation', 'bonus', 'benefits',
-            'payroll', 'pay', 'hourly', 'annual',
-            'department', 'division', 'team', 'manager',
-            'supervisor', 'position', 'title', 'role',
-            'performance', 'review', 'evaluation', 'rating',
-            'goal', 'objective', 'feedback',
-            'attendance', 'leave', 'vacation', 'sick', 'pto',
-            'hours', 'overtime', 'timesheet'
-        },
-        data_patterns={
-            'employee_id', 'ssn_format', 'salary_numeric',
-            'hire_date', 'department_code'
-        },
-        relationships=[
-            ('employee_id', 'department_id'),
-            ('employee_id', 'manager_id'),
-            ('employee_id', 'salary')
-        ],
-        weight=1.0
-    )
-    
+
     # LOGISTICS PATTERNS
     LOGISTICS = DomainPattern(
         name="logistics",
         keywords={
-            'shipment', 'shipping', 'delivery', 'freight',
-            'tracking', 'carrier', 'courier',
+            'shipment', 'tracking', 'carrier', 'delivery',
             'warehouse', 'inventory', 'stock', 'storage',
-            'bin', 'location', 'facility',
-            'vehicle', 'truck', 'route', 'trip', 'driver',
-            'transport', 'dispatch',
-            'status', 'eta', 'arrival', 'departure',
-            'in_transit', 'delivered', 'pending',
-            'origin', 'destination', 'address', 'zip',
-            'city', 'state', 'country'
+            'pickup', 'dropoff', 'route', 'driver',
+            'package', 'parcel', 'container', 'pallet',
+            'weight', 'dimension', 'volume', 'cubic',
+            'origin', 'destination', 'transit', 'eta',
+            'freight', 'cargo', 'shipping', 'transport',
+            'customs', 'clearance', 'duty', 'tariff',
+            'manifest', 'bill_of_lading', 'invoice'
         },
-        data_patterns={
-            'tracking_number', 'warehouse_id', 'address_format',
-            'shipment_id', 'weight_numeric'
-        },
+        data_patterns=set(),
         relationships=[
-            ('shipment_id', 'tracking_number'),
-            ('warehouse_id', 'inventory_id'),
-            ('order_id', 'shipment_id')
+            ('shipment', 'carrier'),
+            ('shipment', 'warehouse'),
         ],
         weight=1.0
     )
-    
+
+    # HR PATTERNS
+    HR = DomainPattern(
+        name="hr",
+        keywords={
+            'employee', 'staff', 'personnel', 'worker',
+            'hire', 'onboard', 'termination', 'resignation',
+            'department', 'position', 'title', 'role',
+            'salary', 'wage', 'compensation', 'bonus',
+            'benefits', 'insurance', 'retirement', '401k',
+            'performance', 'review', 'evaluation', 'rating',
+            'attendance', 'leave', 'vacation', 'sick_day',
+            'timesheet', 'hours', 'overtime', 'shift',
+            'training', 'certification', 'skill',
+            'manager', 'supervisor', 'direct_report'
+        },
+        data_patterns=set(),
+        relationships=[
+            ('employee', 'department'),
+            ('employee', 'manager'),
+        ],
+        weight=1.0
+    )
+
     # MARKETING PATTERNS
     MARKETING = DomainPattern(
         name="marketing",
         keywords={
-            'campaign', 'marketing', 'promotion', 'advertisement',
-            'ad', 'creative', 'channel', 'medium',
-            'impression', 'click', 'conversion', 'ctr', 'roi',
-            'engagement', 'reach', 'frequency', 'bounce',
-            'email', 'social', 'website', 'landing_page',
-            'seo', 'sem', 'ppc', 'organic',
-            'content', 'post', 'article', 'blog', 'video',
-            'image', 'banner', 'newsletter',
-            'audience', 'segment', 'target', 'demographic',
-            'behavior', 'persona'
+            'campaign', 'ad', 'advertisement', 'promotion',
+            'click', 'impression', 'view', 'engagement',
+            'ctr', 'cpc', 'cpm', 'roas', 'roi',
+            'conversion', 'funnel', 'landing_page',
+            'email', 'newsletter', 'blast', 'drip',
+            'social', 'facebook', 'instagram', 'twitter',
+            'audience', 'segment', 'demographic', 'target',
+            'keyword', 'search', 'seo', 'sem',
+            'content', 'blog', 'article', 'post',
+            'analytics', 'metrics', 'kpi'
         },
-        data_patterns={
-            'campaign_id', 'click_rate', 'conversion_rate',
-            'email_format', 'url_format'
-        },
+        data_patterns=set(),
         relationships=[
-            ('campaign_id', 'impression_count'),
-            ('campaign_id', 'click_count'),
-            ('email_id', 'open_rate')
+            ('campaign', 'audience'),
+            ('campaign', 'channel'),
         ],
         weight=1.0
     )
-    
+
+    # SAAS PATTERNS
+    SAAS = DomainPattern(
+        name="saas",
+        keywords={
+            'subscription', 'plan', 'tier', 'license',
+            'user', 'account', 'tenant', 'workspace',
+            'signup', 'trial', 'activation', 'churn',
+            'mrr', 'arr', 'ltv', 'cac',
+            'feature', 'usage', 'quota', 'limit',
+            'api', 'endpoint', 'request', 'response',
+            'integration', 'webhook', 'oauth',
+            'billing', 'invoice', 'payment_method',
+            'upgrade', 'downgrade', 'cancel', 'renewal'
+        },
+        data_patterns=set(),
+        relationships=[
+            ('account', 'subscription'),
+            ('user', 'workspace'),
+        ],
+        weight=1.0
+    )
+
     @classmethod
-    def get_all_domains(cls) -> List[DomainPattern]:
-        """Get list of all domain patterns."""
-        return [
-            cls.ECOMMERCE,
-            cls.FINANCE,
-            cls.CRM,
-            cls.HEALTHCARE,
-            cls.HR,
-            cls.LOGISTICS,
-            cls.MARKETING
-        ]
-    
-    @classmethod
-    def get_domain_by_name(cls, name: str) -> DomainPattern:
-        """Get a specific domain pattern by name."""
-        domains = {d.name: d for d in cls.get_all_domains()}
-        return domains.get(name.lower())
+    def get_all_patterns(cls) -> Dict[str, DomainPattern]:
+        """Return all domain patterns as a dictionary."""
+        return {
+            'e-commerce': cls.ECOMMERCE,
+            'finance': cls.FINANCE,
+            'crm': cls.CRM,
+            'healthcare': cls.HEALTHCARE,
+            'logistics': cls.LOGISTICS,
+            'hr': cls.HR,
+            'marketing': cls.MARKETING,
+            'saas': cls.SAAS,
+        }

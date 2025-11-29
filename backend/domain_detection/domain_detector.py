@@ -18,7 +18,7 @@ class DomainDetector:
     
     def __init__(self):
         """Initialize the domain detector with pattern library."""
-        self.patterns = DomainPatterns.get_all_domains()
+        self.patterns = DomainPatterns.get_all_patterns()
         self.min_confidence_threshold = 0.15  # Minimum confidence to report
         
     def detect_domain(self, df: pd.DataFrame) -> Dict:
@@ -45,11 +45,11 @@ class DomainDetector:
         # Calculate scores for each domain
         domain_scores = {}
         domain_matches = {}
-        
-        for pattern in self.patterns:
+
+        for domain_name, pattern in self.patterns.items():
             score, matches = self._calculate_domain_score(column_names, df, pattern)
-            domain_scores[pattern.name] = score
-            domain_matches[pattern.name] = matches
+            domain_scores[domain_name] = score
+            domain_matches[domain_name] = matches
         
         # Find primary domain
         if not domain_scores or max(domain_scores.values()) == 0:
@@ -82,45 +82,43 @@ class DomainDetector:
         }
     
     def _calculate_domain_score(
-        self, 
-        column_names: List[str], 
+        self,
+        column_names: List[str],
         df: pd.DataFrame,
         pattern: DomainPattern
     ) -> Tuple[float, List[str]]:
         """
         Calculate how well a dataset matches a domain pattern.
-        
+
         Returns:
             Tuple of (score, list of matched keywords)
         """
-        matches = []
-        score = 0.0
-        
-        # Check each column name against keywords
-        for col in column_names:
-            # Exact matches
-            for keyword in pattern.keywords:
-                if keyword in col:
-                    matches.append(col)
-                    score += 1.0
-                    break  # Count each column only once
-        
-        # Normalize score by number of columns
-        if len(column_names) > 0:
-            score = score / len(column_names)
-        
-        # Boost score if we found many matches
-        match_ratio = len(matches) / len(column_names) if len(column_names) > 0 else 0
-        if match_ratio > 0.5:
-            score *= 1.2  # 20% boost for strong matches
-        
+        matches: List[str] = []
+
+        # Match based on keywords vs column names
+        for keyword in pattern.keywords:
+            kw = keyword.lower()
+            if any(kw in col or col in kw for col in column_names):
+                matches.append(keyword)
+
+        total_keywords = len(pattern.keywords)
+        if total_keywords > 0:
+            base_score = len(matches) / total_keywords
+        else:
+            base_score = 0.0
+
         # Apply domain weight
-        score *= pattern.weight
-        
+        score = base_score * pattern.weight
+
+        # If we have any matches, enforce a minimum positive score
+        if matches and score == 0.0:
+            score = 0.2
+
         # Cap at 1.0
         score = min(score, 1.0)
-        
+
         return score, matches
+
     
     def _generate_recommendations(
         self, 

@@ -8,7 +8,7 @@ from datetime import datetime
 
 print('[1/5] Loading data...')
 handler = CSVHandler()
-df = handler.load_csv('sample_data/20251126_170320_spotify_data_clean.csv')
+df = handler.load_csv('sample_data/amazon.csv')
 print(f'[OK] {len(df):,} rows')
 
 print('[2/5] Profiling...')
