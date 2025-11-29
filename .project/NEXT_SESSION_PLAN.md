@@ -3,7 +3,39 @@
 ## Session Goal
 Complete Week 1 remaining tasks + prepare for public launch
 
----
+
+
+
+# NEXT SESSION PLAN (Nov 30 - Early Dec)
+
+## Priority 1: LinkedIn + Demo (Day 3 finish)
+- [ ] LinkedIn Post #1: "Building AI data analyst in public"
+- [ ] 2-min demo video: upload CSV → get insights
+- [ ] Update README with screenshots
+- [ ] Post link on LinkedIn
+
+## Priority 2: Revenue Analytics (Day 4)
+- [ ] Revenue trends line chart (by date)
+- [ ] Top 10 customers bar chart
+- [ ] Top products by revenue
+- [ ] Add to enhanced reports
+- [ ] Test with 1M customer dataset
+
+## Priority 3: AI Insights Enhancement (Day 5)
+- [ ] Add rule-based insight generation
+- [ ] "Revenue up 15% vs last month"
+- [ ] "Top 10% customers = 40% revenue"
+- [ ] Integrate with ultimate reports
+- [ ] Test edge cases
+
+## Session Achievements (Nov 29)
+✅ Domain confidence: 16% → 41%
+✅ Performance tests: sample_data/test only
+✅ Logs cleaned and consistent
+✅ 1M-row validation: 14.68s end-to-end
+
+
+
 
 ## Priority 1: Performance Testing (60 min)
 **Goal:** Validate speed & stability with real-world dataset

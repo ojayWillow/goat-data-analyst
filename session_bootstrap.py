@@ -95,10 +95,57 @@ def show_roadmap_status():
             print(f"📅 {line.strip()}")
 
 
+def show_progress_status():
+    """Show project progress and burndown."""
+    content = read_file('.project/PROGRESS_LOG.md')
+    if not content:
+        return
+    
+    lines = content.split('\n')
+    in_metrics = False
+    
+    for line in lines:
+        if 'Week 1 Metrics' in line:
+            in_metrics = True
+            print(line)
+            continue
+        if in_metrics and line.startswith('---'):
+            break
+        if in_metrics and line:
+            print(line)
+
+
 def get_git_status():
     """Get recent git commits."""
     print("\nRecent commits:")
     os.system('git log --oneline -3')
+
+
+def show_session_achievements():
+    """Show what was accomplished today."""
+    print("""
+✅ SESSION ACHIEVEMENTS:
+
+1. Domain Confidence Fix
+   - Updated customer domain patterns with missing keywords
+   - Confidence: 16% → 41% on 1M customer dataset
+   - File: backend/domain_detection/patterns.py
+
+2. Performance Testing Architecture
+   - Scoped performance_test.py to sample_data/test
+   - Only benchmarks targeted files (no duplication)
+   - 1M customer dataset: ~15s end-to-end
+   - Breakdown: Load 1.4s | Profile 5.3s | Domain 0s | Analytics 4.2s | AI Insights 4.1s
+
+3. Report Generator Cleanup
+   - generate_final_report.py logs now clean and consistent
+   - Removed verbose dict dumps
+   - Clear step-by-step output [1/5] ... [5/5]
+
+4. Git Progress
+   - Committed: patterns.py + performance_test.py
+   - Ready for next session (AI insights validation)
+    """)
 
 
 def main():
@@ -136,30 +183,9 @@ def main():
     print_header("📈 ROADMAP STATUS")
     show_roadmap_status()
 
-
     # Show progress
     print_header("📊 PROJECT PROGRESS")
     show_progress_status()
-
-def show_progress_status():
-    """Show project progress and burndown."""
-    content = read_file('.project/PROGRESS_LOG.md')
-    if not content:
-        return
-    
-    lines = content.split('\n')
-    in_metrics = False
-    
-    for line in lines:
-        if 'Week 1 Metrics' in line:
-            in_metrics = True
-            print(line)
-            continue
-        if in_metrics and line.startswith('---'):
-            break
-        if in_metrics and line:
-            print(line)
-
     
     # 6. Show recent commits
     print_header("📝 RECENT COMMITS")
@@ -168,11 +194,11 @@ def show_progress_status():
     # 7. Quick commands
     print_header("⚡ QUICK COMMANDS")
     print("""
-# Test everything
+# Test performance (sample_data/test only)
 python performance_test.py
 
-# Run main report
-python generate_final_report.py sample_data/amazon.csv
+# Run main report on 1M customer dataset
+python generate_final_report.py sample_data/test/customer_spending_1M_2018_2025.csv
 
 # Start Streamlit
 streamlit run app.py
@@ -187,7 +213,7 @@ type .project/ISSUES_BACKLOG.md
 type .project/SESSION_CHECKLIST.md
     """)
     
-        # 8. Instructions
+    # 8. Instructions
     print_header("📋 SESSION WORKFLOW")
     print("""
 ✅ DURING SESSION:
@@ -219,7 +245,7 @@ BEFORE YOU LEAVE - CHECK THESE:
 🧪 Testing (15 min):
   [ ] python performance_test.py (all datasets OK?)
   [ ] streamlit run app.py (app loads?)
-  [ ] python generate_final_report.py (report generates?)
+  [ ] python generate_final_report.py sample_data/test/customer_spending_1M_2018_2025.csv
   [ ] Any console errors/warnings?
 
 📝 Documentation (10 min):
