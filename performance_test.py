@@ -7,6 +7,7 @@ from backend.domain_detection.domain_detector import DomainDetector
 from backend.analytics.simple_analytics import SimpleAnalytics
 from backend.analytics.ai_insights import AIInsightsEngine
 
+
 def test_pipeline(csv_file):
     """Test full pipeline on a CSV file and measure performance."""
     print(f"\n{'='*60}")
@@ -66,10 +67,13 @@ def test_pipeline(csv_file):
         'total_time': total_time,
     }
 
-# Test all CSVs in sample_data
+
+# Test all CSVs in sample_data/test
 results = []
-csv_files = list(Path('sample_data').glob('*.csv'))
-for csv_file in csv_files[:5]:  # Test first 5 files
+base_dir = Path('sample_data') / 'test'
+csv_files = list(base_dir.glob('*.csv'))
+
+for csv_file in csv_files[:5]:  # Test first 5 files in test folder
     try:
         result = test_pipeline(str(csv_file))
         results.append(result)

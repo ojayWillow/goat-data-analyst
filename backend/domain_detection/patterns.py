@@ -47,18 +47,24 @@ class DomainPatterns:
         keywords={
             'customer', 'customer_id', 'customer_name',
             'name', 'email', 'email_address',
-            'age', 'country', 'city', 'phone',
+            'age', 'gender', 'marital_status', 'married', 'single',
+            'country', 'city', 'state', 'state_names', 'location',
+            'phone', 'address',
             'signup_date', 'registration_date', 'created_date',
             'total_purchases', 'purchase_count', 'order_count',
-            'total_spent', 'total_revenue', 'lifetime_value', 'ltv',
+            'total_spent', 'total_revenue', 'lifetime_value', 'ltv', 'amount_spent',
             'last_purchase', 'last_order_date',
-            'status', 'segment', 'tier',
-            'subscription', 'plan'
+            'status', 'segment', 'tier', 'employees_status', 'employment_status',
+            'subscription', 'plan',
+            'transaction', 'transaction_id', 'transaction_date',
+            'payment_method', 'payment',
+            'referral', 'referral_rate', 'referred_by'
         },
         data_patterns=set(),
         relationships=[
             ('customer', 'purchase'),
             ('customer', 'order'),
+            ('customer', 'transaction'),
         ],
         weight=1.1
     )
