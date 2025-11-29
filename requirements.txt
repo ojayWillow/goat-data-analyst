@@ -1,6 +1,6 @@
 ﻿# Core dependencies
-pandas==2.2.0
-numpy==1.26.2
+pandas>=2.2.3
+numpy>=1.26.2
 python-dateutil==2.8.2
 
 # API
