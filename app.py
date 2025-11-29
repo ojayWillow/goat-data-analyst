@@ -1,4 +1,7 @@
-﻿import time
+﻿import os
+os.environ.setdefault('GROQ_API_KEY', 'dummy')
+
+import time
 from datetime import datetime
 
 import requests
@@ -6,6 +9,7 @@ import streamlit as st
 
 # Railway API URL
 RAILWAY_API_URL = "https://goat-data-analyst-production.up.railway.app"
+
 
 
 def main():
