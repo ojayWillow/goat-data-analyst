@@ -18,7 +18,7 @@ def main():
     st.title("🐐 GOAT Data Analyst")
     st.write(
         "Upload a CSV file and let GOAT analyze it for you. "
-        "Fast, powered by cloud backend."
+        "AI-powered insights + cloud backend."
     )
 
     st.markdown("---")
@@ -41,11 +41,11 @@ def main():
 
     mode = st.radio(
         "Select the analysis mode:",
-        options=["Quick analysis (faster, lighter)", "Full analysis (slower, detailed report)"],
+        options=["Quick analysis (faster, lighter)", "Full analysis (slower, detailed report + AI insights)"],
         index=0,
         help=(
             "Quick analysis: basic dataset info and structure.\n\n"
-            "Full analysis: complete profiling and HTML report."
+            "Full analysis: complete profiling, HTML report, and AI-powered insights."
         ),
     )
 
@@ -56,7 +56,7 @@ def main():
     if mode.startswith("Quick"):
         analyze_button_label = "Run quick analysis"
     else:
-        analyze_button_label = "Run full analysis"
+        analyze_button_label = "Run full analysis with AI"
 
     if st.button(analyze_button_label, type="primary"):
         start_time = time.time()
@@ -79,10 +79,18 @@ def main():
                         f"Quick analysis completed in {round(elapsed, 2)} seconds."
                     )
                     st.markdown("### Results")
+                    
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.metric("Rows", f"{data.get('row_count', 0):,}")
+                    with col2:
+                        st.metric("Columns", data.get('column_count', 0))
+                    with col3:
+                        quality_score = data.get('quality', {}).get('overall_score', 0)
+                        st.metric("Quality Score", f"{quality_score:.1f}/10")
+                    
                     st.json(
                         {
-                            "rows": data.get("row_count"),
-                            "columns": data.get("column_count"),
                             "profile": data.get("profile"),
                             "quality": data.get("quality"),
                         }
@@ -93,7 +101,7 @@ def main():
                     )
 
             else:
-                with st.spinner("Running full analysis and generating report..."):
+                with st.spinner("🤖 Running full analysis with AI insights..."):
                     files = {"file": uploaded_file}
                     response = requests.post(
                         f"{RAILWAY_API_URL}/analyze/html",
@@ -106,18 +114,23 @@ def main():
                 if response.status_code == 200:
                     html_report = response.text
                     st.success(
-                        f"Full analysis completed in {round(elapsed, 2)} seconds "
+                        f"✅ Full analysis completed in {round(elapsed, 2)} seconds "
                         f"({int(elapsed // 60)} min {int(elapsed % 60)} sec)."
                     )
+                    
+                    # Display AI insights hint
+                    st.info("🤖 **AI Insights included in the report!** Look for the 'AI-Powered Insights' section in the preview below.")
+                    
                     st.markdown("### Download full HTML report")
                     st.download_button(
-                        label="Download HTML report",
+                        label="📥 Download HTML report",
                         data=html_report.encode("utf-8"),
                         file_name=f"goat_data_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html",
                         mime="text/html",
                     )
+                    
                     st.markdown("### Report preview")
-                    st.components.v1.html(html_report, height=600, scrolling=True)
+                    st.components.v1.html(html_report, height=800, scrolling=True)
                 else:
                     st.error(
                         f"Error from API: {response.status_code} - {response.text}"
