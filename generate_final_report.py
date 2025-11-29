@@ -8,7 +8,9 @@ from datetime import datetime
 
 print('[1/5] Loading data...')
 handler = CSVHandler()
-df = handler.load_csv('sample_data/amazon.csv')
+import sys
+csv_file = sys.argv[1] if len(sys.argv) > 1 else 'sample_data/amazon.csv'
+df = handler.load_csv(csv_file)
 print(f'[OK] {len(df):,} rows')
 
 print('[2/5] Profiling...')
