@@ -187,7 +187,7 @@ type .project/ISSUES_BACKLOG.md
 type .project/SESSION_CHECKLIST.md
     """)
     
-    # 8. Instructions
+        # 8. Instructions
     print_header("📋 SESSION WORKFLOW")
     print("""
 ✅ DURING SESSION:
@@ -198,6 +198,12 @@ type .project/SESSION_CHECKLIST.md
 ✅ AT END OF SESSION:
 Run: python session_bootstrap.py --end
     """)
+
+    # 9. Show full workflow file
+    print_header("📖 FULL WORKFLOW REFERENCE")
+    workflow = read_file('.project/WORKFLOW.md')
+    if workflow:
+        print(workflow)
 
 
 def end_session_mode():
