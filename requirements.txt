@@ -1,20 +1,12 @@
-﻿# Core
+﻿fastapi>=0.110.0
+uvicorn[standard]>=0.25.0
 pandas>=2.2.2
 numpy>=1.26.2
-python-dateutil==2.8.2
-
-# API / validation
-fastapi>=0.110.0
+streamlit==1.29.0
+python-multipart==0.0.6
 pydantic>=2.6.0
 pydantic-core>=2.16.3
-python-multipart==0.0.6
-
-# Visualization / UI
-streamlit==1.29.0
-plotly==5.18.0
-
-# Excel
+python-dateutil==2.8.2
 openpyxl==3.1.2
-
-# Utils
 python-dotenv==1.0.0
+plotly==5.18.0
