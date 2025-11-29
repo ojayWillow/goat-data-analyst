@@ -20,6 +20,50 @@ class DomainPattern:
 class DomainPatterns:
     """Collection of all domain patterns and utility methods."""
 
+    # MEDIA/ENTERTAINMENT PATTERNS
+    MEDIA = DomainPattern(
+        name="media",
+        keywords={
+            'track', 'track_id', 'track_name', 'track_number', 'track_popularity', 'track_duration',
+            'artist', 'artist_id', 'artist_name', 'artist_popularity', 'artist_followers', 'artist_genres',
+            'album', 'album_id', 'album_name', 'album_type', 'album_release_date', 'album_total_tracks',
+            'genre', 'genres',
+            'explicit',
+            'popularity', 'followers',
+            'duration', 'duration_min', 'duration_ms'
+        },
+        data_patterns=set(),
+        relationships=[
+            ('track', 'artist'),
+            ('track', 'album'),
+            ('artist', 'genre'),
+        ],
+        weight=1.0
+    )
+
+    # CUSTOMER/CRM PATTERNS  
+    CUSTOMER = DomainPattern(
+        name="customer",
+        keywords={
+            'customer', 'customer_id', 'customer_name',
+            'name', 'email', 'email_address',
+            'age', 'country', 'city', 'phone',
+            'signup_date', 'registration_date', 'created_date',
+            'total_purchases', 'purchase_count', 'order_count',
+            'total_spent', 'total_revenue', 'lifetime_value', 'ltv',
+            'last_purchase', 'last_order_date',
+            'status', 'segment', 'tier',
+            'subscription', 'plan'
+        },
+        data_patterns=set(),
+        relationships=[
+            ('customer', 'purchase'),
+            ('customer', 'order'),
+        ],
+        weight=1.1
+    )
+
+
     # E-COMMERCE PATTERNS
     ECOMMERCE = DomainPattern(
         name="e-commerce",
@@ -231,5 +275,8 @@ class DomainPatterns:
             'logistics': cls.LOGISTICS,
             'hr': cls.HR,
             'marketing': cls.MARKETING,
+            'customer': cls.CUSTOMER,
+            'media': cls.MEDIA,
             'saas': cls.SAAS,
+
         }
