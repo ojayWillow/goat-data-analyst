@@ -1,20 +1,20 @@
-﻿# Core dependencies
-pandas==2.1.4
-numpy==1.26.2
+﻿# Core
+pandas>=2.2.2
+numpy>=1.26.2
 python-dateutil==2.8.2
 
-# API
-fastapi==0.109.0
-uvicorn[standard]==0.25.0
+# API / validation
+fastapi>=0.110.0
+pydantic>=2.6.0
+pydantic-core>=2.16.3
 python-multipart==0.0.6
-pydantic==2.5.3
 
-# Data processing
+# Visualization / UI
+streamlit==1.29.0
+plotly==5.18.0
+
+# Excel
 openpyxl==3.1.2
 
-# Visualization
-plotly==5.18.0
-streamlit==1.29.0
-
-# Utilities
+# Utils
 python-dotenv==1.0.0
