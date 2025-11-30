@@ -1,17 +1,14 @@
 from datetime import datetime
 import io
 import os
-import shutil
 
 import pandas as pd
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, Response
+from fastapi.responses import HTMLResponse
 from backend.data_processing.profiler import DataProfiler
 from backend.export_engine.ultimate_report import UltimateReportGenerator
 from backend.analytics.visualizations import DataVisualizer
-
-import pdfkit
 
 app = FastAPI(
     title="GOAT Data Analyst API",
@@ -27,39 +24,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# PDF configuration - detect wkhtmltopdf path
-# Try multiple locations: Railway Linux, system PATH, Windows local
-wkhtmltopdf_path = None
-
-# Try system PATH first (works if wkhtmltopdf is installed via apt)
-wkhtmltopdf_path = shutil.which('wkhtmltopdf')
-
-# Try common Linux locations
-if not wkhtmltopdf_path:
-    linux_paths = [
-        '/usr/bin/wkhtmltopdf',
-        '/usr/local/bin/wkhtmltopdf',
-        '/bin/wkhtmltopdf'
-    ]
-    for path in linux_paths:
-        if os.path.exists(path):
-            wkhtmltopdf_path = path
-            break
-
-# Fallback to Windows local path for development
-if not wkhtmltopdf_path:
-    windows_path = r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe"
-    if os.path.exists(windows_path):
-        wkhtmltopdf_path = windows_path
-
-# Initialize pdfkit config if wkhtmltopdf found
-if wkhtmltopdf_path:
-    pdfkit_config = pdfkit.configuration(wkhtmltopdf=wkhtmltopdf_path)
-    print(f"✅ wkhtmltopdf found at: {wkhtmltopdf_path}")
-else:
-    pdfkit_config = None
-    print("⚠️ wkhtmltopdf not found - PDF export will be disabled")
-
 
 @app.get("/")
 async def root():
@@ -71,7 +35,6 @@ async def root():
             "health": "/health",
             "analyze_json": "/analyze",
             "analyze_html": "/analyze/html",
-            "analyze_pdf": "/analyze/pdf",
             "docs": "/docs",
         },
     }
@@ -82,8 +45,7 @@ async def health():
     return {
         "status": "healthy",
         "timestamp": datetime.now().isoformat(),
-        "version": "1.0.0",
-        "wkhtmltopdf_available": wkhtmltopdf_path is not None
+        "version": "1.0.0"
     }
 
 
@@ -220,86 +182,6 @@ async def analyze_csv_html(file: UploadFile = File(...)):
         print("❌ ERROR in /analyze/html:", repr(e))
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Report generation failed: {str(e)}")
-
-
-@app.post("/analyze/pdf")
-async def analyze_csv_pdf(file: UploadFile = File(...)):
-    """
-    Analyze uploaded CSV and return the full PDF report with AI insights.
-    Implementation: reuse HTML generation, then convert to PDF with pdfkit.
-    """
-    import traceback
-
-    # Check if wkhtmltopdf is available
-    if not pdfkit_config:
-        raise HTTPException(
-            status_code=503,
-            detail="PDF export is temporarily unavailable - wkhtmltopdf not installed on this server"
-        )
-
-    try:
-        if not file.filename.lower().endswith(".csv"):
-            raise HTTPException(status_code=400, detail="Only CSV files are supported")
-
-        contents = await file.read()
-        if not contents:
-            raise HTTPException(status_code=400, detail="CSV file is empty")
-
-        df = pd.read_csv(io.BytesIO(contents))
-
-        profiler = DataProfiler()
-        profile = profiler.profile_dataframe(df)
-        quality = profiler.get_quality_report()
-
-        # Domain detection + AI insights
-        from backend.domain_detection.domain_detector import DomainDetector
-        from backend.analytics.simple_analytics import SimpleAnalytics
-        from backend.analytics.ai_insights import AIInsightsEngine
-
-        detector = DomainDetector()
-        domain_result = detector.detect_domain(df)
-        domain = domain_result.get("primary_domain") if domain_result else None
-
-        analytics = SimpleAnalytics()
-        analytics_summary = analytics.analyze_dataset(df)
-
-        ai_engine = AIInsightsEngine()
-        ai_results = ai_engine.generate_insights(df, domain, analytics_summary)
-
-        generator = UltimateReportGenerator(profile, quality, df)
-        generator.domain = domain
-        generator.analytics_summary = analytics_summary
-        generator.ai_insights = ai_results["ai_insights"]
-
-        # Charts
-        visualizer = DataVisualizer(df)
-        generator.charts = visualizer.generate_all_charts()
-
-        html = generator.generate_html()
-
-        # HTML -> PDF
-        pdf_bytes = pdfkit.from_string(html, False, configuration=pdfkit_config)
-
-        filename_root = os.path.splitext(file.filename)[0] or "report"
-
-        return Response(
-            content=pdf_bytes,
-            media_type="application/pdf",
-            headers={
-                "Content-Disposition": f'attachment; filename="{filename_root}_report.pdf"'
-            },
-        )
-
-    except pd.errors.EmptyDataError:
-        raise HTTPException(status_code=400, detail="CSV file is empty")
-    except pd.errors.ParserError as e:
-        raise HTTPException(status_code=400, detail=f"CSV parsing error: {str(e)}")
-    except HTTPException:
-        raise
-    except Exception as e:
-        print("❌ ERROR in /analyze/pdf:", repr(e))
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"PDF generation failed: {str(e)}")
 
 
 if __name__ == "__main__":
