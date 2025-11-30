@@ -1,0 +1,58 @@
+USER UPLOADS CSV
+    ↓
+[app.py] → POST to API
+    ↓
+[main.py] FastAPI endpoint
+    ↓
+┌─────────────────────────────────────┐
+│  DATA PROCESSING                     │
+│  profiler.py:                        │
+│  • Load CSV with encoding detection │
+│  • Profile columns (types, stats)   │
+│  • Detect missing values            │
+│  • Find duplicates                  │
+└──────────────┬──────────────────────┘
+               ↓
+┌─────────────────────────────────────┐
+│  DOMAIN DETECTION                    │
+│  domain_detector.py:                 │
+│  • Match column names vs patterns   │
+│  • Calculate domain scores          │
+│  • Return top domain + confidence   │
+└──────────────┬──────────────────────┘
+               ↓
+┌─────────────────────────────────────┐
+│  ANALYTICS                           │
+│  simple_analytics.py:                │
+│  • Summary statistics                │
+│  • Numeric analysis                  │
+│  • Categorical analysis              │
+│                                      │
+│  insights_engine.py:                 │
+│  • Rule-based insights               │
+│  • Outlier detection                 │
+│  • Top performers                    │
+│                                      │
+│  ai_insights.py:                     │
+│  • Groq AI integration               │
+│  • Business recommendations          │
+│                                      │
+│  visualizations.py:                  │
+│  • Revenue trends chart              │
+│  • Top customers chart               │
+│  • Top products chart                │
+└──────────────┬──────────────────────┘
+               ↓
+┌─────────────────────────────────────┐
+│  REPORT GENERATION                   │
+│  quality_report.py:                  │
+│  • Build HTML with embedded CSS      │
+│  • Embed interactive charts          │
+│  • Display all insights              │
+│                                      │
+│  ultimate_report.py:                 │
+│  • Convert HTML → PDF (disabled)     │
+└──────────────┬──────────────────────┘
+               ↓
+    RETURN TO USER
+    (HTML displayed in Streamlit)

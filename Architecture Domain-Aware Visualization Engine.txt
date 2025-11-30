@@ -1,0 +1,31 @@
+User uploads CSV
+    ↓
+Domain Detection (86% confidence)
+    ↓
+SmartVisualizer.generate_charts(df, domain="e-commerce")
+    ↓
+┌─────────────────────────────────────┐
+│ STEP 1: Universal Charts            │
+│ (Always show - work for any data)   │
+│  - Distribution of key numeric      │
+│  - Top categories breakdown          │
+│  - Correlation heatmap               │
+└─────────────┬───────────────────────┘
+              ↓
+┌─────────────────────────────────────┐
+│ STEP 2: Domain-Specific Charts      │
+│ (Based on detected domain)           │
+│  - E-commerce → Products, Customers  │
+│  - Finance → Transactions, Accounts  │
+│  - Healthcare → Patients, Treatments │
+└─────────────┬───────────────────────┘
+              ↓
+┌─────────────────────────────────────┐
+│ STEP 3: Smart Time Series           │
+│ (If date column found)               │
+│  - Auto-aggregate by best interval  │
+│  - Adapt metric based on domain      │
+└─────────────┬───────────────────────┘
+              ↓
+    5-8 Professional Charts
+    (Adaptive to business context)
