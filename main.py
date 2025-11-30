@@ -1,6 +1,7 @@
 from datetime import datetime
 import io
 import os
+import shutil
 
 import pandas as pd
 from fastapi import FastAPI, File, UploadFile, HTTPException
@@ -26,10 +27,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# PDF configuration - wkhtmltopdf path (installed earlier)
-pdfkit_config = pdfkit.configuration(
-    wkhtmltopdf=r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe"
-)
+# PDF configuration - auto-detect wkhtmltopdf path (Railway Linux vs Windows local)
+wkhtmltopdf_path = shutil.which('wkhtmltopdf')  # Finds wkhtmltopdf in PATH (Railway)
+if not wkhtmltopdf_path:
+    # Fallback to Windows local path
+    wkhtmltopdf_path = r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe"
+
+pdfkit_config = pdfkit.configuration(wkhtmltopdf=wkhtmltopdf_path)
 
 
 @app.get("/")
