@@ -138,7 +138,6 @@ async def analyze_csv_html(file: UploadFile = File(...)):
     """
     import traceback
 
-
     try:
         if not file.filename.lower().endswith(".csv"):
             raise HTTPException(status_code=400, detail="Only CSV files are supported")
@@ -201,7 +200,6 @@ async def analyze_csv_pdf(file: UploadFile = File(...)):
     """
     import traceback
 
-
     try:
         if not file.filename.lower().endswith(".csv"):
             raise HTTPException(status_code=400, detail="Only CSV files are supported")
@@ -243,8 +241,7 @@ async def analyze_csv_pdf(file: UploadFile = File(...)):
         html = generator.generate_html()
 
         # HTML -> PDF
-        pdf_bytes = pdfkit.from_string(html, False, configuration=pdfkit_config, options={'print-media-type': None})
-
+        pdf_bytes = pdfkit.from_string(html, False, configuration=pdfkit_config)
 
         filename_root = os.path.splitext(file.filename)[0] or "report"
 
