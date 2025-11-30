@@ -1,11 +1,11 @@
-from datetime import datetime
+﻿from datetime import datetime
 import io
 import os
 
 import pandas as pd
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, Response
+from fastapi.responses import HTMLResponse
 
 from backend.data_processing.profiler import DataProfiler
 from backend.export_engine.ultimate_report import UltimateReportGenerator
@@ -36,7 +36,6 @@ async def root():
             "health": "/health",
             "analyze_json": "/analyze",
             "analyze_html": "/analyze/html",
-            "analyze_pdf": "/analyze/pdf",
             "docs": "/docs",
         },
     }
@@ -52,10 +51,6 @@ async def health():
 
 
 def make_json_safe(obj):
-    """
-    Recursively convert pandas / numpy / complex objects into JSON-serializable
-    Python types (dict, list, int, float, str, bool, None).
-    """
     import numpy as np
     import pandas as pd
 
@@ -82,9 +77,6 @@ def make_json_safe(obj):
 
 @app.post("/analyze")
 async def analyze_csv(file: UploadFile = File(...)):
-    """
-    Analyze uploaded CSV and return a JSON-safe profile + quality report.
-    """
     import traceback
 
     try:
@@ -120,16 +112,13 @@ async def analyze_csv(file: UploadFile = File(...)):
     except HTTPException:
         raise
     except Exception as e:
-        print("❌ ERROR in /analyze:", repr(e))
+        print("ERROR in /analyze:", repr(e))
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
 
 
 @app.post("/analyze/html")
 async def analyze_csv_html(file: UploadFile = File(...)):
-    """
-    Analyze uploaded CSV and return the full HTML report with AI insights.
-    """
     import traceback
 
     try:
@@ -146,17 +135,15 @@ async def analyze_csv_html(file: UploadFile = File(...)):
         profile = profiler.profile_dataframe(df)
         quality = profiler.get_quality_report()
 
-        # Domain detection + AI insights
         from backend.domain_detection.domain_detector import DomainDetector
         from backend.domain_detection.ai_domain_detector import AIDomainDetector
         from backend.analytics.simple_analytics import SimpleAnalytics
         from backend.analytics.ai_insights import AIInsightsEngine
+        from backend.analytics.universal_charts import UniversalCharts
 
-        # Step 1: Keyword-based detection
         detector = DomainDetector()
         keyword_result = detector.detect_domain(df)
 
-        # Step 2: AI-enhanced detection
         ai_detector = AIDomainDetector()
         domain_result = ai_detector.enhance_detection(df, keyword_result)
         domain = domain_result.get("primary_domain") if domain_result else None
@@ -172,9 +159,14 @@ async def analyze_csv_html(file: UploadFile = File(...)):
         generator.analytics_summary = analytics_summary
         generator.ai_insights = ai_results["ai_insights"]
 
-        # Charts
         visualizer = DataVisualizer(df)
-        generator.charts = visualizer.generate_all_charts()
+        domain_charts = visualizer.generate_all_charts()
+
+        universal = UniversalCharts(df)
+        universal_charts = universal.generate_all_universal_charts()
+
+        all_charts = {**domain_charts, **universal_charts}
+        generator.charts = all_charts
 
         html = generator.generate_html()
 
@@ -187,93 +179,11 @@ async def analyze_csv_html(file: UploadFile = File(...)):
     except HTTPException:
         raise
     except Exception as e:
-        print("❌ ERROR in /analyze/html:", repr(e))
+        print("ERROR in /analyze/html:", repr(e))
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Report generation failed: {str(e)}")
 
 
-@app.post("/analyze/pdf")
-async def analyze_csv_pdf(file: UploadFile = File(...)):
-    """
-    Analyze uploaded CSV and return the full PDF report with AI insights.
-    Implementation: reuse HTML generation, then convert to PDF with pdfkit.
-    """
-    import traceback
-    import pdfkit
-
-    try:
-        if not file.filename.lower().endswith(".csv"):
-            raise HTTPException(status_code=400, detail="Only CSV files are supported")
-
-        contents = await file.read()
-        if not contents:
-            raise HTTPException(status_code=400, detail="CSV file is empty")
-
-        df = pd.read_csv(io.BytesIO(contents))
-
-        profiler = DataProfiler()
-        profile = profiler.profile_dataframe(df)
-        quality = profiler.get_quality_report()
-
-        # Domain detection + AI insights
-        from backend.domain_detection.domain_detector import DomainDetector
-        from backend.domain_detection.ai_domain_detector import AIDomainDetector
-        from backend.analytics.simple_analytics import SimpleAnalytics
-        from backend.analytics.ai_insights import AIInsightsEngine
-
-        # Step 1: Keyword-based detection
-        detector = DomainDetector()
-        keyword_result = detector.detect_domain(df)
-
-        # Step 2: AI-enhanced detection
-        ai_detector = AIDomainDetector()
-        domain_result = ai_detector.enhance_detection(df, keyword_result)
-        domain = domain_result.get("primary_domain") if domain_result else None
-
-        analytics = SimpleAnalytics()
-        analytics_summary = analytics.analyze_dataset(df)
-
-        ai_engine = AIInsightsEngine()
-        ai_results = ai_engine.generate_insights(df, domain, analytics_summary)
-
-        generator = UltimateReportGenerator(profile, quality, df)
-        generator.domain = domain
-        generator.analytics_summary = analytics_summary
-        generator.ai_insights = ai_results["ai_insights"]
-
-        # Charts
-        visualizer = DataVisualizer(df)
-        generator.charts = visualizer.generate_all_charts()
-
-        html = generator.generate_html()
-
-        # HTML -> PDF
-        pdfkit_config = pdfkit.configuration(wkhtmltopdf=r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe')
-        pdf_bytes = pdfkit.from_string(html, False, configuration=pdfkit_config, options={'print-media-type': None})
-
-        filename_root = os.path.splitext(file.filename)[0] or "report"
-
-        return Response(
-            content=pdf_bytes,
-            media_type="application/pdf",
-            headers={
-                "Content-Disposition": f'attachment; filename="{filename_root}_report.pdf"'
-            },
-        )
-
-    except pd.errors.EmptyDataError:
-        raise HTTPException(status_code=400, detail="CSV file is empty")
-    except pd.errors.ParserError as e:
-        raise HTTPException(status_code=400, detail=f"CSV parsing error: {str(e)}")
-    except HTTPException:
-        raise
-    except Exception as e:
-        print("❌ ERROR in /analyze/pdf:", repr(e))
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"PDF generation failed: {str(e)}")
-
-
 if __name__ == "__main__":
     import uvicorn
-
     uvicorn.run(app, host="0.0.0.0", port=8000)

@@ -1,4 +1,4 @@
-﻿"""
+"""
 Universal Charts Module
 Domain-agnostic visualizations that work for any dataset
 """
@@ -20,7 +20,7 @@ class UniversalCharts:
         self.charts = {}
     
     def generate_all_universal_charts(self) -> Dict[str, str]:
-        \"\"\"Generate all applicable universal charts.\"\"\"
+        """Generate all applicable universal charts."""
         self.charts = {}
         
         # Chart 1: Smart Distribution
@@ -46,10 +46,10 @@ class UniversalCharts:
         return self.charts
     
     def create_smart_distribution(self) -> Optional[str]:
-        \"\"\"
+        """
         Create distribution chart for the most interesting numeric column.
         Picks column with highest variance or most data points.
-        \"\"\"
+        """
         try:
             # Find best numeric column
             numeric_cols = self.df.select_dtypes(include=[np.number]).columns
@@ -93,13 +93,13 @@ class UniversalCharts:
             return fig.to_html(include_plotlyjs='cdn', div_id='distribution_chart')
         
         except Exception as e:
-            print(f\"Could not create distribution chart: {e}\")
+            print(f"Could not create distribution chart: {e}")
             return None
     
     def create_category_breakdown(self, top_n: int = 10) -> Optional[str]:
-        \"\"\"
+        """
         Create donut chart for the most interesting categorical column.
-        \"\"\"
+        """
         try:
             # Find best categorical column (high cardinality but not too high)
             categorical_cols = self.df.select_dtypes(include=['object', 'category']).columns
@@ -142,13 +142,13 @@ class UniversalCharts:
             return fig.to_html(include_plotlyjs='cdn', div_id='categories_chart')
         
         except Exception as e:
-            print(f\"Could not create category breakdown: {e}\")
+            print(f"Could not create category breakdown: {e}")
             return None
     
     def create_correlation_heatmap(self) -> Optional[str]:
-        \"\"\"
+        """
         Create correlation heatmap for numeric columns.
-        \"\"\"
+        """
         try:
             numeric_df = self.df.select_dtypes(include=[np.number])
             
@@ -167,8 +167,8 @@ class UniversalCharts:
                 zmid=0,
                 text=corr_matrix.values.round(2),
                 texttemplate='%{text}',
-                textfont={\"size\": 10},
-                colorbar=dict(title=\"Correlation\")
+                textfont={"size": 10},
+                colorbar=dict(title="Correlation")
             ))
             
             fig.update_layout(
@@ -181,13 +181,13 @@ class UniversalCharts:
             return fig.to_html(include_plotlyjs='cdn', div_id='correlation_chart')
         
         except Exception as e:
-            print(f\"Could not create correlation heatmap: {e}\")
+            print(f"Could not create correlation heatmap: {e}")
             return None
     
     def create_volume_over_time(self) -> Optional[str]:
-        \"\"\"
+        """
         Create volume/count trend over time if date column exists.
-        \"\"\"
+        """
         try:
             # Find date column
             date_col = None
@@ -240,5 +240,5 @@ class UniversalCharts:
             return fig.to_html(include_plotlyjs='cdn', div_id='volume_trend_chart')
         
         except Exception as e:
-            print(f\"Could not create volume trend: {e}\")
+            print(f"Could not create volume trend: {e}")
             return None
