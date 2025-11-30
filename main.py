@@ -27,13 +27,38 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# PDF configuration - auto-detect wkhtmltopdf path (Railway Linux vs Windows local)
-wkhtmltopdf_path = shutil.which('wkhtmltopdf')  # Finds wkhtmltopdf in PATH (Railway)
-if not wkhtmltopdf_path:
-    # Fallback to Windows local path
-    wkhtmltopdf_path = r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe"
+# PDF configuration - detect wkhtmltopdf path
+# Try multiple locations: Railway Linux, system PATH, Windows local
+wkhtmltopdf_path = None
 
-pdfkit_config = pdfkit.configuration(wkhtmltopdf=wkhtmltopdf_path)
+# Try system PATH first (works if wkhtmltopdf is installed via apt)
+wkhtmltopdf_path = shutil.which('wkhtmltopdf')
+
+# Try common Linux locations
+if not wkhtmltopdf_path:
+    linux_paths = [
+        '/usr/bin/wkhtmltopdf',
+        '/usr/local/bin/wkhtmltopdf',
+        '/bin/wkhtmltopdf'
+    ]
+    for path in linux_paths:
+        if os.path.exists(path):
+            wkhtmltopdf_path = path
+            break
+
+# Fallback to Windows local path for development
+if not wkhtmltopdf_path:
+    windows_path = r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe"
+    if os.path.exists(windows_path):
+        wkhtmltopdf_path = windows_path
+
+# Initialize pdfkit config if wkhtmltopdf found
+if wkhtmltopdf_path:
+    pdfkit_config = pdfkit.configuration(wkhtmltopdf=wkhtmltopdf_path)
+    print(f"✅ wkhtmltopdf found at: {wkhtmltopdf_path}")
+else:
+    pdfkit_config = None
+    print("⚠️ wkhtmltopdf not found - PDF export will be disabled")
 
 
 @app.get("/")
@@ -58,6 +83,7 @@ async def health():
         "status": "healthy",
         "timestamp": datetime.now().isoformat(),
         "version": "1.0.0",
+        "wkhtmltopdf_available": wkhtmltopdf_path is not None
     }
 
 
@@ -203,6 +229,13 @@ async def analyze_csv_pdf(file: UploadFile = File(...)):
     Implementation: reuse HTML generation, then convert to PDF with pdfkit.
     """
     import traceback
+
+    # Check if wkhtmltopdf is available
+    if not pdfkit_config:
+        raise HTTPException(
+            status_code=503,
+            detail="PDF export is temporarily unavailable - wkhtmltopdf not installed on this server"
+        )
 
     try:
         if not file.filename.lower().endswith(".csv"):
