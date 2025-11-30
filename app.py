@@ -1,4 +1,4 @@
-﻿import os
+import os
 os.environ.setdefault('GROQ_API_KEY', 'dummy')
 
 import streamlit as st
@@ -8,8 +8,8 @@ import time
 
 st.set_page_config(page_title="GOAT Data Analyst", page_icon="🐐", layout="wide")
 
-# Use local API during development
-RAILWAY_API_URL = "http://127.0.0.1:8000"
+# Production Railway API URL
+RAILWAY_API_URL = "https://goat-data-analyst-production.up.railway.app"
 
 st.title("🐐 GOAT Data Analyst")
 st.markdown(
