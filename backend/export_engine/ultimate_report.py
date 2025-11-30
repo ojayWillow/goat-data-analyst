@@ -15,6 +15,7 @@ class UltimateReportGenerator:
         self.profile = profile
         self.quality_report = quality_report
         self.df = df
+        self.charts = {}
         self.original_gen = OriginalGen(profile, quality_report)
         self.domain_detector = DomainDetector()
         self.analytics_engine = SimpleAnalytics()
@@ -51,11 +52,14 @@ class UltimateReportGenerator:
             our_html += self._domain_html()
         if self.insights:
             our_html += self._insights_html()
-        if self.ai_insights:  # NEW: Add AI insights section
+        if self.ai_insights:
             our_html += self._ai_insights_html()
         if self.analytics_result:
             our_html += self._analytics_html()
-        
+        if self.charts:
+            our_html += self._charts_html()
+
+	
         # Insert BEFORE </body>
         if our_html:
             result = original_html[:body_close_idx] + our_html + original_html[body_close_idx:]
@@ -147,6 +151,34 @@ class UltimateReportGenerator:
         
         html += '</div>'
         return html
+
+    def _charts_html(self) -> str:
+        """Render interactive charts section."""
+        html = '<div class="card" style="padding: 20px; margin-bottom: 20px;">'
+        html += '<h2 style="margin-bottom: 16px; font-size: 20px;">📈 Visual Analytics</h2>'
+        
+        # Revenue trend chart
+        if 'revenue_trend' in self.charts:
+            html += '<div style="margin-bottom: 24px;">'
+            html += self.charts['revenue_trend']
+            html += '</div>'
+        
+        # Top customers chart
+        if 'top_customers' in self.charts:
+            html += '<div style="margin-bottom: 24px;">'
+            html += self.charts['top_customers']
+            html += '</div>'
+        
+        # Top products chart
+        if 'top_products' in self.charts:
+            html += '<div style="margin-bottom: 24px;">'
+            html += self.charts['top_products']
+            html += '</div>'
+        
+        html += '</div>'
+        return html
+
+
     
     def _analytics_html(self) -> str:
         analytics = self.analytics_result

@@ -7,6 +7,7 @@ from backend.export_engine.ultimate_report import UltimateReportGenerator
 from backend.analytics.simple_analytics import SimpleAnalytics
 from backend.analytics.ai_insights import AIInsightsEngine
 from backend.domain_detection.domain_detector import DomainDetector
+from backend.analytics.visualizations import DataVisualizer
 
 
 def main():
@@ -48,6 +49,10 @@ def main():
     generator.domain = domain
     generator.analytics_summary = analytics_summary
     generator.ai_insights = ai_results["ai_insights"]
+
+    # NEW: Generate charts
+    visualizer = DataVisualizer(df)
+    generator.charts = visualizer.generate_all_charts()
 
     output_file = f"ULTIMATE_REPORT_{datetime.now().strftime('%H%M%S')}.html"
     html = generator.generate_html()

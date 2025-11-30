@@ -5,9 +5,9 @@ import pandas as pd
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
-
 from backend.data_processing.profiler import DataProfiler
 from backend.export_engine.ultimate_report import UltimateReportGenerator
+from backend.analytics.visualizations import DataVisualizer
 
 app = FastAPI(
     title="GOAT Data Analyst API",
@@ -164,6 +164,11 @@ async def analyze_csv_html(file: UploadFile = File(...)):
         generator.domain = domain
         generator.analytics_summary = analytics_summary
         generator.ai_insights = ai_results['ai_insights']
+
+	# NEW: Generate charts
+	visualizer = DataVisualizer(df)
+	generator.charts = visualizer.generate_all_charts()
+
         html = generator.generate_html()
 
         return HTMLResponse(content=html)
