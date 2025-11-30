@@ -153,54 +153,17 @@ if run_button:
                     col1.metric("Mode", "Full with AI")
                     col2.metric("Processing Time", f"{elapsed:.1f}s")
 
-                # ===== ATTEMPT PDF GENERATION IMMEDIATELY =====
-                pdf_bytes = None
-                pdf_error = None
-                try:
-                    pdf_response = requests.post(
-                        f"{RAILWAY_API_URL}/analyze/pdf",
-                        files={"file": (file_name, file_bytes, "text/csv")},
-                        timeout=240,
-                    )
-                    if pdf_response.status_code == 200:
-                        pdf_bytes = pdf_response.content
-                    else:
-                        pdf_error = f"PDF API error: {pdf_response.status_code}"
-                except Exception as e:
-                    pdf_error = f"PDF generation failed: {str(e)}"
-
-                # ===== DOWNLOAD BUTTONS + PREVIEW =====
+                # ===== DOWNLOAD BUTTON + PREVIEW =====
                 with results_container:
                     st.success("Full AI report ready.")
 
-                    if pdf_bytes is not None:
-                        col_html, col_pdf = st.columns(2)
-
-                        col_html.download_button(
-                            label="⬇️ Download HTML Report",
-                            data=html_report.encode("utf-8"),
-                            file_name=f"report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html",
-                            mime="text/html",
-                            use_container_width=True,
-                        )
-
-                        col_pdf.download_button(
-                            label="⬇️ Download PDF Report",
-                            data=pdf_bytes,
-                            file_name=f"report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
-                            mime="application/pdf",
-                            use_container_width=True,
-                        )
-                    else:
-                        st.download_button(
-                            label="⬇️ Download HTML Report",
-                            data=html_report.encode("utf-8"),
-                            file_name=f"report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html",
-                            mime="text/html",
-                            use_container_width=True,
-                        )
-                        if pdf_error:
-                            st.warning(pdf_error)
+                    st.download_button(
+                        label="⬇️ Download HTML Report",
+                        data=html_report.encode("utf-8"),
+                        file_name=f"report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html",
+                        mime="text/html",
+                        use_container_width=True,
+                    )
 
                     # Render HTML inline
                     st.markdown("### Report Preview")
