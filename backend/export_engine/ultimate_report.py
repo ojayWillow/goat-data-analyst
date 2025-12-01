@@ -1,4 +1,4 @@
-﻿"""Ultimate Report - Original + Our Features + Universal Charts"""
+﻿"""Ultimate Report - combines original report, domain detection, AI insights, analytics, and charts."""
 
 from backend.export_engine.quality_report import QualityReportGenerator as OriginalGen
 from backend.domain_detection.domain_detector import DomainDetector
@@ -10,103 +10,149 @@ from typing import Dict, Any, List
 
 
 class UltimateReportGenerator:
-    """Combines original + domain + insights + analytics + AI + charts."""
-    
+    """
+    Wraps the original HTML report and injects:
+      - Domain Intelligence (using self.domain_result, can be AI-enhanced)
+      - Rule-based insights
+      - AI-powered insights
+      - Data analytics summary
+      - Universal charts
+    """
+
     def __init__(self, profile: Dict[str, Any], quality_report: Dict[str, Any], df: pd.DataFrame = None):
         self.profile = profile
         self.quality_report = quality_report
         self.df = df
-        self.charts = {}
+
+        # Original generator
         self.original_gen = OriginalGen(profile, quality_report)
+
+        # Engines
         self.domain_detector = DomainDetector()
         self.analytics_engine = SimpleAnalytics()
         self.insights_engine = InsightsEngine()
-        self.domain_result = None
-        self.analytics_result = None
-        self.insights = []
-        
-        # AI insights attributes
-        self.domain = None
-        self.analytics_summary = None
-        self.ai_insights = []
-        
+
+        # Data holders
+        self.domain_result: Dict[str, Any] = None   # Will hold AI-enhanced result from main.py
+        self.analytics_result: Dict[str, Any] = None
+        self.insights: List[str] = []
+        self.ai_insights: List[str] = []
+        self.charts: Dict[str, str] = {}
+
+        # If df is provided, do basic computation (for backward compatibility)
         if df is not None:
-            self.domain_result = self.domain_detector.detect_domain(df)
+            # Keyword-based domain (used as fallback or for entities)
+            keyword_domain = self.domain_detector.detect_domain(df)
+            if self.domain_result is None:
+                self.domain_result = keyword_domain
+
+            # Rule-based analytics
             self.analytics_result = self.analytics_engine.analyze_dataset(df)
-            domain_name = self.domain_result.get('primary_domain') if self.domain_result else None
-            self.insights = self.insights_engine.generate_insights(df, domain_name)
-            
-            # NEW: Generate universal charts
-            try:
-                chart_gen = UniversalChartGenerator(df, domain_name)
-                self.charts = chart_gen.generate_all_charts()
-            except Exception as e:
-                print(f"Chart generation error: {e}")
-    
+            primary_domain = None
+            if self.domain_result:
+                primary_domain = self.domain_result.get("primary_domain")
+
+            # Rule-based insights
+            self.insights = self.insights_engine.generate_insights(df, primary_domain)
+
+            # Charts (if not already injected)
+            if not self.charts:
+                try:
+                    chart_gen = UniversalChartGenerator(df, primary_domain)
+                    self.charts = chart_gen.generate_all_charts()
+                except Exception as e:
+                    print(f"Chart generation error in UltimateReportGenerator: {e}")
+
     def generate_html(self) -> str:
-        """Generate original + inject our sections."""
+        """Generate original HTML and inject our sections before </body>."""
         original_html = self.original_gen.generate_html()
-        
-        # Find the CLOSING body tag
-        body_close_idx = original_html.rfind('</body>')
-        
+        body_close_idx = original_html.rfind("</body>")
         if body_close_idx < 0:
             return original_html
-        
-        # Build all our sections
+
         our_html = ""
-        
+
+        # Domain Intelligence (AI-enhanced)
         if self.domain_result:
             our_html += self._domain_html()
+
+        # Rule-based insights
         if self.insights:
             our_html += self._insights_html()
+
+        # AI insights (from Groq)
         if self.ai_insights:
             our_html += self._ai_insights_html()
+
+        # Data analytics
         if self.analytics_result:
             our_html += self._analytics_html()
+
+        # Charts
         if self.charts:
             our_html += self._charts_html()
-	
-        # Insert BEFORE </body>
+
         if our_html:
-            result = original_html[:body_close_idx] + our_html + original_html[body_close_idx:]
-            return result
-        
+            return original_html[:body_close_idx] + our_html + original_html[body_close_idx:]
+
         return original_html
-    
+
     def _domain_html(self) -> str:
-        domain = self.domain_result.get('primary_domain', 'Unknown').upper()
-        confidence = self.domain_result.get('confidence', 0)
-        entities = self.domain_result.get('detected_entities', [])
-        all_scores = self.domain_result.get('all_scores', {})
+        """Render Domain Intelligence section. Uses self.domain_result (AI-enhanced if available)."""
+        domain = self.domain_result.get("primary_domain", "Unknown").upper()
+        confidence = self.domain_result.get("confidence", 0)
+
+        # Normalize and cap confidence between 0 and 1
+        try:
+            # If backend accidentally sends 0–100, convert to 0–1
+            if confidence > 1:
+                confidence = confidence / 100.0
+        except (TypeError, ValueError):
+            confidence = 0
+
+        confidence = max(0.0, min(1.0, confidence))
         
+        entities = self.domain_result.get("detected_entities", []) or self.domain_result.get("entities", [])
+        all_scores = self.domain_result.get("all_scores", {})
+
         html = '<div class="card" style="padding: 20px; margin-bottom: 20px;">'
         html += '<h2 style="margin-bottom: 16px; font-size: 20px;">🎯 Domain Intelligence</h2>'
-        
-        html += f'<div style="display: flex; gap: 20px; margin-bottom: 16px;">'
-        html += f'<div style="flex: 1; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 16px; border-radius: 8px; color: white; text-align: center;">'
-        html += f'<div style="font-size: 12px; opacity: 0.9; margin-bottom: 4px;">Domain</div>'
+
+        html += '<div style="display: flex; gap: 20px; margin-bottom: 16px;">'
+        html += '<div style="flex: 1; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 16px; border-radius: 8px; color: white; text-align: center;">'
+        html += '<div style="font-size: 12px; opacity: 0.9; margin-bottom: 4px;">Domain</div>'
         html += f'<div style="font-size: 24px; font-weight: bold;">{domain}</div>'
-        html += f'</div>'
-        html += f'<div style="flex: 1; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 16px; border-radius: 8px; color: white; text-align: center;">'
-        html += f'<div style="font-size: 12px; opacity: 0.9; margin-bottom: 4px;">Confidence</div>'
-        html += f'<div style="font-size: 24px; font-weight: bold;">{confidence:.0%}</div>'
-        html += f'</div>'
-        html += f'</div>'
-        
+        html += '</div>'
+
+        html += '<div style="flex: 1; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 16px; border-radius: 8px; color: white; text-align: center;">'
+        html += '<div style="font-size: 12px; opacity: 0.9; margin-bottom: 4px;">Confidence</div>'
+        html += f'<div style="font-size: 24px; font-weight: bold;">{confidence*100:.0f}%</div>'
+        html += '</div>'
+        html += '</div>'
+
         if all_scores:
             html += '<div style="background: #f8f9fa; padding: 12px; border-radius: 6px; margin-bottom: 12px;">'
             sorted_scores = sorted(all_scores.items(), key=lambda x: x[1], reverse=True)[:3]
             for d_name, score_val in sorted_scores:
+                # Normalize score_val as well
+                try:
+                    if score_val > 1:
+                        score_val = score_val / 100.0
+                except (TypeError, ValueError):
+                    score_val = 0
+                score_val = max(0.0, min(1.0, score_val))
+                
                 pct = score_val * 100
-                bar_color = '#667eea' if score_val > 0 else '#e0e0e0'
-                html += f'<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">'
+                bar_color = "#667eea" if score_val > 0 else "#e0e0e0"
+                html += '<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">'
                 html += f'<div style="min-width: 100px; font-size: 11px; font-weight: 600;">{d_name.title()}</div>'
-                html += f'<div style="flex: 1; background: #e0e0e0; height: 4px; border-radius: 2px;"><div style="background: {bar_color}; height: 100%; width: {pct}%;"></div></div>'
-                html += f'<div style="min-width: 40px; text-align: right; font-size: 11px; font-weight: 600;">{score_val:.0%}</div>'
-                html += f'</div>'
+                html += '<div style="flex: 1; background: #e0e0e0; height: 4px; border-radius: 2px;">'
+                html += f'<div style="background: {bar_color}; height: 100%; width: {pct}%;"></div>'
+                html += '</div>'
+                html += f'<div style="min-width: 40px; text-align: right; font-size: 11px; font-weight: 600;">{score_val*100:.0f}%</div>'
+                html += '</div>'
             html += '</div>'
-        
+
         if entities:
             html += '<div style="display: flex; flex-wrap: wrap; gap: 6px;">'
             for entity in entities[:8]:
@@ -114,112 +160,107 @@ class UltimateReportGenerator:
             if len(entities) > 8:
                 html += f'<span style="background: #e0e0e0; color: #666; padding: 4px 10px; border-radius: 12px; font-size: 11px;">+{len(entities) - 8} more</span>'
             html += '</div>'
-        
+
         html += '</div>'
         return html
-    
+
     def _insights_html(self) -> str:
         html = '<div class="card" style="padding: 20px; margin-bottom: 20px;">'
         html += '<h2 style="margin-bottom: 12px; font-size: 20px;">💡 Rule-Based Insights</h2>'
-        
+
         for i, insight in enumerate(self.insights[:3], 1):
-            html += f'<div style="background: #fff4e6; padding: 10px; margin-bottom: 8px; border-left: 3px solid #ff9800; border-radius: 4px; font-size: 13px;">'
+            html += '<div style="background: #fff4e6; padding: 10px; margin-bottom: 8px; border-left: 3px solid #ff9800; border-radius: 4px; font-size: 13px;">'
             html += f'<strong style="color: #ff9800;">{i}.</strong> {insight}'
-            html += f'</div>'
-        
+            html += '</div>'
+
         if len(self.insights) > 3:
             html += f'<div style="text-align: center; color: #666; font-size: 12px; margin-top: 8px;">+{len(self.insights) - 3} more insights</div>'
-        
+
         html += '</div>'
         return html
-    
+
     def _ai_insights_html(self) -> str:
         html = '<div class="card" style="padding: 20px; margin-bottom: 20px; background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);">'
         html += '<h2 style="margin-bottom: 12px; font-size: 20px;">🤖 AI-Powered Insights</h2>'
         html += '<div style="font-size: 11px; color: #666; margin-bottom: 12px;">Generated by Groq Llama 3.3 70B</div>'
-        
+
         for i, insight in enumerate(self.ai_insights, 1):
             clean_insight = insight
-            if insight.strip().startswith(f'{i}.'):
-                clean_insight = insight.split('.', 1)[1].strip()
-            
-            html += f'<div style="background: white; padding: 12px; margin-bottom: 10px; border-left: 4px solid #667eea; border-radius: 6px; font-size: 13px; line-height: 1.6;">'
+            if insight.strip().startswith(f"{i}."):
+                clean_insight = insight.split(".", 1)[1].strip()
+
+            html += '<div style="background: white; padding: 12px; margin-bottom: 10px; border-left: 4px solid #667eea; border-radius: 6px; font-size: 13px; line-height: 1.6;">'
             html += f'<strong style="color: #667eea;">#{i}</strong> {clean_insight}'
-            html += f'</div>'
-        
+            html += '</div>'
+
         html += '</div>'
         return html
 
     def _charts_html(self) -> str:
-        """Render universal charts section."""
         html = '<div class="card" style="padding: 20px; margin-bottom: 20px;">'
         html += '<h2 style="margin-bottom: 16px; font-size: 20px;">📈 Visual Analytics</h2>'
-        
-        # Time series
-        if 'time_series' in self.charts:
+
+        if "time_series" in self.charts:
             html += '<div style="margin-bottom: 24px;">'
-            html += self.charts['time_series']
+            html += self.charts["time_series"]
             html += '</div>'
-        
-        # Top N
-        if 'top_n' in self.charts:
+
+        if "top_n" in self.charts:
             html += '<div style="margin-bottom: 24px;">'
-            html += self.charts['top_n']
+            html += self.charts["top_n"]
             html += '</div>'
-        
-        # Distribution
-        if 'distribution' in self.charts:
+
+        if "distribution" in self.charts:
             html += '<div style="margin-bottom: 24px;">'
-            html += self.charts['distribution']
+            html += self.charts["distribution"]
             html += '</div>'
-        
-        # Correlation
-        if 'correlation' in self.charts:
+
+        if "correlation" in self.charts:
             html += '<div style="margin-bottom: 24px;">'
-            html += self.charts['correlation']
+            html += self.charts["correlation"]
             html += '</div>'
-        
+
         html += '</div>'
         return html
-    
+
     def _analytics_html(self) -> str:
-        analytics = self.analytics_result
-        summary = analytics.get('summary', {})
-        numeric = analytics.get('numeric_analysis', {})
-        
+        analytics = self.analytics_result or {}
+        summary = analytics.get("summary", {})
+        numeric = analytics.get("numeric_analysis", {})
+
         html = '<div class="card" style="padding: 20px; margin-bottom: 20px;">'
         html += '<h2 style="margin-bottom: 12px; font-size: 20px;">📊 Data Analytics</h2>'
-        
+
         html += '<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 12px;">'
-        html += f'<div style="background: #f8f9fa; padding: 10px; border-radius: 6px; text-align: center;">'
+        html += '<div style="background: #f8f9fa; padding: 10px; border-radius: 6px; text-align: center;">'
         html += f'<div style="font-size: 18px; font-weight: bold; color: #667eea;">{summary.get("rows", 0):,}</div>'
-        html += f'<div style="font-size: 10px; color: #666; margin-top: 2px;">Rows</div></div>'
-        
-        html += f'<div style="background: #f8f9fa; padding: 10px; border-radius: 6px; text-align: center;">'
+        html += '<div style="font-size: 10px; color: #666; margin-top: 2px;">Rows</div></div>'
+
+        html += '<div style="background: #f8f9fa; padding: 10px; border-radius: 6px; text-align: center;">'
         html += f'<div style="font-size: 18px; font-weight: bold; color: #667eea;">{summary.get("columns", 0)}</div>'
-        html += f'<div style="font-size: 10px; color: #666; margin-top: 2px;">Columns</div></div>'
-        
-        html += f'<div style="background: #f8f9fa; padding: 10px; border-radius: 6px; text-align: center;">'
+        html += '<div style="font-size: 10px; color: #666; margin-top: 2px;">Columns</div></div>'
+
+        html += '<div style="background: #f8f9fa; padding: 10px; border-radius: 6px; text-align: center;">'
         html += f'<div style="font-size: 18px; font-weight: bold; color: #667eea;">{summary.get("missing_percentage", 0):.1f}%</div>'
-        html += f'<div style="font-size: 10px; color: #666; margin-top: 2px;">Missing</div></div>'
-        
+        html += '<div style="font-size: 10px; color: #666; margin-top: 2px;">Missing</div></div>'
+
         total_memory = summary.get("memory_usage_mb", 0)
-        html += f'<div style="background: #f8f9fa; padding: 10px; border-radius: 6px; text-align: center;">'
+        html += '<div style="background: #f8f9fa; padding: 10px; border-radius: 6px; text-align: center;">'
         html += f'<div style="font-size: 18px; font-weight: bold; color: #667eea;">{total_memory:.1f}MB</div>'
-        html += f'<div style="font-size: 10px; color: #666; margin-top: 2px;">Memory</div></div>'
-        
+        html += '<div style="font-size: 10px; color: #666; margin-top: 2px;">Memory</div></div>'
+
         html += '</div>'
-        
+
         if numeric:
             for col_name, stats in list(numeric.items())[:2]:
-                html += f'<div style="background: #f8f9fa; padding: 10px; margin-bottom: 6px; border-radius: 6px;">'
+                html += '<div style="background: #f8f9fa; padding: 10px; margin-bottom: 6px; border-radius: 6px;">'
                 html += f'<div style="font-weight: 600; font-size: 11px; margin-bottom: 6px; color: #667eea;">{col_name}</div>'
-                html += f'<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; font-size: 10px; color: #666;">'
-                html += f'<div>avg: {stats["mean"]:.1f}</div>'
-                html += f'<div>min: {stats["min"]:.1f}</div>'
-                html += f'<div>max: {stats["max"]:.1f}</div>'
-                html += f'<div>std: {stats["std_dev"]:.1f}</div>'
-                html += f'</div></div>'
-        
+                html += '<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; font-size: 10px; color: #666;">'
+                html += f'<div>avg: {stats.get("mean", 0):.1f}</div>'
+                html += f'<div>min: {stats.get("min", 0):.1f}</div>'
+                html += f'<div>max: {stats.get("max", 0):.1f}</div>'
+                html += f'<div>std: {stats.get("std_dev", 0):.1f}</div>'
+                html += '</div></div>'
+
         html += '</div>'
         return html

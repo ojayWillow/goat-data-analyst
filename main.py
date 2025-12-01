@@ -121,6 +121,7 @@ async def analyze_csv_html(file: UploadFile = File(...)):
     import traceback
 
     try:
+        # 1. Basic validation
         if not file.filename.lower().endswith(".csv"):
             raise HTTPException(status_code=400, detail="Only CSV files are supported")
 
@@ -128,40 +129,53 @@ async def analyze_csv_html(file: UploadFile = File(...)):
         if not contents:
             raise HTTPException(status_code=400, detail="CSV file is empty")
 
+        # 2. Load CSV into DataFrame
         df = pd.read_csv(io.BytesIO(contents))
 
+        # 3. Profile and quality report
         profiler = DataProfiler()
         profile = profiler.profile_dataframe(df)
         quality = profiler.get_quality_report()
 
+        # 4. Domain detection: keyword + AI enhancement
         from backend.domain_detection.domain_detector import DomainDetector
         from backend.domain_detection.ai_domain_detector import AIDomainDetector
         from backend.analytics.simple_analytics import SimpleAnalytics
         from backend.analytics.ai_insights import AIInsightsEngine
         from backend.visualizations.universal_charts import UniversalChartGenerator
+        from backend.export_engine.ultimate_report import UltimateReportGenerator
 
-        detector = DomainDetector()
-        keyword_result = detector.detect_domain(df)
+        # 4.1 Keyword-based detection
+        keyword_detector = DomainDetector()
+        keyword_result = keyword_detector.detect_domain(df)
 
+        # 4.2 AI-enhanced detection (takes keyword_result as hint)
         ai_detector = AIDomainDetector()
         domain_result = ai_detector.enhance_detection(df, keyword_result)
         domain = domain_result.get("primary_domain") if domain_result else None
 
+        # 5. Analytics
         analytics = SimpleAnalytics()
         analytics_summary = analytics.analyze_dataset(df)
 
+        # 6. AI insights
         ai_engine = AIInsightsEngine()
         ai_results = ai_engine.generate_insights(df, domain, analytics_summary)
+        ai_insights = ai_results.get("ai_insights", [])
 
+        # 7. Build ultimate report
         generator = UltimateReportGenerator(profile, quality, df)
-        generator.domain = domain
-        generator.analytics_summary = analytics_summary
-        generator.ai_insights = ai_results["ai_insights"]
 
-        # Generate universal charts
+        # Inject AI-related context into generator
+        generator.domain_result = domain_result          # AI + keyword combined
+        generator.analytics_result = analytics_summary
+        generator.ai_insights = ai_insights
+
+        # 8. Charts
         chart_gen = UniversalChartGenerator(df, domain)
         generator.charts = chart_gen.generate_all_charts()
 
+        # 9. Generate final HTML
         html = generator.generate_html()
 
         return HTMLResponse(content=html)
