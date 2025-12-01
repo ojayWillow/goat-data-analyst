@@ -24,22 +24,18 @@ class UniversalChartGenerator:
         """Generate all applicable universal charts."""
         self.charts = {}
 
-        # Chart 1: Smart Distribution
         dist_chart = self.create_smart_distribution()
         if dist_chart:
             self.charts["distribution"] = dist_chart
 
-        # Chart 2: Category Breakdown
         category_chart = self.create_category_breakdown()
         if category_chart:
             self.charts["categories"] = category_chart
 
-        # Chart 3: Correlation Heatmap
         corr_chart = self.create_correlation_heatmap()
         if corr_chart:
             self.charts["correlation"] = corr_chart
 
-        # Chart 4: Volume Over Time
         volume_chart = self.create_volume_over_time()
         if volume_chart:
             self.charts["volume_trend"] = volume_chart
@@ -47,16 +43,11 @@ class UniversalChartGenerator:
         return self.charts
 
     def create_smart_distribution(self) -> Optional[str]:
-        """
-        Create distribution chart for the most interesting numeric column.
-        Picks column with highest variance or most data points.
-        """
         try:
             numeric_cols = self.df.select_dtypes(include=[np.number]).columns
             if len(numeric_cols) == 0:
                 return None
 
-            # Pick column with highest coefficient of variation (interesting data)
             best_col: Optional[str] = None
             best_score = 0.0
 
@@ -81,7 +72,6 @@ class UniversalChartGenerator:
                 return None
 
             fig = go.Figure()
-
             fig.add_trace(
                 go.Histogram(
                     x=series,
@@ -107,9 +97,6 @@ class UniversalChartGenerator:
             return None
 
     def create_category_breakdown(self, top_n: int = 10) -> Optional[str]:
-        """
-        Create donut chart for the most interesting categorical column.
-        """
         try:
             categorical_cols = self.df.select_dtypes(
                 include=["object", "category", "string"]
@@ -124,9 +111,8 @@ class UniversalChartGenerator:
                     continue
 
                 unique_count = series.nunique()
-                # Prefer columns with 2-50 unique values
                 if 2 <= unique_count <= 50:
-                    score = min(unique_count, 20)  # Cap score at 20
+                    score = min(unique_count, 20)
                     if score > best_score:
                         best_score = score
                         best_col = col
@@ -169,9 +155,6 @@ class UniversalChartGenerator:
             return None
 
     def create_correlation_heatmap(self) -> Optional[str]:
-        """
-        Create correlation heatmap for numeric columns.
-        """
         try:
             numeric_df = self.df.select_dtypes(include=[np.number]).replace(
                 {np.inf: np.nan, -np.inf: np.nan}
@@ -216,19 +199,14 @@ class UniversalChartGenerator:
             return None
 
     def create_volume_over_time(self) -> Optional[str]:
-        """
-        Create volume/count trend over time if date column exists.
-        """
         try:
             date_col: Optional[str] = None
 
-            # Detect an existing datetime column first
             for col in self.df.columns:
                 if pd.api.types.is_datetime64_any_dtype(self.df[col]):
                     date_col = col
                     break
 
-            # If none, try to parse likely date-like text columns
             if not date_col:
                 for col in self.df.columns:
                     name = col.lower()
@@ -289,5 +267,3 @@ class UniversalChartGenerator:
         except Exception as e:
             print(f"Could not create volume trend: {e}")
             return None
-#   R e b u i l d   t r i g g e r  
- 
