@@ -10,7 +10,7 @@ from typing import Dict, Optional, List
 import numpy as np
 
 
-class UniversalCharts:
+class UniversalChartGenerator:
     """
     Creates universal charts that adapt to any dataset structure.
     These charts don't require specific column names - they auto-detect best candidates.
