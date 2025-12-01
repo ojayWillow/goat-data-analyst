@@ -289,3 +289,5 @@ class UniversalChartGenerator:
         except Exception as e:
             print(f"Could not create volume trend: {e}")
             return None
+#   R e b u i l d   t r i g g e r  
+ 
