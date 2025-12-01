@@ -9,7 +9,6 @@ from fastapi.responses import HTMLResponse
 
 from backend.data_processing.profiler import DataProfiler
 from backend.export_engine.ultimate_report import UltimateReportGenerator
-from backend.analytics.visualizations import DataVisualizer
 
 app = FastAPI(
     title="GOAT Data Analyst API",
@@ -139,7 +138,7 @@ async def analyze_csv_html(file: UploadFile = File(...)):
         from backend.domain_detection.ai_domain_detector import AIDomainDetector
         from backend.analytics.simple_analytics import SimpleAnalytics
         from backend.analytics.ai_insights import AIInsightsEngine
-        from backend.analytics.universal_charts import UniversalCharts
+        from backend.visualizations.universal_charts import UniversalChartGenerator
 
         detector = DomainDetector()
         keyword_result = detector.detect_domain(df)
@@ -159,14 +158,9 @@ async def analyze_csv_html(file: UploadFile = File(...)):
         generator.analytics_summary = analytics_summary
         generator.ai_insights = ai_results["ai_insights"]
 
-        visualizer = DataVisualizer(df)
-        domain_charts = visualizer.generate_all_charts()
-
-        universal = UniversalCharts(df)
-        universal_charts = universal.generate_all_universal_charts()
-
-        all_charts = {**domain_charts, **universal_charts}
-        generator.charts = all_charts
+        # Generate universal charts
+        chart_gen = UniversalChartGenerator(df, domain)
+        generator.charts = chart_gen.generate_all_charts()
 
         html = generator.generate_html()
 

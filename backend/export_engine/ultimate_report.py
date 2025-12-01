@@ -1,15 +1,16 @@
-﻿"""Ultimate Report - Original + Our Features"""
+﻿"""Ultimate Report - Original + Our Features + Universal Charts"""
 
 from backend.export_engine.quality_report import QualityReportGenerator as OriginalGen
 from backend.domain_detection.domain_detector import DomainDetector
 from backend.analytics.simple_analytics import SimpleAnalytics
 from backend.analytics.insights_engine import InsightsEngine
+from backend.visualizations.universal_charts import UniversalChartGenerator
 import pandas as pd
 from typing import Dict, Any, List
 
 
 class UltimateReportGenerator:
-    """Combines original + domain + insights + analytics + AI."""
+    """Combines original + domain + insights + analytics + AI + charts."""
     
     def __init__(self, profile: Dict[str, Any], quality_report: Dict[str, Any], df: pd.DataFrame = None):
         self.profile = profile
@@ -24,7 +25,7 @@ class UltimateReportGenerator:
         self.analytics_result = None
         self.insights = []
         
-        # NEW: AI insights attributes
+        # AI insights attributes
         self.domain = None
         self.analytics_summary = None
         self.ai_insights = []
@@ -34,6 +35,13 @@ class UltimateReportGenerator:
             self.analytics_result = self.analytics_engine.analyze_dataset(df)
             domain_name = self.domain_result.get('primary_domain') if self.domain_result else None
             self.insights = self.insights_engine.generate_insights(df, domain_name)
+            
+            # NEW: Generate universal charts
+            try:
+                chart_gen = UniversalChartGenerator(df, domain_name)
+                self.charts = chart_gen.generate_all_charts()
+            except Exception as e:
+                print(f"Chart generation error: {e}")
     
     def generate_html(self) -> str:
         """Generate original + inject our sections."""
@@ -58,7 +66,6 @@ class UltimateReportGenerator:
             our_html += self._analytics_html()
         if self.charts:
             our_html += self._charts_html()
-
 	
         # Insert BEFORE </body>
         if our_html:
@@ -73,11 +80,9 @@ class UltimateReportGenerator:
         entities = self.domain_result.get('detected_entities', [])
         all_scores = self.domain_result.get('all_scores', {})
         
-        # Compact card styling
         html = '<div class="card" style="padding: 20px; margin-bottom: 20px;">'
         html += '<h2 style="margin-bottom: 16px; font-size: 20px;">🎯 Domain Intelligence</h2>'
         
-        # Compact header - side by side
         html += f'<div style="display: flex; gap: 20px; margin-bottom: 16px;">'
         html += f'<div style="flex: 1; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 16px; border-radius: 8px; color: white; text-align: center;">'
         html += f'<div style="font-size: 12px; opacity: 0.9; margin-bottom: 4px;">Domain</div>'
@@ -89,7 +94,6 @@ class UltimateReportGenerator:
         html += f'</div>'
         html += f'</div>'
         
-        # Top 3 confidence scores only (compact)
         if all_scores:
             html += '<div style="background: #f8f9fa; padding: 12px; border-radius: 6px; margin-bottom: 12px;">'
             sorted_scores = sorted(all_scores.items(), key=lambda x: x[1], reverse=True)[:3]
@@ -103,10 +107,9 @@ class UltimateReportGenerator:
                 html += f'</div>'
             html += '</div>'
         
-        # Entities - compact badges
         if entities:
             html += '<div style="display: flex; flex-wrap: wrap; gap: 6px;">'
-            for entity in entities[:8]:  # Limit to 8 entities
+            for entity in entities[:8]:
                 html += f'<span style="background: #667eea; color: white; padding: 4px 10px; border-radius: 12px; font-size: 11px;">{entity}</span>'
             if len(entities) > 8:
                 html += f'<span style="background: #e0e0e0; color: #666; padding: 4px 10px; border-radius: 12px; font-size: 11px;">+{len(entities) - 8} more</span>'
@@ -116,11 +119,9 @@ class UltimateReportGenerator:
         return html
     
     def _insights_html(self) -> str:
-        # Compact insights (rule-based)
         html = '<div class="card" style="padding: 20px; margin-bottom: 20px;">'
         html += '<h2 style="margin-bottom: 12px; font-size: 20px;">💡 Rule-Based Insights</h2>'
         
-        # Show max 3 insights, compact format
         for i, insight in enumerate(self.insights[:3], 1):
             html += f'<div style="background: #fff4e6; padding: 10px; margin-bottom: 8px; border-left: 3px solid #ff9800; border-radius: 4px; font-size: 13px;">'
             html += f'<strong style="color: #ff9800;">{i}.</strong> {insight}'
@@ -133,14 +134,11 @@ class UltimateReportGenerator:
         return html
     
     def _ai_insights_html(self) -> str:
-        """NEW: AI-generated insights section"""
         html = '<div class="card" style="padding: 20px; margin-bottom: 20px; background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);">'
         html += '<h2 style="margin-bottom: 12px; font-size: 20px;">🤖 AI-Powered Insights</h2>'
         html += '<div style="font-size: 11px; color: #666; margin-bottom: 12px;">Generated by Groq Llama 3.3 70B</div>'
         
-        # Show all AI insights
         for i, insight in enumerate(self.ai_insights, 1):
-            # Clean up numbered format if AI already added numbers
             clean_insight = insight
             if insight.strip().startswith(f'{i}.'):
                 clean_insight = insight.split('.', 1)[1].strip()
@@ -153,43 +151,45 @@ class UltimateReportGenerator:
         return html
 
     def _charts_html(self) -> str:
-        """Render interactive charts section."""
+        """Render universal charts section."""
         html = '<div class="card" style="padding: 20px; margin-bottom: 20px;">'
         html += '<h2 style="margin-bottom: 16px; font-size: 20px;">📈 Visual Analytics</h2>'
         
-        # Revenue trend chart
-        if 'revenue_trend' in self.charts:
+        # Time series
+        if 'time_series' in self.charts:
             html += '<div style="margin-bottom: 24px;">'
-            html += self.charts['revenue_trend']
+            html += self.charts['time_series']
             html += '</div>'
         
-        # Top customers chart
-        if 'top_customers' in self.charts:
+        # Top N
+        if 'top_n' in self.charts:
             html += '<div style="margin-bottom: 24px;">'
-            html += self.charts['top_customers']
+            html += self.charts['top_n']
             html += '</div>'
         
-        # Top products chart
-        if 'top_products' in self.charts:
+        # Distribution
+        if 'distribution' in self.charts:
             html += '<div style="margin-bottom: 24px;">'
-            html += self.charts['top_products']
+            html += self.charts['distribution']
+            html += '</div>'
+        
+        # Correlation
+        if 'correlation' in self.charts:
+            html += '<div style="margin-bottom: 24px;">'
+            html += self.charts['correlation']
             html += '</div>'
         
         html += '</div>'
         return html
-
-
     
     def _analytics_html(self) -> str:
         analytics = self.analytics_result
         summary = analytics.get('summary', {})
         numeric = analytics.get('numeric_analysis', {})
         
-        # Compact analytics
         html = '<div class="card" style="padding: 20px; margin-bottom: 20px;">'
         html += '<h2 style="margin-bottom: 12px; font-size: 20px;">📊 Data Analytics</h2>'
         
-        # Compact stats grid
         html += '<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 12px;">'
         html += f'<div style="background: #f8f9fa; padding: 10px; border-radius: 6px; text-align: center;">'
         html += f'<div style="font-size: 18px; font-weight: bold; color: #667eea;">{summary.get("rows", 0):,}</div>'
@@ -203,7 +203,6 @@ class UltimateReportGenerator:
         html += f'<div style="font-size: 18px; font-weight: bold; color: #667eea;">{summary.get("missing_percentage", 0):.1f}%</div>'
         html += f'<div style="font-size: 10px; color: #666; margin-top: 2px;">Missing</div></div>'
         
-        # Add memory usage
         total_memory = summary.get("memory_usage_mb", 0)
         html += f'<div style="background: #f8f9fa; padding: 10px; border-radius: 6px; text-align: center;">'
         html += f'<div style="font-size: 18px; font-weight: bold; color: #667eea;">{total_memory:.1f}MB</div>'
@@ -211,7 +210,6 @@ class UltimateReportGenerator:
         
         html += '</div>'
         
-        # Show only 2 columns stats (most compact)
         if numeric:
             for col_name, stats in list(numeric.items())[:2]:
                 html += f'<div style="background: #f8f9fa; padding: 10px; margin-bottom: 6px; border-radius: 6px;">'
