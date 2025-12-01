@@ -9,8 +9,10 @@ from typing import List, Dict, Any
 from groq import Groq
 from dotenv import load_dotenv
 
+
 # Load environment variables
 load_dotenv()
+
 
 class AIInsightsEngine:
     """Generate AI-powered insights using Groq."""
@@ -98,17 +100,22 @@ class AIInsightsEngine:
                 messages=[
                     {
                         "role": "system",
-                        "content": (
-                            "You are a business data analyst. Generate 5-7 actionable insights "
-                            "from the dataset summary. Focus on:\n"
-                            "1. Key trends and patterns\n"
-                            "2. Business opportunities\n"
-                            "3. Potential risks or issues\n"
-                            "4. Actionable recommendations\n"
-                            "5. Data quality observations\n\n"
-                            "Be concise, specific, and business-focused. "
-                            "Return insights as a numbered list."
-                        )
+                        "content": """You are a Senior Data Analyst at a top-tier consulting firm.
+Your goal is to find the "So What?" in the data - not just describe it, but explain what it means.
+
+Generate 5-7 high-impact insights. Focus on:
+1. ⚠️ Anomalies & Outliers - What looks wrong or unusual?
+2. 📈 Key Trends - What is moving significantly?
+3. 🔗 Correlations - What affects what?
+4. 💡 Business Implications - Why does this matter?
+5. ⚡ Quick Wins - What could be fixed immediately?
+
+Guidelines:
+- Be concise and specific. No fluff or obvious statements.
+- Use business language, not data science jargon.
+- Prioritize insights by potential business impact.
+- If data quality is poor, flag it as a risk.
+- Format as a numbered list (1. 2. 3. etc.)"""
                     },
                     {
                         "role": "user",
@@ -147,19 +154,21 @@ class AIInsightsEngine:
                 messages=[
                     {
                         "role": "system",
-                        "content": (
-                            f"You are a {domain} business consultant. "
-                            "Based on the insights provided, generate 3-5 specific, "
-                            "actionable recommendations. Each recommendation should:\n"
-                            "1. Be concrete and implementable\n"
-                            "2. Have clear expected outcomes\n"
-                            "3. Be prioritized (most important first)\n\n"
-                            "Return as a numbered list."
-                        )
+                        "content": f"""You are a senior {domain} business consultant.
+Based on the data insights provided, generate 3-5 specific, actionable recommendations.
+
+Each recommendation must:
+1. Be concrete and implementable (not vague)
+2. Have clear expected outcomes
+3. Be prioritized by business impact (most important first)
+4. Include rough effort/timeline if relevant
+
+Format as a numbered list (1. 2. 3. etc.).
+Be direct and consultant-like - assume the reader knows their business."""
                     },
                     {
                         "role": "user",
-                        "content": f"Insights:\n{insights_text}\n\nGenerate recommendations:"
+                        "content": f"Insights from analysis:\n{insights_text}\n\nProvide specific recommendations:"
                     }
                 ],
                 temperature=0.7,
