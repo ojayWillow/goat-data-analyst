@@ -11,8 +11,8 @@ class UltimateReportGenerator:
     """
     
     def __init__(self):
+        """Initialize the report generator."""
         self.assembler = ReportAssembler()
-        self.chart_gen = UniversalChartGenerator()
         
         # Keep data containers for state
         self.df = None
@@ -46,7 +46,6 @@ class UltimateReportGenerator:
             charts_data = self._generate_charts_data()
         
         # 2. Prepare AI Data
-        # The assembler expects a specific dictionary format for AI insights
         insights_data = None
         if ai_insights:
             insights_data = {
@@ -56,7 +55,6 @@ class UltimateReportGenerator:
             }
         
         # 3. Delegate HTML Generation to Assembler
-        # This replaces all the complex HTML building logic that used to be here!
         html = self.assembler.generate_report(
             profile=profile,
             domain_data=domain_result,
@@ -75,14 +73,21 @@ class UltimateReportGenerator:
         return html
     
     def _generate_charts_data(self) -> dict:
-        """Helper to generate chart HTML snippets."""
+        """Helper to generate chart HTML snippets using correct method names."""
+        if self.df is None:
+            return {}
+        
         charts = {}
         try:
-            charts['time_series'] = self.chart_gen.create_time_series_chart(self.df, self.profile)
-            charts['top_n'] = self.chart_gen.create_top_n_chart(self.df, self.profile)
-            charts['distribution'] = self.chart_gen.create_distribution_chart(self.df, self.profile)
-            charts['correlation'] = self.chart_gen.create_correlation_heatmap(self.df, self.profile)
+            chart_gen = UniversalChartGenerator(self.df)
+            
+            # Use CORRECT method names
+            charts['time_series'] = chart_gen.create_volume_over_time()
+            charts['distribution'] = chart_gen.create_smart_distribution()
+            charts['correlation'] = chart_gen.create_correlation_heatmap()
+            charts['category'] = chart_gen.create_category_breakdown()
+            
         except Exception as e:
-            print(f"⚠️ Chart generation warning: {e}")
+            print(f"⚠️ Chart generation skipped: {str(e)[:50]}")
         
         return charts
