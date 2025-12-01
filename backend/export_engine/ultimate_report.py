@@ -4,6 +4,7 @@ from backend.export_engine.quality_report import QualityReportGenerator as Origi
 from backend.domain_detection.domain_detector import DomainDetector
 from backend.analytics.simple_analytics import SimpleAnalytics
 from backend.analytics.insights_engine import InsightsEngine
+from backend.analytics.ai_insights import AIInsightsEngine
 from backend.visualizations.universal_charts import UniversalChartGenerator
 import pandas as pd
 from typing import Dict, Any, List
@@ -29,6 +30,7 @@ class UltimateReportGenerator:
         self.domain_detector = DomainDetector()
         self.analytics_engine = SimpleAnalytics()
         self.insights_engine = InsightsEngine()
+        self.ai_insights_engine = AIInsightsEngine()
 
         # Data holders
         self.domain_result: Dict[str, Any] = None
@@ -48,14 +50,60 @@ class UltimateReportGenerator:
             if self.domain_result:
                 primary_domain = self.domain_result.get("primary_domain")
 
-            self.insights = self.insights_engine.generate_insights(df, primary_domain)
+            # Generate rule-based insights (structured facts)
+            insights_facts = self.insights_engine.generate_insights(df, primary_domain)
 
+            # Convert to AI prose
+            try:
+                dataset_summary = self._build_dataset_summary_for_ai(df, insights_facts, primary_domain)
+                self.ai_insights = self.ai_insights_engine._call_groq(dataset_summary)
+            except Exception as e:
+                print(f"AI insights error: {e}")
+                self.ai_insights = []
+
+            # Charts
             if not self.charts:
                 try:
                     chart_gen = UniversalChartGenerator(df)
                     self.charts = chart_gen.generate_all_universal_charts()
                 except Exception as e:
                     print(f"Chart generation error: {e}")
+
+    def _build_dataset_summary_for_ai(self, df: pd.DataFrame, insights_facts: Dict[str, Any], domain: str) -> str:
+        """Build a concise dataset summary for the AI engine."""
+        lines = [f"Dataset Analysis for {domain or 'Unknown'} Domain"]
+        
+        quality = insights_facts.get("quality", {})
+        lines.append(f"\nDataset Size: {quality.get('rows', 0):,} rows, {quality.get('columns', 0)} columns")
+        lines.append(f"Data Quality: {100 - quality.get('missing_pct', 0):.1f}% complete, {quality.get('duplicates', 0)} duplicates")
+        
+        lines.append(f"\nColumns: {', '.join(df.columns.tolist()[:10])}")
+        
+        concentration = insights_facts.get("concentration", [])
+        if concentration:
+            lines.append("\nKey Concentrations:")
+            for c in concentration:
+                lines.append(f"- Top {c['top_n']} {c['column']}: {c['top_pct']:.1f}% of {c['value_metric']}")
+        
+        outliers = insights_facts.get("outliers", [])
+        if outliers:
+            lines.append("\nOutliers Detected:")
+            for o in outliers:
+                lines.append(f"- {o['column']}: {o['count']} outliers ({o['pct']:.1f}%)")
+        
+        metrics = insights_facts.get("metrics", [])
+        if metrics:
+            lines.append("\nKey Metrics:")
+            for m in metrics:
+                lines.append(f"- {m['name']}: total={m['total']}, avg={m['avg']}, range=[{m['min']}, {m['max']}]")
+        
+        domain_facts = insights_facts.get("domain_facts", {})
+        if domain_facts:
+            lines.append(f"\n{domain.title()} Insights:")
+            for key, val in domain_facts.items():
+                lines.append(f"- {key}: {val}")
+        
+        return "\n".join(lines)
 
     def generate_html(self) -> str:
         """
@@ -196,7 +244,7 @@ class UltimateReportGenerator:
         html += '<h2 style="margin-bottom: 16px; font-size: 20px;">📈 Visual Analytics</h2>'
 
         chart_count = 0
-        for chart_name in ["time_series", "top_n", "distribution", "correlation"]:
+        for chart_name in ["distribution", "categories", "correlation", "volume_trend"]:
             if chart_name in self.charts:
                 html += f'<div style="margin-bottom: 24px;">{self.charts[chart_name]}</div>'
                 chart_count += 1
@@ -217,27 +265,21 @@ class UltimateReportGenerator:
             html += '⚠️ These insights focus on data quality issues. Fix critical issues before business analysis.'
             html += '</div>'
         else:
-            html += '<div style="font-size: 12px; color: #666; margin-bottom: 12px;">AI-powered + rule-based observations</div>'
+            html += '<div style="font-size: 12px; color: #666; margin-bottom: 12px;">AI-powered observations</div>'
 
         insight_num = 1
 
         if self.ai_insights:
-            for insight in self.ai_insights[:5]:
+            for insight in self.ai_insights[:7]:
                 clean = insight.strip()
                 if clean and clean[0].isdigit() and '.' in clean[:3]:
                     clean = clean.split('.', 1)[1].strip()
 
-                html += '<div style="background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%); padding: 14px; margin-bottom: 10px; border-left: 4px solid #667eea; border-radius: 6px; font-size: 14px; line-height: 1.6;">'
-                html += f'<strong style="color: #667eea;">#{insight_num}</strong> {clean}'
-                html += '</div>'
-                insight_num += 1
-
-        if self.insights:
-            for insight in self.insights[:3]:
-                html += '<div style="background: #f8f9fa; padding: 14px; margin-bottom: 10px; border-left: 4px solid #ff9800; border-radius: 6px; font-size: 14px; line-height: 1.6;">'
-                html += f'<strong style="color: #ff9800;">#{insight_num}</strong> {insight}'
-                html += '</div>'
-                insight_num += 1
+                if clean:
+                    html += '<div style="background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%); padding: 14px; margin-bottom: 10px; border-left: 4px solid #667eea; border-radius: 6px; font-size: 14px; line-height: 1.6;">'
+                    html += f'<strong style="color: #667eea;">#{insight_num}</strong> {clean}'
+                    html += '</div>'
+                    insight_num += 1
 
         if insight_num == 1:
             html += '<div style="padding: 20px; text-align: center; color: #666;">No insights available</div>'
