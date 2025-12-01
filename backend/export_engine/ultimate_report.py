@@ -58,77 +58,90 @@ class UltimateReportGenerator:
                     print(f"Chart generation error: {e}")
 
     def generate_html(self) -> str:
-        """Generate adaptive report based on quality score."""
-        
-        # Get base quality report HTML
-        original_html = self.original_gen.generate_html()
-        
-        # Find injection point
-        body_close_idx = original_html.rfind("</body>")
-        if body_close_idx < 0:
-            return original_html
+        """
+        Build the report so that our new summary, charts, insights, and domain come FIRST,
+        and the entire quality report appears below as its own section.
+        """
+        # Get the full quality report HTML from the original generator
+        quality_html = self.original_gen.generate_html()
 
-        # Build sections based on quality
+        # Build our new top sections
         if self.quality_score < 70:
-            # BAD DATA: Quality-first layout
-            sections = self._build_bad_data_layout()
+            # Bad data: alert + domain + quality-focused insights
+            main_sections = self._quality_alert_banner()
+            if self.domain_result:
+                main_sections += self._domain_html()
+            if self.ai_insights or self.insights:
+                main_sections += self._combined_insights_html(focus_on_quality=True)
         else:
-            # GOOD DATA: Analytics-first layout
-            sections = self._build_good_data_layout()
+            # Good/excellent data: exec summary → charts → insights → domain
+            main_sections = self._executive_summary()
+            if self.charts:
+                main_sections += self._charts_html()
+            if self.ai_insights or self.insights:
+                main_sections += self._combined_insights_html(focus_on_quality=False)
+            if self.domain_result:
+                main_sections += self._domain_html()
 
-        # Inject before </body>
-        if sections:
-            return original_html[:body_close_idx] + sections + original_html[body_close_idx:]
-        
-        return original_html
+        # Compose entire HTML page, with quality report at the end
+        return f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Data Analysis Report</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <style>
+        body {{ font-family: 'Segoe UI', Arial, sans-serif; background: #f5f6fa; color: #181818; margin: 0; padding: 0; }}
+        .card {{ background: #fff; border-radius: 10px; box-shadow: 0 2px 10px 0 #0001; margin: 20px auto; max-width: 950px; padding: 36px 44px 30px 44px; }}
+        h2 {{ font-weight: 700; color: #5039d4; margin-bottom: 14px; }}
+        h3 {{ font-weight: 700; color: #181830; margin-bottom: 10px; font-size: 19px; }}
+        table {{ border-collapse: collapse; width: 100%; margin: 24px 0 16px 0; }}
+        th, td {{ border: 1px solid #e4e8ef; padding: 7px 10px; text-align: left; }}
+        tr:hover {{ background: #f0f4ff; }}
+    </style>
+</head>
+<body>
+    {main_sections}
+    <div class="card" style="padding:32px 44px 24px 44px; background:#fafafc; box-shadow:none; margin-top: 30px;">
+        <h2 style="font-size:24px;color:#675fd3;font-weight:900;margin-top:0;">Full Data Quality Report</h2>
+        {quality_html}
+    </div>
+</body>
+</html>
+"""
 
     def _build_bad_data_layout(self) -> str:
-        """Layout for poor quality data (score < 70)."""
+        """(Unused by new generate_html, kept for compatibility if needed elsewhere)."""
         html = ""
-        
-        # 1. Quality Alert Banner
         html += self._quality_alert_banner()
-        
-        # 2. Domain (if detected)
         if self.domain_result:
             html += self._domain_html()
-        
-        # 3. Combined insights (skip charts for bad data)
         if self.ai_insights or self.insights:
             html += self._combined_insights_html(focus_on_quality=True)
-        
         return html
 
     def _build_good_data_layout(self) -> str:
-        """Layout for good quality data (score ≥ 70)."""
+        """(Unused by new generate_html, kept for compatibility if needed elsewhere)."""
         html = ""
-        
-        # 1. Executive Summary
         html += self._executive_summary()
-        
-        # 2. Visual Analytics (charts first)
         if self.charts:
             html += self._charts_html()
-        
-        # 3. Combined Insights
         if self.ai_insights or self.insights:
             html += self._combined_insights_html(focus_on_quality=False)
-        
-        # 4. Domain Intelligence (orientation)
         if self.domain_result:
             html += self._domain_html()
-        
         return html
 
     def _quality_alert_banner(self) -> str:
         """Red banner for bad data quality."""
         score = self.quality_score
         issues = self.quality_report.get('issues', [])
-        
+
         html = '<div style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); padding: 24px; margin-bottom: 20px; border-radius: 8px; color: white;">'
         html += '<h2 style="margin: 0 0 12px 0; font-size: 24px;">⚠️ Data Quality Issues Detected</h2>'
         html += f'<div style="font-size: 18px; margin-bottom: 16px;">Quality Score: <strong>{score}/100</strong></div>'
-        
+
         if issues:
             html += '<div style="background: rgba(255,255,255,0.1); padding: 12px; border-radius: 6px;">'
             html += '<div style="font-weight: 600; margin-bottom: 8px;">Critical Issues:</div>'
@@ -137,7 +150,7 @@ class UltimateReportGenerator:
             if len(issues) > 3:
                 html += f'<div style="margin-top: 8px; opacity: 0.8;">+{len(issues) - 3} more issues</div>'
             html += '</div>'
-        
+
         html += '<div style="margin-top: 16px; font-size: 14px; opacity: 0.9;">⚡ Fix these issues before running analysis. Charts and insights may be unreliable.</div>'
         html += '</div>'
         return html
@@ -147,33 +160,33 @@ class UltimateReportGenerator:
         summary = self.analytics_result.get("summary", {}) if self.analytics_result else {}
         domain = self.domain_result.get("primary_domain", "Unknown").title() if self.domain_result else "Unknown"
         confidence = self.domain_result.get("confidence", 0) if self.domain_result else 0
-        
+
         # Normalize confidence
         if confidence > 1:
             confidence = confidence / 100.0
         confidence = max(0.0, min(1.0, confidence))
-        
+
         html = '<div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 20px; margin-bottom: 20px; border-radius: 8px; color: white;">'
         html += '<h2 style="margin: 0 0 16px 0; font-size: 20px;">✅ Executive Summary</h2>'
-        
+
         html += '<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;">'
-        
+
         html += '<div style="background: rgba(255,255,255,0.15); padding: 12px; border-radius: 6px; text-align: center;">'
         html += f'<div style="font-size: 24px; font-weight: bold;">{summary.get("rows", 0):,}</div>'
         html += '<div style="font-size: 11px; opacity: 0.9; margin-top: 4px;">Rows</div></div>'
-        
+
         html += '<div style="background: rgba(255,255,255,0.15); padding: 12px; border-radius: 6px; text-align: center;">'
         html += f'<div style="font-size: 24px; font-weight: bold;">{summary.get("columns", 0)}</div>'
         html += '<div style="font-size: 11px; opacity: 0.9; margin-top: 4px;">Columns</div></div>'
-        
+
         html += '<div style="background: rgba(255,255,255,0.15); padding: 12px; border-radius: 6px; text-align: center;">'
         html += f'<div style="font-size: 24px; font-weight: bold;">{self.quality_score}</div>'
         html += '<div style="font-size: 11px; opacity: 0.9; margin-top: 4px;">Quality Score</div></div>'
-        
+
         html += '<div style="background: rgba(255,255,255,0.15); padding: 12px; border-radius: 6px; text-align: center;">'
         html += f'<div style="font-size: 16px; font-weight: bold;">{domain}</div>'
         html += f'<div style="font-size: 11px; opacity: 0.9; margin-top: 4px;">{confidence*100:.0f}% confidence</div></div>'
-        
+
         html += '</div></div>'
         return html
 
@@ -198,40 +211,37 @@ class UltimateReportGenerator:
         """Combine AI and rule-based insights into one section."""
         html = '<div class="card" style="padding: 20px; margin-bottom: 20px;">'
         html += '<h2 style="margin-bottom: 16px; font-size: 20px;">💡 Analyst Insights</h2>'
-        
+
         if focus_on_quality:
             html += '<div style="background: #fef3c7; padding: 12px; margin-bottom: 16px; border-left: 4px solid #f59e0b; border-radius: 4px; font-size: 13px;">'
             html += '⚠️ These insights focus on data quality issues. Fix critical issues before business analysis.'
             html += '</div>'
         else:
             html += '<div style="font-size: 12px; color: #666; margin-bottom: 12px;">AI-powered + rule-based observations</div>'
-        
+
         insight_num = 1
-        
-        # AI insights first (more sophisticated)
+
         if self.ai_insights:
             for insight in self.ai_insights[:5]:
                 clean = insight.strip()
-                # Remove auto-numbering if present
                 if clean and clean[0].isdigit() and '.' in clean[:3]:
                     clean = clean.split('.', 1)[1].strip()
-                
+
                 html += '<div style="background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%); padding: 14px; margin-bottom: 10px; border-left: 4px solid #667eea; border-radius: 6px; font-size: 14px; line-height: 1.6;">'
                 html += f'<strong style="color: #667eea;">#{insight_num}</strong> {clean}'
                 html += '</div>'
                 insight_num += 1
-        
-        # Then rule-based insights
+
         if self.insights:
             for insight in self.insights[:3]:
                 html += '<div style="background: #f8f9fa; padding: 14px; margin-bottom: 10px; border-left: 4px solid #ff9800; border-radius: 6px; font-size: 14px; line-height: 1.6;">'
                 html += f'<strong style="color: #ff9800;">#{insight_num}</strong> {insight}'
                 html += '</div>'
                 insight_num += 1
-        
+
         if insight_num == 1:
             html += '<div style="padding: 20px; text-align: center; color: #666;">No insights available</div>'
-        
+
         html += '</div>'
         return html
 
@@ -240,11 +250,10 @@ class UltimateReportGenerator:
         domain = self.domain_result.get("primary_domain", "Unknown").upper()
         confidence = self.domain_result.get("confidence", 0)
 
-        # Normalize confidence
         if confidence > 1:
             confidence = confidence / 100.0
         confidence = max(0.0, min(1.0, confidence))
-        
+
         entities = self.domain_result.get("detected_entities", []) or self.domain_result.get("entities", [])
 
         html = '<div class="card" style="padding: 20px; margin-bottom: 20px;">'
