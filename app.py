@@ -8,7 +8,7 @@ import time
 
 st.set_page_config(page_title="GOAT Data Analyst", page_icon="🐐", layout="wide")
 
-RAILWAY_API_URL = "https://goat-data-analyst-production.up.railway.app"
+RAILWAY_API_URL = "http://localhost:8000"
 
 st.title("🐐 GOAT Data Analyst")
 st.markdown(

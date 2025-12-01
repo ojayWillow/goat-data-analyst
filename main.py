@@ -172,8 +172,8 @@ async def analyze_csv_html(file: UploadFile = File(...)):
         generator.ai_insights = ai_insights
 
         # 8. Charts
-        chart_gen = UniversalChartGenerator(df, domain)
-        generator.charts = chart_gen.generate_all_charts()
+        chart_gen = UniversalChartGenerator(df)
+        generator.charts = chart_gen.generate_all_universal_charts()
 
         # 9. Generate final HTML
         html = generator.generate_html()

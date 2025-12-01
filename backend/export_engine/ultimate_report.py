@@ -53,7 +53,7 @@ class UltimateReportGenerator:
             if not self.charts:
                 try:
                     chart_gen = UniversalChartGenerator(df)
-                    self.charts = chart_gen.generate_all_charts()
+                    self.charts = chart_gen.generate_all_universal_charts()
                 except Exception as e:
                     print(f"Chart generation error: {e}")
 
