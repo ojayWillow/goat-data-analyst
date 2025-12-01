@@ -149,10 +149,9 @@ async def analyze_csv_html(file: UploadFile = File(...)):
         keyword_detector = DomainDetector()
         keyword_result = keyword_detector.detect_domain(df)
 
-        # 4.2 AI-enhanced detection (takes keyword_result as hint)
+        # 4.2 AI-enhanced detection
         ai_detector = AIDomainDetector()
         domain_result = ai_detector.enhance_detection(df, keyword_result)
-        domain = domain_result.get("primary_domain") if domain_result else None
 
         # 5. Analytics
         analytics = SimpleAnalytics()
@@ -160,23 +159,36 @@ async def analyze_csv_html(file: UploadFile = File(...)):
 
         # 6. AI insights
         ai_engine = AIInsightsEngine()
-        ai_results = ai_engine.generate_insights(df, domain, analytics_summary)
+        ai_results = ai_engine.generate_insights(df, domain_result.get("primary_domain"), analytics_summary)
         ai_insights = ai_results.get("ai_insights", [])
 
-        # 7. Build ultimate report
-        generator = UltimateReportGenerator(profile, quality, df)
-
-        # Inject AI-related context into generator
-        generator.domain_result = domain_result          # AI + keyword combined
-        generator.analytics_result = analytics_summary
-        generator.ai_insights = ai_insights
-
-        # 8. Charts
+        # 7. Generate charts
         chart_gen = UniversalChartGenerator(df)
-        generator.charts = chart_gen.generate_all_universal_charts()
+        charts = chart_gen.generate_all_universal_charts()
 
-        # 9. Generate final HTML
-        html = generator.generate_html()
+        # 8. Format data for report generator
+        insights_data = {
+            "insights": ai_insights,
+            "model": "Groq Llama 3"
+        }
+
+        charts_data = {
+            "time_series": charts.get("time_series", ""),
+            "top_n": charts.get("top_n", ""),
+            "distribution": charts.get("distribution", ""),
+            "correlation": charts.get("correlation", "")
+        }
+
+        # 9. Generate final HTML using UltimateReportGenerator
+        generator = UltimateReportGenerator()
+        html = generator.generate_report(
+            df=df,
+            profile=profile,
+            domain_result=domain_result,
+            analytics=analytics_summary,
+            ai_insights=insights_data,
+            include_charts=True
+        )
 
         return HTMLResponse(content=html)
 
@@ -190,6 +202,7 @@ async def analyze_csv_html(file: UploadFile = File(...)):
         print("ERROR in /analyze/html:", repr(e))
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Report generation failed: {str(e)}")
+
 
 
 if __name__ == "__main__":
