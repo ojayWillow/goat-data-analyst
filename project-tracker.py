@@ -18,7 +18,7 @@ def ask_perplexity_about_error(error_type: str, file_name: str) -> str:
         from openai import OpenAI
         
         client = OpenAI(
-            api_key="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",
+            api_key=os.getenv("PERPLEXITY_API_KEY", ""),
             base_url="https://api.perplexity.ai",
             timeout=10.0
         )

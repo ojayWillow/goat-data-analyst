@@ -1,5 +1,50 @@
 # GOAT Data Analyst Architecture
 
+
+C:\Projects\goat-data-analyst\
+│
+├── main.py                 # FastAPI backend
+├── app.py                  # Streamlit frontend
+├── project-tracker.py      # Your debugging tool
+│
+├── 📂 backend/
+│   ├── 📂 connectors/      # Data input
+│   │   └── csv_handler.py
+│   │
+│   ├── 📂 processing/      # Data analysis
+│   │   └── profiler.py
+│   │
+│   ├── 📂 domain/          # Domain detection
+│   │   ├── keyword_detector.py  (rename domain_detector.py)
+│   │   ├── ai_detector.py       (rename ai_domain_detector.py)
+│   │   └── patterns.py
+│   │
+│   ├── 📂 analytics/       # Statistics & insights
+│   │   ├── stats.py             (rename simple_analytics.py)
+│   │   └── ai_insights.py
+│   │
+│   ├── 📂 charts/          # Visualizations
+│   │   └── chart_builder.py     (rename universal_charts.py)
+│   │
+│   └── 📂 reports/         # HTML generation
+│       ├── quality_section.py   (extract from quality_report.py)
+│       ├── domain_section.py    (new)
+│       ├── analytics_section.py (new)
+│       ├── charts_section.py    (new)
+│       ├── ai_section.py        (new)
+│       └── assembler.py         (glues sections together)
+│
+├── 📂 tests/               # All test files
+│   ├── test_ai_domains.py
+│   ├── test_api.py
+│   └── test_deployment.py
+│
+└── 📂 sample_data/         # Optional - keep or delete
+
+
+
+
+
 ## Current State (Dec 1, 2025)
 - 38 Python files
 - Monolithic report generation
