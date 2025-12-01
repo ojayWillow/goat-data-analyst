@@ -40,7 +40,7 @@ class DomainSection:
                     <div class="metric-label">Confidence: {confidence:.1f}%</div>
                     <p style="color: rgba(255,255,255,0.9); margin-top: 1rem; font-size: 0.9rem;">
                         This is a best guess based on column names and data patterns. 
-                        Use as orientation, not absolute truth.
+                        Think of this as your starting hypothesis, not the final verdict.
                     </p>
                 </div>
         """
