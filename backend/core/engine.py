@@ -1,4 +1,4 @@
-﻿# ============================================================================
+# ============================================================================
 # GOAT Data Analyst - Analysis Engine
 # ============================================================================
 # This is the HEART of the system. All analysis flows through this file.
@@ -51,6 +51,11 @@ except ImportError:
     InsightGenerator = None
 
 try:
+    from backend.ai.ai_engine import AIEngine
+except ImportError:
+    AIEngine = None
+
+try:
     from backend.visualizations.chart_orchestrator import ChartOrchestrator
 except ImportError:
     ChartOrchestrator = None
@@ -77,7 +82,7 @@ class AnalysisEngine:
     4. Analytics: What PATTERNS exist?
     5. AI Insights: What does it MEAN?
     6. Charts: SHOW me visually
-    7. Narrative: COMMUNICATE like a human
+    7. Narrative: COMMUNICATE like a human (AI-enhanced Day 8)
     8. Report: Package it all BEAUTIFULLY
     """
     
@@ -88,11 +93,17 @@ class AnalysisEngine:
         self.domain_detector = DomainDetector() if DomainDetector else None
         self.statistical_analyzer = StatisticalAnalyzer() if StatisticalAnalyzer else None
         self.insight_generator = InsightGenerator() if InsightGenerator else None
-        self.narrative_generator = NarrativeGenerator() if NarrativeGenerator else None
+        
+        # Day 8: Initialize AIEngine for narrative enhancement
+        self.ai_engine = AIEngine() if AIEngine else None
+        
+        # Pass AIEngine to NarrativeGenerator for AI-enhanced pain points
+        self.narrative_generator = NarrativeGenerator(ai_engine=self.ai_engine) if NarrativeGenerator else None
+        
         # ChartOrchestrator will be initialized in analyze() with the actual df
         self.report_generator = UltimateReportGenerator() if UltimateReportGenerator else None
         
-        print("✓ AnalysisEngine initialized")
+        print("✓ AnalysisEngine initialized" + (" (AI-enhanced)" if self.ai_engine and self.ai_engine.enabled else ""))
     
     def analyze(self, df: pd.DataFrame, options: Optional[dict] = None) -> AnalysisResult:
         """
@@ -163,9 +174,9 @@ class AnalysisEngine:
                 result.warnings.append("ChartOrchestrator not available")
                 result.charts = {}
             
-            # Step 7: NARRATIVE - Human-like communication
+            # Step 7: NARRATIVE - Human-like communication (Day 8: AI-enhanced pain points)
             if self.narrative_generator:
-                print("  → Generating narrative...")
+                print("  → Generating narrative..." + (" (AI-enhanced)" if self.ai_engine and self.ai_engine.enabled else ""))
                 result.narrative = self.narrative_generator.generate_full_narrative(
                     domain=result.domain,
                     profile=result.profile,
