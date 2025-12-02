@@ -1,14 +1,11 @@
-from datetime import datetime
+﻿from datetime import datetime
 import io
-import os
-
 import pandas as pd
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 
-from backend.data_processing.profiler import DataProfiler
-from backend.export_engine.ultimate_report import UltimateReportGenerator
+from backend.core.engine import AnalysisEngine
 
 app = FastAPI(
     title="GOAT Data Analyst API",
@@ -32,7 +29,6 @@ async def root():
         "status": "ok",
         "endpoints": {
             "health": "/health",
-            "analyze_json": "/analyze",
             "analyze_html": "/analyze/html",
             "docs": "/docs",
         },
@@ -46,77 +42,13 @@ async def health():
         "version": "1.0.0"
     }
 
-def make_json_safe(obj):
-    import numpy as np
-    import pandas as pd
-
-    if isinstance(obj, pd.DataFrame):
-        return obj.to_dict(orient="list")
-    if isinstance(obj, pd.Series):
-        return obj.to_list()
-    if isinstance(obj, pd.Index):
-        return obj.tolist()
-    if isinstance(obj, (np.integer,)):
-        return int(obj)
-    if isinstance(obj, (np.floating,)):
-        return float(obj)
-    if isinstance(obj, (np.bool_,)):
-        return bool(obj)
-    if isinstance(obj, (np.ndarray,)):
-        return obj.tolist()
-    if isinstance(obj, dict):
-        return {str(k): make_json_safe(v) for k, v in obj.items()}
-    if isinstance(obj, (list, tuple, set)):
-        return [make_json_safe(v) for v in obj]
-    return obj
-
-@app.post("/analyze")
-async def analyze_csv(file: UploadFile = File(...)):
-    import traceback
-
-    try:
-        if not file.filename.lower().endswith(".csv"):
-            raise HTTPException(status_code=400, detail="Only CSV files are supported")
-
-        contents = await file.read()
-        if not contents:
-            raise HTTPException(status_code=400, detail="CSV file is empty")
-
-        df = pd.read_csv(io.BytesIO(contents))
-
-        profiler = DataProfiler()
-        profile = profiler.profile_dataframe(df)
-        quality = profiler.get_quality_report()
-
-        safe_profile = make_json_safe(profile)
-        safe_quality = make_json_safe(quality)
-
-        return {
-            "success": True,
-            "timestamp": datetime.now().isoformat(),
-            "row_count": int(len(df)),
-            "column_count": int(len(df.columns)),
-            "profile": safe_profile,
-            "quality": safe_quality,
-        }
-
-    except pd.errors.EmptyDataError:
-        raise HTTPException(status_code=400, detail="CSV file is empty")
-    except pd.errors.ParserError as e:
-        raise HTTPException(status_code=400, detail=f"CSV parsing error: {str(e)}")
-    except HTTPException:
-        raise
-    except Exception as e:
-        print("ERROR in /analyze:", repr(e))
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
-
 @app.post("/analyze/html")
 async def analyze_csv_html(file: UploadFile = File(...)):
+    """Upload CSV and get full HTML report"""
     import traceback
 
     try:
-        # 1. Basic validation
+        # Validate
         if not file.filename.lower().endswith(".csv"):
             raise HTTPException(status_code=400, detail="Only CSV files are supported")
 
@@ -124,76 +56,15 @@ async def analyze_csv_html(file: UploadFile = File(...)):
         if not contents:
             raise HTTPException(status_code=400, detail="CSV file is empty")
 
-        # 2. Load CSV into DataFrame
+        # Load CSV
         df = pd.read_csv(io.BytesIO(contents))
 
-        # 3. Profile and quality report
-        profiler = DataProfiler()
-        profile = profiler.profile_dataframe(df)
-        quality = profiler.get_quality_report()
+        # THE ONE BRAIN does everything
+        engine = AnalysisEngine()
+        result = engine.analyze(df)
 
-        # 4. Domain detection: keyword + AI enhancement
-        from backend.domain_detection.domain_detector import DomainDetector
-        from backend.domain_detection.ai_domain_detector import AIDomainDetector
-        from backend.analytics.simple_analytics import SimpleAnalytics
-        from backend.analytics.ai_insights import AIInsightsEngine
-        from backend.visualizations.chart_orchestrator import ChartOrchestrator
-        from backend.export_engine.ultimate_report import UltimateReportGenerator
-
-        # 4.1 Keyword-based detection
-        keyword_detector = DomainDetector()
-        keyword_result = keyword_detector.detect_domain(df)
-
-        # 4.2 AI-enhanced detection
-        ai_detector = AIDomainDetector()
-        domain_result = ai_detector.enhance_detection(df, keyword_result)
-
-        # 5. Analytics
-        analytics = SimpleAnalytics()
-        analytics_summary = analytics.analyze_dataset(df)
-
-        # 6. AI insights
-        ai_engine = AIInsightsEngine()
-        ai_results = ai_engine.generate_insights(
-            df,
-            domain_result.get("primary_domain"),
-            analytics_summary
-        )
-        ai_insights = ai_results.get("ai_insights", [])
-
-        # 7. Generate charts
-        orchestrator = ChartOrchestrator(df, domain_result.get('domain'), profile=profile)
-        charts = orchestrator.generate_all_charts()
-        print(f"DEBUG: Generated charts: {list(charts.keys())}")
-        print(f"DEBUG: Intelligence numeric cols: {orchestrator.intelligence.get_key_numeric_columns()}")
-        print(f"DEBUG: Intelligence categorical cols: {orchestrator.intelligence.get_key_categorical_columns()}")
-
-        # 8. Format data for report generator
-        insights_data = {
-            "insights": ai_insights,
-            "model": "Groq Llama 3"
-        }
-
-        # correlation removed here
-        charts_data = {
-            "time_series": charts.get("time_series", ""),
-            "category": charts.get("category", ""),
-            "distribution": charts.get("distribution", "")
-        }
-
-        # 9. Generate final HTML using UltimateReportGenerator
-        generator = UltimateReportGenerator()
-        html = generator.generate_report(
-            df=df,
-            profile=profile,
-            domain_result=domain_result,
-            analytics=analytics_summary,
-            ai_insights=insights_data,
-            charts=charts_data,
-            include_charts=True
-        )
-
-        return HTMLResponse(content=html)
+        # Return HTML report
+        return HTMLResponse(content=result.report_html)
 
     except pd.errors.EmptyDataError:
         raise HTTPException(status_code=400, detail="CSV file is empty")

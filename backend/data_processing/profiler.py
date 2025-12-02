@@ -17,7 +17,7 @@ class DataProfiler:
     """Profiles datasets and generates quality reports"""
     
     def __init__(self):
-        self.profile = {}
+        self._profile_data = {}  # 🔴 CHANGED: Renamed from self.profile to avoid conflict
     
     def detect_column_type(self, series: pd.Series) -> str:
         """
@@ -158,6 +158,10 @@ class DataProfiler:
         
         return profile
     
+    def profile(self, df: pd.DataFrame) -> Dict[str, Any]:  # 🔴 CHANGED: This is the method engine.py calls
+        """Generate comprehensive profile for entire dataframe - main entry point"""
+        return self.profile_dataframe(df)
+    
     def profile_dataframe(self, df: pd.DataFrame) -> Dict[str, Any]:
         """Generate comprehensive profile for entire dataframe"""
         
@@ -198,47 +202,47 @@ class DataProfiler:
             col_type = col_profile['type']
             type_summary[col_type] = type_summary.get(col_type, 0) + 1
         
-        self.profile = {
+        self._profile_data = {  # 🔴 CHANGED: Use _profile_data
             'overall': overall_profile,
             'columns': column_profiles,
             'type_summary': type_summary,
             'correlations': correlations,
         }
         
-        # 🔴 FIX: Calculate and add quality metrics
+        # Calculate and add quality metrics
         quality_report = self.get_quality_report()
-        self.profile['quality_score'] = quality_report['score']
-        self.profile['quality_status'] = quality_report['status']
-        self.profile['quality_metrics'] = {
+        self._profile_data['quality_score'] = quality_report['score']
+        self._profile_data['quality_status'] = quality_report['status']
+        self._profile_data['quality_metrics'] = {
             'issues': quality_report['issues'],
             'warnings': quality_report['warnings']
         }
         
         logger.info("✅ Profiling complete")
         
-        return self.profile
+        return self._profile_data
     
     def get_quality_report(self) -> Dict[str, Any]:
         """Generate data quality report"""
         
-        if not self.profile:
+        if not self._profile_data:  # 🔴 CHANGED: Use _profile_data
             raise ValueError("No profile available. Run profile_dataframe first.")
         
         issues = []
         warnings = []
         
         # Check overall quality
-        if self.profile['overall']['total_missing_pct'] > 20:
-            issues.append(f"High overall missing data: {self.profile['overall']['total_missing_pct']:.1f}%")
+        if self._profile_data['overall']['total_missing_pct'] > 20:
+            issues.append(f"High overall missing data: {self._profile_data['overall']['total_missing_pct']:.1f}%")
         
         # Check column-specific issues
-        for col_profile in self.profile['columns']:
+        for col_profile in self._profile_data['columns']:
             if col_profile['quality_issues']:
                 for issue in col_profile['quality_issues']:
                     warnings.append(f"{col_profile['name']}: {issue}")
         
         # Check for constant columns
-        constant_cols = [col['name'] for col in self.profile['columns'] if col['unique'] == 1]
+        constant_cols = [col['name'] for col in self._profile_data['columns'] if col['unique'] == 1]
         if constant_cols:
             warnings.append(f"Constant columns (no variation): {', '.join(constant_cols)}")
         
@@ -252,7 +256,7 @@ class DataProfiler:
     def print_summary(self):
         """Print human-readable summary"""
         
-        if not self.profile:
+        if not self._profile_data:  # 🔴 CHANGED: Use _profile_data
             print("No profile available. Run profile_dataframe first.")
             return
         
@@ -260,12 +264,12 @@ class DataProfiler:
         print("📊 DATA PROFILE SUMMARY")
         print("=" * 80)
         
-        print(f"\n📏 Size: {self.profile['overall']['rows']:,} rows × {self.profile['overall']['columns']} columns")
-        print(f"💾 Memory: {self.profile['overall']['memory_mb']:.2f} MB")
-        print(f"❓ Missing: {self.profile['overall']['total_missing']:,} cells ({self.profile['overall']['total_missing_pct']:.1f}%)")
+        print(f"\n📏 Size: {self._profile_data['overall']['rows']:,} rows × {self._profile_data['overall']['columns']} columns")
+        print(f"💾 Memory: {self._profile_data['overall']['memory_mb']:.2f} MB")
+        print(f"❓ Missing: {self._profile_data['overall']['total_missing']:,} cells ({self._profile_data['overall']['total_missing_pct']:.1f}%)")
         
         print(f"\n📋 Column Types:")
-        for col_type, count in self.profile['type_summary'].items():
+        for col_type, count in self._profile_data['type_summary'].items():
             print(f"  • {col_type}: {count}")
         
         # Quality report
@@ -284,9 +288,9 @@ class DataProfiler:
             if len(quality['warnings']) > 5:
                 print(f"  ... and {len(quality['warnings']) - 5} more")
         
-        if self.profile['correlations']:
+        if self._profile_data['correlations']:
             print(f"\n🔗 High Correlations:")
-            for pair, corr in list(self.profile['correlations'].items())[:5]:
+            for pair, corr in list(self._profile_data['correlations'].items())[:5]:
                 print(f"  • {pair}: {corr:.3f}")
         
         print("\n" + "=" * 80)
