@@ -1,4 +1,4 @@
-# ============================================================================
+﻿# ============================================================================
 # GOAT Data Analyst - Analysis Engine
 # ============================================================================
 # This is the HEART of the system. All analysis flows through this file.
@@ -60,6 +60,11 @@ try:
 except ImportError:
     UltimateReportGenerator = None
 
+try:
+    from backend.narrative.narrative_generator import NarrativeGenerator
+except ImportError:
+    NarrativeGenerator = None
+
 
 class AnalysisEngine:
     """
@@ -72,7 +77,8 @@ class AnalysisEngine:
     4. Analytics: What PATTERNS exist?
     5. AI Insights: What does it MEAN?
     6. Charts: SHOW me visually
-    7. Report: Package it all BEAUTIFULLY
+    7. Narrative: COMMUNICATE like a human
+    8. Report: Package it all BEAUTIFULLY
     """
     
     def __init__(self):
@@ -82,6 +88,7 @@ class AnalysisEngine:
         self.domain_detector = DomainDetector() if DomainDetector else None
         self.statistical_analyzer = StatisticalAnalyzer() if StatisticalAnalyzer else None
         self.insight_generator = InsightGenerator() if InsightGenerator else None
+        self.narrative_generator = NarrativeGenerator() if NarrativeGenerator else None
         # ChartOrchestrator will be initialized in analyze() with the actual df
         self.report_generator = UltimateReportGenerator() if UltimateReportGenerator else None
         
@@ -148,7 +155,6 @@ class AnalysisEngine:
                 result.ai_insights = {"summary": "AI insights disabled or unavailable"}
             
             # Step 6: CHARTS - Generate visualizations (initialize ChartOrchestrator here with df)
-            # Step 6: CHARTS - Generate visualizations (initialize ChartOrchestrator here with df)
             if ChartOrchestrator:
                 print("  → Creating charts...")
                 chart_orch = ChartOrchestrator(df, result.domain.get('type'), result.profile)
@@ -157,7 +163,21 @@ class AnalysisEngine:
                 result.warnings.append("ChartOrchestrator not available")
                 result.charts = {}
             
-            # Step 7: REPORT - Assemble everything into HTML
+            # Step 7: NARRATIVE - Human-like communication
+            if self.narrative_generator:
+                print("  → Generating narrative...")
+                result.narrative = self.narrative_generator.generate_full_narrative(
+                    domain=result.domain,
+                    profile=result.profile,
+                    quality=result.quality,
+                    analytics=result.analytics,
+                    df=df
+                )
+            else:
+                result.warnings.append("NarrativeGenerator not available")
+                result.narrative = ""
+            
+            # Step 8: REPORT - Assemble everything into HTML
             if self.report_generator:
                 print("  → Assembling final report...")
                 result.report_html = self.report_generator.generate(result)
@@ -247,6 +267,7 @@ def _test():
     print(f"Profile: {result.profile}")
     print(f"Domain: {result.domain}")
     print(f"Quality: {result.quality}")
+    print(f"Narrative length: {len(result.narrative)} chars")
     print(f"Execution time: {result.execution_time_seconds:.2f}s")
     print(f"Report HTML length: {len(result.report_html)} chars")
     print("="*50)
