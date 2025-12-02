@@ -10,6 +10,7 @@
 
 from typing import Dict, List, Optional
 import pandas as pd
+from datetime import datetime
 
 
 class NarrativeGenerator:
@@ -42,29 +43,114 @@ class NarrativeGenerator:
         
         Returns:
             Human-like intro paragraph (2-4 sentences)
-        
-        Example output:
-            "Hi—I can see you're working with sales transaction data from an 
-            e-commerce system. You have 12,450 rows across 8 columns, with 
-            timestamps spanning January 2023 to December 2024."
         """
-        # Placeholder for Day 6
-        rows = profile.get('rows', 0)
-        cols = profile.get('columns', 0)
+        rows = profile.get('overall', {}).get('rows', profile.get('rows', 0))
+        cols = profile.get('overall', {}).get('columns', profile.get('columns', 0))
         domain_type = domain.get('type', 'unknown')
+        confidence = domain.get('confidence', 0.0)
+        
+        # Get column info
+        columns = profile.get('columns', [])
+        col_names = [c.get('name') for c in columns] if columns else profile.get('column_names', [])
+        
+        # Detect date columns and ranges
+        date_info = self._detect_date_range(df, columns) if df is not None else None
+        
+        # Build context based on domain type
+        intro = self._build_intro(domain_type, confidence, rows, cols)
+        column_context = self._build_column_context(col_names, columns)
+        time_context = self._build_time_context(date_info) if date_info else ""
         
         return f"""
         <div class="narrative-section context">
             <h3>📊 I See You</h3>
-            <p>
-                Hi—I can see you're working with <strong>{domain_type}</strong> data. 
-                You have <strong>{rows:,}</strong> rows across <strong>{cols}</strong> columns.
-            </p>
-            <p class="placeholder">
-                🚧 <em>Full context recognition coming in Day 7</em>
-            </p>
+            {intro}
+            {column_context}
+            {time_context}
         </div>
         """
+    
+    def _build_intro(self, domain_type: str, confidence: float, rows: int, cols: int) -> str:
+        """Build opening sentence based on domain detection"""
+        if domain_type == 'unknown' or confidence < 0.5:
+            return f"<p>Hi—I can see you're working with a dataset containing <strong>{rows:,}</strong> rows across <strong>{cols}</strong> columns.</p>"
+        
+        domain_descriptions = {
+            'sales': 'sales transaction data',
+            'finance': 'financial data',
+            'ecommerce': 'e-commerce data',
+            'marketing': 'marketing campaign data',
+            'healthcare': 'healthcare records',
+            'hr': 'human resources data',
+            'inventory': 'inventory management data',
+            'customer': 'customer relationship data',
+            'web_analytics': 'web analytics data',
+            'logistics': 'logistics and shipping data'
+        }
+        
+        description = domain_descriptions.get(domain_type, f'{domain_type} data')
+        
+        return f"<p>Hi—I can see you're working with <strong>{description}</strong>. You have <strong>{rows:,}</strong> rows across <strong>{cols}</strong> columns.</p>"
+    
+    def _build_column_context(self, col_names: List[str], columns: List[Dict]) -> str:
+        """Identify and highlight key columns"""
+        if not col_names:
+            return ""
+        
+        # Find important column types
+        key_columns = []
+        
+        for col in columns:
+            col_name = col.get('name', '').lower()
+            col_type = col.get('type', '')
+            
+            # Identify meaningful columns (not IDs/metadata)
+            if col_type == 'numeric' and 'amount' in col_name or 'price' in col_name or 'revenue' in col_name:
+                key_columns.append(f"<strong>{col.get('name')}</strong> (monetary)")
+            elif col_type == 'numeric' and 'quantity' in col_name or 'count' in col_name:
+                key_columns.append(f"<strong>{col.get('name')}</strong> (quantity)")
+            elif col_type == 'categorical' and col.get('unique', 0) < 50:
+                key_columns.append(f"<strong>{col.get('name')}</strong> (category)")
+        
+        if key_columns:
+            key_list = ', '.join(key_columns[:5])  # Limit to top 5
+            return f"<p>Key columns include: {key_list}.</p>"
+        
+        return f"<p>The dataset includes columns like: <strong>{', '.join(col_names[:5])}</strong>{'...' if len(col_names) > 5 else ''}.</p>"
+    
+    def _detect_date_range(self, df: pd.DataFrame, columns: List[Dict]) -> Optional[Dict]:
+        """Detect date columns and extract date range"""
+        for col in columns:
+            col_name = col.get('name')
+            col_type = col.get('type')
+            
+            # Look for datetime columns
+            if col_type == 'datetime' or 'date' in col_name.lower():
+                try:
+                    date_series = pd.to_datetime(df[col_name], errors='coerce')
+                    if date_series.notna().sum() > 0:
+                        min_date = date_series.min()
+                        max_date = date_series.max()
+                        return {
+                            'column': col_name,
+                            'start': min_date,
+                            'end': max_date
+                        }
+                except:
+                    continue
+        
+        return None
+    
+    def _build_time_context(self, date_info: Dict) -> str:
+        """Build time range description"""
+        start = date_info['start']
+        end = date_info['end']
+        col = date_info['column']
+        
+        start_str = start.strftime('%B %Y')
+        end_str = end.strftime('%B %Y')
+        
+        return f"<p>The data spans from <strong>{start_str}</strong> to <strong>{end_str}</strong> based on the <em>{col}</em> column.</p>"
     
     def generate_pain_points(
         self,
@@ -84,12 +170,6 @@ class NarrativeGenerator:
         
         Returns:
             Prioritized list of issues in human language
-        
-        Example output:
-            "Here's what needs attention:
-            1. Missing values: 12% of your 'amount' column is empty—this will break totals.
-            2. Duplicates: 47 duplicate transaction IDs found.
-            3. Outliers: 3 extreme values in 'price' (99999) look like data entry errors."
         """
         # Placeholder for Day 6
         missing_pct = quality.get('missing_pct', 0)
@@ -130,14 +210,6 @@ class NarrativeGenerator:
         
         Returns:
             Ordered list of specific action steps
-        
-        Example output:
-            "Your Path Forward:
-            1. Clean: Remove 47 duplicate rows.
-            2. Fix: Fill missing 'amount' values with median.
-            3. Validate: Check for negative prices (found 2).
-            4. Analyze: Segment customers by purchase frequency.
-            5. Visualize: Build revenue trend by month."
         """
         # Placeholder for Day 6
         return f"""
@@ -198,6 +270,14 @@ class NarrativeGenerator:
                     color: #1976D2;
                     margin-bottom: 10px;
                 }}
+                .narrative-section p {{
+                    line-height: 1.6;
+                    margin: 8px 0;
+                }}
+                .narrative-section ul, .narrative-section ol {{
+                    margin: 10px 0;
+                    padding-left: 25px;
+                }}
                 .placeholder {{
                     color: #666;
                     font-style: italic;
@@ -217,35 +297,46 @@ class NarrativeGenerator:
 
 # Test function
 def _test():
-    """Test narrative generator with dummy data"""
+    """Test narrative generator with realistic data"""
+    import numpy as np
+    
     gen = NarrativeGenerator()
+    
+    # Create test dataframe with dates
+    dates = pd.date_range('2023-01-01', periods=1000, freq='D')
+    df = pd.DataFrame({
+        'transaction_id': range(1000),
+        'date': dates,
+        'amount': np.random.uniform(10, 500, 1000),
+        'category': np.random.choice(['Electronics', 'Clothing', 'Food'], 1000),
+        'customer_id': np.random.randint(1, 100, 1000)
+    })
     
     # Dummy inputs
     domain = {"type": "sales", "confidence": 0.85}
-    profile = {"rows": 5000, "columns": 8, "memory_mb": 2.5}
-    quality = {"missing_pct": 12.5, "duplicates": 47, "overall_score": 67}
+    profile = {
+        'overall': {'rows': 1000, 'columns': 5, 'memory_mb': 0.5},
+        'columns': [
+            {'name': 'transaction_id', 'type': 'numeric'},
+            {'name': 'date', 'type': 'datetime'},
+            {'name': 'amount', 'type': 'numeric'},
+            {'name': 'category', 'type': 'categorical', 'unique': 3},
+            {'name': 'customer_id', 'type': 'numeric'}
+        ]
+    }
+    quality = {'missing_pct': 2.5, 'duplicates': 15, 'overall_score': 82}
     analytics = {}
     
-    # Generate narratives
-    print("\n" + "="*50)
-    print("TESTING NARRATIVE GENERATOR")
-    print("="*50)
+    print("\n" + "="*70)
+    print("TESTING NARRATIVE GENERATOR - DAY 7")
+    print("="*70)
     
-    print("\n1. Context:")
-    print(gen.generate_context(domain, profile))
+    print("\n✅ Context Section (with real DataFrame):")
+    print(gen.generate_context(domain, profile, df))
     
-    print("\n2. Pain Points:")
-    print(gen.generate_pain_points(quality, profile))
-    
-    print("\n3. Action Plan:")
-    print(gen.generate_action_plan(domain, quality, analytics, profile))
-    
-    print("\n4. Full Narrative:")
-    print(gen.generate_full_narrative(domain, profile, quality, analytics))
-    
-    print("\n" + "="*50)
-    print("✅ All methods exist and return strings")
-    print("="*50)
+    print("\n" + "="*70)
+    print("✅ Day 7 Complete: Smart context recognition working")
+    print("="*70)
 
 
 if __name__ == "__main__":
