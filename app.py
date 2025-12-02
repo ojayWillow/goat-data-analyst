@@ -1,79 +1,97 @@
-import os
-os.environ.setdefault('GROQ_API_KEY', 'dummy')
+"""
+Streamlit Frontend for GOAT Data Analyst
+
+Purpose:
+- Let users upload a CSV
+- Call the backend analysis pipeline directly in-process
+- Generate and display the full HTML report (including charts)
+
+Connections:
+- Uses DataProfiler for profiling + quality score
+- Uses SimpleAnalytics for basic stats
+- Uses UniversalChartGenerator for charts
+- Uses ReportAssembler to build the final HTML report
+"""
 
 import streamlit as st
-import requests
-from datetime import datetime
-import time
+import pandas as pd
 
-st.set_page_config(page_title="GOAT Data Analyst", page_icon="🐐", layout="wide")
+from backend.data_processing.profiler import DataProfiler
+from backend.analytics.simple_analytics import SimpleAnalytics
+from backend.visualizations.universal_charts import UniversalChartGenerator
+from backend.reports.assembler import ReportAssembler
 
-RAILWAY_API_URL = "http://localhost:8000"
 
-st.title("🐐 GOAT Data Analyst")
-st.markdown(
-    "Turn raw CSV files into **AI-powered reports** with data quality, domain detection, "
-    "analytics, visualizations, and insights."
-)
+st.set_page_config(page_title="GOAT Data Analyst", layout="wide")
 
-# ===== SIDEBAR =====
-with st.sidebar:
-    st.header("Upload CSV File")
-    uploaded_file = st.file_uploader("Choose a CSV file", type=["csv"])
-    run_button = st.button("Run Analysis", type="primary", use_container_width=True)
 
-placeholder_info = st.empty()
-metrics_container = st.container()
-results_container = st.container()
+def run_analysis(df: pd.DataFrame) -> str:
+    """Run the full in-process analysis pipeline and return HTML report."""
+    # 1) Profile
+    profiler = DataProfiler()
+    profile = profiler.profile_dataframe(df)
 
-if not uploaded_file:
-    placeholder_info.info("Upload a CSV file in the sidebar to begin.")
-    st.stop()
+    # 2) Basic analytics
+    analytics_engine = SimpleAnalytics()
+    analytics_result = analytics_engine.analyze_dataset(df)
 
-if run_button:
-    start_time = time.time()
-    file_bytes = uploaded_file.getvalue()
-    file_name = uploaded_file.name
+    # 3) Domain placeholder (for now)
+    domain_info = {
+        "domain": "unknown",
+        "confidence": 0.0,
+        "reason": "Domain detection not wired in Streamlit yet.",
+    }
 
-    try:
-        with st.spinner("Generating full report with AI..."):
-            response = requests.post(
-                f"{RAILWAY_API_URL}/analyze/html",
-                files={"file": (file_name, file_bytes, "text/csv")},
-                timeout=180,
-            )
+    # 4) Charts
+    chart_gen = UniversalChartGenerator(df)
+    raw_charts = chart_gen.generate_all_universal_charts()
+    charts_data = {
+        "time_series": raw_charts.get("time_series"),
+        "distribution": raw_charts.get("distribution"),
+        "correlation": raw_charts.get("correlation"),
+        "top_n": raw_charts.get("category"),  # category -> top_n
+    }
 
-        elapsed = time.time() - start_time
+    # 5) Assemble HTML report
+    assembler = ReportAssembler()
+    html_report = assembler.generate_report(
+        profile=profile,
+        domain_data=domain_info,
+        insights_data=None,   # AI optional
+        charts_data=charts_data,
+        config={
+            "include_header": True,
+            "include_quality": True,
+            "include_domain": True,
+            "include_ai": False,
+            "include_charts": True,
+            "include_footer": True,
+        },
+    )
+    return html_report
 
-        if response.status_code == 200:
-            html_report = response.text
 
-            # ===== METRICS =====
-            with metrics_container:
-                st.subheader("Run Summary")
-                col1, col2 = st.columns(2)
-                col1.metric("Mode", "Full with AI")
-                col2.metric("Processing Time", f"{elapsed:.1f}s")
+def main():
+    st.title("GOAT Data Analyst")
+    st.write("Upload a CSV file and get an instant analyst-grade report.")
 
-            # ===== DOWNLOAD + PREVIEW =====
-            with results_container:
-                st.success("Full AI report ready.")
+    uploaded_file = st.file_uploader("Upload CSV", type=["csv"])
 
-                st.download_button(
-                    label="⬇️ Download HTML Report",
-                    data=html_report.encode("utf-8"),
-                    file_name=f"report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html",
-                    mime="text/html",
-                    use_container_width=True,
-                )
+    if uploaded_file is not None:
+        try:
+            df = pd.read_csv(uploaded_file)
+            st.success(f"Loaded {len(df)} rows, {len(df.columns)} columns")
 
-                # Render HTML inline
-                st.markdown("### Report Preview")
+            if st.button("Run Analysis"):
+                with st.spinner("Analyzing data..."):
+                    html_report = run_analysis(df)
+
+                st.success("Analysis complete. Full report below:")
                 st.components.v1.html(html_report, height=900, scrolling=True)
 
-        else:
-            st.error(f"API Error: {response.status_code}")
-            st.write(response.text)
+        except Exception as e:
+            st.error(f"Error reading or analyzing file: {e}")
 
-    except Exception as e:
-        st.error(f"Error during full AI analysis: {str(e)}")
+
+if __name__ == "__main__":
+    main()

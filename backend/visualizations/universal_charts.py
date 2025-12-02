@@ -329,3 +329,8 @@ class UniversalChartGenerator:
         
         # Filter out empty charts
         return {k: v for k, v in charts.items() if v}
+
+
+
+
+

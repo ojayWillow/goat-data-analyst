@@ -1,131 +1,353 @@
-# GOAT Data Analyst Architecture
+# GOAT Data Analyst - System Architecture
 
+**Last Updated:** December 2, 2025, 2:45 PM EET
 
+---
+
+## 🎯 Vision
+
+Modular "puzzle piece" architecture where each component:
+- Does ONE thing well
+- Can be added/removed independently
+- Has clear inputs/outputs
+- No hidden dependencies
+
+---
+
+## 📂 Directory Structure
+
+```
 C:\Projects\goat-data-analyst\
 │
-├── main.py                 # FastAPI backend
-├── app.py                  # Streamlit frontend
-├── project-tracker.py      # Your debugging tool
+├── main.py                     # FastAPI backend (Railway)
+├── app.py                      # Streamlit frontend (Streamlit Cloud)
+├── requirements.txt
+├── .env                        # API keys (not in git)
 │
-├── 📂 backend/
-│   ├── 📂 connectors/      # Data input
-│   │   └── csv_handler.py
+├── backend/
+│   ├── connectors/
+│   │   └── csv_handler.py      # CSV loading, encoding detection
 │   │
-│   ├── 📂 processing/      # Data analysis
-│   │   └── profiler.py
+│   ├── data_processing/
+│   │   └── profiler.py         # DataProfiler + ProfileIntelligence
 │   │
-│   ├── 📂 domain/          # Domain detection
-│   │   ├── keyword_detector.py  (rename domain_detector.py)
-│   │   ├── ai_detector.py       (rename ai_domain_detector.py)
-│   │   └── patterns.py
+│   ├── domain_detection/
+│   │   ├── domain_detector.py  # Keyword-based domain detection
+│   │   ├── ai_domain_detector.py # AI-enhanced detection (Groq)
+│   │   └── patterns.py         # Domain pattern definitions
 │   │
-│   ├── 📂 analytics/       # Statistics & insights
-│   │   ├── stats.py             (rename simple_analytics.py)
-│   │   └── ai_insights.py
+│   ├── analytics/
+│   │   ├── simple_analytics.py # Basic statistics
+│   │   ├── ai_insights.py      # AI-generated insights (Groq)
+│   │   ├── insights_engine.py  # Insights orchestration
+│   │   └── visualizations.py   # (Legacy - to be replaced)
 │   │
-│   ├── 📂 charts/          # Visualizations
-│   │   └── chart_builder.py     (rename universal_charts.py)
+│   ├── visualizations/
+│   │   ├── base_chart.py       # Abstract chart interface
+│   │   ├── chart_orchestrator.py  # Chart manager
+│   │   ├── charts/
+│   │   │   ├── __init__.py
+│   │   │   ├── timeseries_chart.py   # Only if datetime exists
+│   │   │   ├── distribution_chart.py  # Uses ProfileIntelligence
+│   │   │   ├── correlation_chart.py   # Uses ProfileIntelligence
+│   │   │   └── category_chart.py      # Only if categorical exists
+│   │   └── universal_charts.py # (DEPRECATED - being replaced)
 │   │
-│   └── 📂 reports/         # HTML generation
-│       ├── quality_section.py   (extract from quality_report.py)
-│       ├── domain_section.py    (new)
-│       ├── analytics_section.py (new)
-│       ├── charts_section.py    (new)
-│       ├── ai_section.py        (new)
-│       └── assembler.py         (glues sections together)
+│   ├── reports/
+│   │   ├── assembler.py        # Orchestrates sections
+│   │   └── sections/
+│   │       ├── __init__.py
+│   │       ├── quality_section.py   # Data quality HTML
+│   │       ├── domain_section.py    # Domain detection HTML
+│   │       ├── ai_section.py        # AI insights HTML
+│   │       └── charts_section.py    # Visualization HTML
+│   │
+│   └── export_engine/
+│       ├── quality_report.py   # (Legacy quality report)
+│       └── ultimate_report.py  # (Delegates to assembler)
 │
-├── 📂 tests/               # All test files
-│   ├── test_ai_domains.py
-│   ├── test_api.py
-│   └── test_deployment.py
-│
-└── 📂 sample_data/         # Optional - keep or delete
+└── tests/
+    ├── test_ai_domains.py
+    ├── test_api.py
+    └── test_deployment.py
+```
 
+---
 
+## 🔄 Data Flow
 
+### Request Pipeline
 
+```
+1. CSV Upload
+      ↓
+2. CSVHandler.load_csv()
+   - Detects encoding
+   - Loads as DataFrame
+   - Returns (df, filename)
+      ↓
+3. DataProfiler.profile_data(df)
+   - Column-level analysis
+   - Type detection
+   - Quality metrics
+   - Creates ProfileIntelligence helper
+   - Returns profile dict + intelligence
+      ↓
+4. Domain Detection (Parallel)
+   ├─ DomainDetector (keyword patterns)
+   └─ AIDomainDetector (Groq AI)
+   - Combines results
+   - Returns domain string
+      ↓
+5. ChartOrchestrator(df, domain)
+   - Receives ProfileIntelligence
+   - Passes to each chart via set_intelligence()
+   - Each chart checks can_generate()
+   - Returns {chart_name: html_string}
+      ↓
+6. AIInsightsEngine
+   - Uses domain context
+   - Generates McKinsey-style insights
+   - Returns insights dict
+      ↓
+7. ReportAssembler
+   - Receives: profile, domain, charts, insights
+   - Calls each section generator
+   - Wraps in HTML template
+   - Returns complete HTML
+      ↓
+8. Response
+   - FastAPI: JSON with report_html
+   - Streamlit: Direct HTML render
+```
 
-## Current State (Dec 1, 2025)
-- 38 Python files
-- Monolithic report generation
-- Need: modular puzzle-piece approach
+---
 
-## Target State (Phase 1 Goal)
-- Section-based architecture
-- Each HTML section = independent module
-- Easy to add/remove features
+## 🧩 Component Details
 
-## Next Refactoring
-Split ultimate_report.py into:
-- quality_section.py
-- domain_section.py
-- analytics_section.py
-- charts_section.py
-- ai_section.py
-- assembler.py
+### 1. Data Processing Layer
 
-# GOAT Data Analyst - Architecture
+**CSVHandler**
+```python
+Input: file_path or uploaded_file
+Output: (DataFrame, filename)
+```
 
-**Last Updated:** December 1, 2025
+**DataProfiler**
+```python
+Input: DataFrame
+Output: {
+    'dataset_name': str,
+    'overall': {'rows': int, 'columns': int},
+    'columns': {...},
+    'quality_score': int
+}
++ ProfileIntelligence instance
+```
 
-## Vision
-Modular "puzzle piece" architecture where each component does ONE thing and can be added/removed independently.
+**ProfileIntelligence (NEW)**
+```python
+Methods:
+- get_key_numeric_columns(max_cols=10) → List[str]
+- is_identifier_column(col) → bool
+- is_metadata_column(col) → bool
 
-## Current Structure
+Purpose: Filter noise from charts (IDs, timestamps, flags)
+```
 
-### Entry Points
-- `main.py` - FastAPI backend (Railway)
-- `app.py` - Streamlit frontend (Streamlit Cloud)
+### 2. Domain Detection Layer
 
-### Backend Modules
+**DomainDetector (Keyword-based)**
+```python
+Input: DataFrame
+Logic: Pattern matching on column names
+Output: domain str ("sales", "hr", "ecommerce", etc.)
+```
 
-**Data Input**
-- `backend/connectors/csv_handler.py` - CSV loading & encoding
+**AIDomainDetector (AI-enhanced)**
+```python
+Input: DataFrame sample
+Logic: Groq AI analysis
+Output: domain str + confidence
+```
 
-**Data Processing**
-- `backend/data_processing/profiler.py` - Column analysis & type detection
+### 3. Visualization Layer
 
-**Domain Detection**
-- `backend/domain_detection/domain_detector.py` - Keyword-based detection
-- `backend/domain_detection/ai_domain_detector.py` - AI-enhanced detection
-- `backend/domain_detection/patterns.py` - Domain pattern definitions
+**ChartOrchestrator**
+```python
+Input: DataFrame, domain, ProfileIntelligence
+Logic:
+  - Instantiate all chart classes
+  - Call chart.set_intelligence(intelligence)
+  - Check chart.can_generate()
+  - Call chart.generate() if applicable
+Output: Dict[chart_name, html_string]
+```
 
-**Analytics**
-- `backend/analytics/simple_analytics.py` - Basic statistics
-- `backend/analytics/ai_insights.py` - AI-generated insights (Groq)
+**Individual Charts**
+```python
+BaseChart (abstract)
+  ↓
+├─ TimeSeriesChart (conditional: datetime column exists)
+├─ DistributionChart (conditional: numeric columns exist)
+├─ CorrelationChart (conditional: 2+ numeric columns)
+└─ CategoryChart (conditional: categorical column exists)
 
-**Visualizations**
-- `backend/visualizations/universal_charts.py` - 4 chart types (time series, top-N, distribution, correlation)
+Each implements:
+- can_generate() → bool
+- generate() → str (HTML)
+- chart_name → str (unique ID)
+- set_intelligence(ProfileIntelligence)
+```
 
-**Report Generation**
-- `backend/export_engine/quality_report.py` - Quality checks HTML
-- `backend/export_engine/ultimate_report.py` - Assembles final report
+### 4. Report Generation Layer
 
-## Refactoring Goal
+**ReportAssembler**
+```python
+Input:
+  - profile: Dict
+  - domain_data: Dict
+  - insights_data: Dict
+  - charts_data: Dict[str, str]
+  - config: Dict[str, bool]
 
-Split `ultimate_report.py` into independent sections:
+Logic:
+  - Conditionally include sections based on config
+  - Call each section.generate()
+  - Wrap in HTML template with CSS
 
-backend/reports/
-├── sections/
-│ ├── quality_section.py
-│ ├── domain_section.py
-│ ├── analytics_section.py
-│ ├── charts_section.py
-│ └── ai_section.py
-└── assembler.py
+Output: Complete HTML string
+```
 
+**Sections** (All independent)
+```python
+QualitySection.generate(profile) → HTML
+DomainSection.generate(domain_data) → HTML
+AISection.generate(insights_data) → HTML
+ChartsSection.generate(charts_data) → HTML
+```
 
+---
 
-## Phase 1 Priority
+## 🔑 Key Design Principles
 
-Extract sections we need to modify for Phase 1 roadmap:
-1. Domain section (adjust wording)
-2. AI insights section (improve prompts)
+### 1. Intelligence Layer
+**Profile drives visualization decisions**
+- Charts query ProfileIntelligence for meaningful columns
+- No hardcoded column name assumptions
+- Filters IDs, metadata, noise automatically
 
-## Principles
+### 2. Conditional Generation
+**Components check applicability**
+```python
+if chart.can_generate():
+    html = chart.generate()
+```
+- No forced charts
+- Clean failure handling
+- User sees only relevant visuals
 
-- Each section = pure function (input → HTML output)
-- No dependencies between sections
-- Easy to add new sections
-- Easy to remove sections
-- Easy to test independently
+### 3. Separation of Concerns
+**Each layer has one job**
+- Profiler: Analyze data
+- Detector: Identify domain
+- Orchestrator: Decide what to show
+- Charts: Generate visuals
+- Assembler: Build report
+
+### 4. Dependency Injection
+**Components receive what they need**
+```python
+chart.set_intelligence(intelligence)
+section.generate(data)
+```
+- No global state
+- Easy to test
+- Clear contracts
+
+---
+
+## 🚧 Known Issues
+
+### 1. Chart Display (CRITICAL)
+- Correlation heatmap appears smaller than specified 1100px
+- Plotly hardcodes dimensions in inline style
+- Container CSS may be conflicting
+- Needs visual debugging with screenshots
+
+### 2. Dataset Name
+- Always shows "CSV Analysis Report"
+- Should show actual filename
+- Issue in profile generation or upload handling
+
+### 3. Legacy Code
+- `universal_charts.py` still exists (deprecated)
+- `quality_report.py` partially unused
+- Cleanup needed after migration confirmed stable
+
+---
+
+## 📊 Architecture Quality Metrics
+
+| Aspect | Status | Notes |
+|--------|--------|-------|
+| Modularity | ✅ | Each component independent |
+| Testability | ✅ | Pure functions, clear inputs/outputs |
+| Extensibility | ✅ | Easy to add new charts/sections |
+| Maintainability | ✅ | Clear responsibilities |
+| Performance | ⚠️ | Need to verify chart caching |
+| Documentation | ✅ | Well-commented code |
+
+---
+
+## 🎯 Next Steps
+
+### Phase 2: Optimization
+1. Add chart result caching
+2. Optimize profile generation
+3. Parallel domain detection
+
+### Phase 3: Advanced Features
+1. Custom chart configuration
+2. Export to PDF/Excel
+3. Multi-file analysis
+4. Dashboard mode
+
+---
+
+## 🔗 Deployment
+
+**Backend:** Railway  
+**Frontend:** Streamlit Cloud  
+**Environment:** Python 3.11+  
+**Key Dependencies:** pandas, plotly, groq, fastapi, streamlit
+
+---
+
+## 📝 Migration Notes
+
+**From Monolithic to Modular:**
+```
+OLD: universal_charts.py (800 lines, all charts coupled)
+NEW: base_chart.py + 4 independent chart modules (150 lines each)
+
+Benefits:
+- Fix one without breaking others
+- Add new charts without touching existing
+- Test each chart in isolation
+- Clear conditional logic
+```
+
+**Intelligence Layer Addition:**
+```
+OLD: Charts blindly used first numeric column (often User_ID)
+NEW: ProfileIntelligence filters meaningful columns
+
+Result: Charts now show actual data (price, quantity, etc.)
+```
+
+---
+
+**Last Refactor:** December 2, 2025  
+**Status:** Modular system operational, display issues remain  
+**Next Session:** Visual debugging of chart sizing

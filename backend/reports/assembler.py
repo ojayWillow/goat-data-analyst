@@ -107,13 +107,14 @@ class ReportAssembler:
     
     def _build_header(self, profile: Dict[str, Any]) -> str:
         """Build report header."""
-        dataset_name = profile.get('dataset_name', 'Unknown Dataset')
-        total_rows = profile.get('total_rows', 0)
-        total_cols = profile.get('total_columns', 0)
+        dataset_name = profile.get('dataset_name', 'CSV Analysis Report')
+        overall = profile.get('overall', {})
+        total_rows = overall.get('rows', 0)
+        total_cols = overall.get('columns', 0)
         quality_score = profile.get('quality_score', 0)
         
         quality_color = '#10b981' if quality_score >= 80 else '#f59e0b' if quality_score >= 60 else '#ef4444'
-        
+
         return f"""
         <div class="header">
             <h1>📊 Data Analysis Report</h1>
@@ -170,7 +171,7 @@ class ReportAssembler:
         }
         
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             padding: 20px;
         }
@@ -255,6 +256,7 @@ class ReportAssembler:
             <meta charset="utf-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>GOAT Data Analysis Report</title>
+            <script src="https://cdn.plot.ly/plotly-2.27.0.min.js" charset="utf-8"></script>
             <style>
                 {styles}
             </style>

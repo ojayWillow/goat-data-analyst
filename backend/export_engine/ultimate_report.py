@@ -1,6 +1,6 @@
 ﻿import pandas as pd
 from backend.export_engine.quality_report import QualityReportGenerator
-from backend.visualizations.universal_charts import UniversalChartGenerator
+from backend.visualizations.chart_orchestrator import ChartOrchestrator
 from backend.reports.assembler import ReportAssembler
 
 
@@ -29,6 +29,7 @@ class UltimateReportGenerator:
         domain_result: dict = None,
         analytics: dict = None,
         ai_insights: dict = None,
+        charts: dict = None,
         include_charts: bool = True
     ) -> str:
         """
@@ -39,11 +40,12 @@ class UltimateReportGenerator:
         self.domain_result = domain_result
         self.analytics = analytics
         self.ai_insights = ai_insights
+        self.charts = charts if charts else {}
         
-        # 1. Generate Charts (if requested)
+        # 1. Use provided charts (don't regenerate)
         charts_data = {}
-        if include_charts:
-            charts_data = self._generate_charts_data()
+        if include_charts and charts:
+            charts_data = charts
         
         # 2. Prepare AI Data
         insights_data = None
@@ -71,23 +73,3 @@ class UltimateReportGenerator:
         )
         
         return html
-    
-    def _generate_charts_data(self) -> dict:
-        """Helper to generate chart HTML snippets using correct method names."""
-        if self.df is None:
-            return {}
-        
-        charts = {}
-        try:
-            chart_gen = UniversalChartGenerator(self.df)
-            
-            # Use CORRECT method names
-            charts['time_series'] = chart_gen.create_volume_over_time()
-            charts['distribution'] = chart_gen.create_smart_distribution()
-            charts['correlation'] = chart_gen.create_correlation_heatmap()
-            charts['category'] = chart_gen.create_category_breakdown()
-            
-        except Exception as e:
-            print(f"⚠️ Chart generation skipped: {str(e)[:50]}")
-        
-        return charts

@@ -142,7 +142,7 @@ async def analyze_csv_html(file: UploadFile = File(...)):
         from backend.domain_detection.ai_domain_detector import AIDomainDetector
         from backend.analytics.simple_analytics import SimpleAnalytics
         from backend.analytics.ai_insights import AIInsightsEngine
-        from backend.visualizations.universal_charts import UniversalChartGenerator
+        from backend.visualizations.chart_orchestrator import ChartOrchestrator
         from backend.export_engine.ultimate_report import UltimateReportGenerator
 
         # 4.1 Keyword-based detection
@@ -163,9 +163,12 @@ async def analyze_csv_html(file: UploadFile = File(...)):
         ai_insights = ai_results.get("ai_insights", [])
 
         # 7. Generate charts
-        chart_gen = UniversalChartGenerator(df)
-        charts = chart_gen.generate_all_universal_charts()
-
+        orchestrator = ChartOrchestrator(df, domain_result.get('domain'), profile=profile)
+        charts = orchestrator.generate_all_charts()
+        print(f"DEBUG: Generated charts: {list(charts.keys())}")
+        print(f"DEBUG: Intelligence numeric cols: {orchestrator.intelligence.get_key_numeric_columns()}")
+        print(f"DEBUG: Intelligence categorical cols: {orchestrator.intelligence.get_key_categorical_columns()}")
+        
         # 8. Format data for report generator
         insights_data = {
             "insights": ai_insights,
@@ -174,7 +177,7 @@ async def analyze_csv_html(file: UploadFile = File(...)):
 
         charts_data = {
             "time_series": charts.get("time_series", ""),
-            "top_n": charts.get("top_n", ""),
+            "category": charts.get("category", ""),
             "distribution": charts.get("distribution", ""),
             "correlation": charts.get("correlation", "")
         }
@@ -187,6 +190,7 @@ async def analyze_csv_html(file: UploadFile = File(...)):
             domain_result=domain_result,
             analytics=analytics_summary,
             ai_insights=insights_data,
+            charts=charts_data,
             include_charts=True
         )
 
