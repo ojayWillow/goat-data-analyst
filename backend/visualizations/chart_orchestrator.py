@@ -3,7 +3,6 @@ import pandas as pd
 from .base_chart import BaseChart
 from .charts.timeseries_chart import TimeSeriesChart
 from .charts.distribution_chart import DistributionChart
-from .charts.correlation_chart import CorrelationChart
 from .charts.category_chart import CategoryChart
 from .profile_intelligence import ProfileIntelligence
 
@@ -17,8 +16,8 @@ class ChartOrchestrator:
     AVAILABLE_CHARTS: List[Type[BaseChart]] = [
         TimeSeriesChart,
         DistributionChart,
-        CorrelationChart,
-        CategoryChart
+        CategoryChart,
+        
     ]
     
     def __init__(self, df: pd.DataFrame, domain: str = None, profile: dict = None):

@@ -24,7 +24,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 @app.get("/")
 async def root():
     return {
@@ -39,7 +38,6 @@ async def root():
         },
     }
 
-
 @app.get("/health")
 async def health():
     return {
@@ -47,7 +45,6 @@ async def health():
         "timestamp": datetime.now().isoformat(),
         "version": "1.0.0"
     }
-
 
 def make_json_safe(obj):
     import numpy as np
@@ -72,7 +69,6 @@ def make_json_safe(obj):
     if isinstance(obj, (list, tuple, set)):
         return [make_json_safe(v) for v in obj]
     return obj
-
 
 @app.post("/analyze")
 async def analyze_csv(file: UploadFile = File(...)):
@@ -114,7 +110,6 @@ async def analyze_csv(file: UploadFile = File(...)):
         print("ERROR in /analyze:", repr(e))
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
-
 
 @app.post("/analyze/html")
 async def analyze_csv_html(file: UploadFile = File(...)):
@@ -159,7 +154,11 @@ async def analyze_csv_html(file: UploadFile = File(...)):
 
         # 6. AI insights
         ai_engine = AIInsightsEngine()
-        ai_results = ai_engine.generate_insights(df, domain_result.get("primary_domain"), analytics_summary)
+        ai_results = ai_engine.generate_insights(
+            df,
+            domain_result.get("primary_domain"),
+            analytics_summary
+        )
         ai_insights = ai_results.get("ai_insights", [])
 
         # 7. Generate charts
@@ -168,18 +167,18 @@ async def analyze_csv_html(file: UploadFile = File(...)):
         print(f"DEBUG: Generated charts: {list(charts.keys())}")
         print(f"DEBUG: Intelligence numeric cols: {orchestrator.intelligence.get_key_numeric_columns()}")
         print(f"DEBUG: Intelligence categorical cols: {orchestrator.intelligence.get_key_categorical_columns()}")
-        
+
         # 8. Format data for report generator
         insights_data = {
             "insights": ai_insights,
             "model": "Groq Llama 3"
         }
 
+        # correlation removed here
         charts_data = {
             "time_series": charts.get("time_series", ""),
             "category": charts.get("category", ""),
-            "distribution": charts.get("distribution", ""),
-            "correlation": charts.get("correlation", "")
+            "distribution": charts.get("distribution", "")
         }
 
         # 9. Generate final HTML using UltimateReportGenerator
@@ -206,8 +205,6 @@ async def analyze_csv_html(file: UploadFile = File(...)):
         print("ERROR in /analyze/html:", repr(e))
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Report generation failed: {str(e)}")
-
-
 
 if __name__ == "__main__":
     import uvicorn

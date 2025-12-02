@@ -45,10 +45,11 @@ def run_analysis(df: pd.DataFrame) -> str:
     # 4) Charts
     chart_gen = UniversalChartGenerator(df)
     raw_charts = chart_gen.generate_all_universal_charts()
+
+    # Correlation chart removed from charts_data
     charts_data = {
         "time_series": raw_charts.get("time_series"),
         "distribution": raw_charts.get("distribution"),
-        "correlation": raw_charts.get("correlation"),
         "top_n": raw_charts.get("category"),  # category -> top_n
     }
 
@@ -87,7 +88,8 @@ def main():
                     html_report = run_analysis(df)
 
                 st.success("Analysis complete. Full report below:")
-                st.components.v1.html(html_report, height=900, scrolling=True)
+                # Increased height to accommodate full-sized charts
+                st.components.v1.html(html_report, height=5000, scrolling=True)
 
         except Exception as e:
             st.error(f"Error reading or analyzing file: {e}")
