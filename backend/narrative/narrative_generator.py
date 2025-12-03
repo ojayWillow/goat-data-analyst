@@ -4,7 +4,7 @@
 # Makes GOAT talk like a human analyst, not a dashboard
 # Three main sections:
 #   1. "I See You" - Context recognition (✅ Day 7)
-#   2. "What Hurts" - Pain points identification (✅ Day 8 - AI-ENHANCED
+#   2. "What Hurts" - Pain points identification (✅ Day 8 - AI-ENHANCED)
 #   3. "Your Path Forward" - Action plan (✅ Day 9 - DOMAIN-AWARE)
 #   4. Fix Suggestions - Actionable fixes (✅ Day 12 - NEW)
 # ============================================================================
@@ -176,7 +176,7 @@ class NarrativeGenerator:
         score = quality.get('overall_score', 100)
         
         # Get pain points (AI-enhanced if available)
-        if self.ai_engine and df is not None:
+        if self.ai_engine and self.ai_engine.enabled and df is not None:
             try:
                 pain_points = self.ai_engine.explain_pain_points(
                     df=df,
@@ -216,17 +216,14 @@ class NarrativeGenerator:
         duplicates = quality.get('duplicates', 0)
         missing_by_col = quality.get('missing_by_column', {})
         
-        # Check missing data
+        # 1. Check missing data
         if missing_pct > 5:
             severity = "high" if missing_pct > 20 else "medium"
-            
-            # Find worst columns
             worst_cols = sorted(
                 [(col, count) for col, count in missing_by_col.items() if count > 0],
                 key=lambda x: x[1],
                 reverse=True
             )[:3]
-            
             col_details = ", ".join([f"<strong>{col}</strong> ({count} missing)" for col, count in worst_cols])
             
             pain_points.append({
@@ -236,7 +233,7 @@ class NarrativeGenerator:
                 "fix": "Review missing data patterns. Consider median/mode fill for numeric/categorical, or flag for manual review."
             })
         
-        # Check duplicates
+        # 2. Check duplicates
         if duplicates > 0:
             severity = "high" if duplicates > 100 else "medium"
             dup_pct = (duplicates / profile.get('rows', 1)) * 100
@@ -248,16 +245,42 @@ class NarrativeGenerator:
                 "fix": "Remove duplicates after verifying they are true duplicates, not legitimate repeated records."
             })
         
-        # Check for outliers (if df provided)
-        if df is not None:
-            outlier_cols = self._detect_outliers(df)
-            if outlier_cols:
-                pain_points.append({
-                    "severity": "medium",
-                    "issue": f"Outliers detected in {len(outlier_cols)} numeric columns",
-                    "impact": f"Columns affected: {', '.join(outlier_cols)}. These extreme values may skew statistical analysis.",
-                    "fix": "Review outliers to determine if they are errors or legitimate edge cases. Consider capping or flagging."
-                })
+        # 3. Check for outliers
+        outliers = quality.get('outliers', {})
+        if outliers:
+            outlier_cols = list(outliers.keys())
+            outlier_details = ', '.join([f"<strong>{col}</strong> ({outliers[col]['count']})" for col in outlier_cols[:3]])
+            
+            pain_points.append({
+                "severity": "medium",
+                "issue": f"Outliers detected in {len(outliers)} numeric columns",
+                "impact": f"Columns affected: {outlier_details}. These extreme values may skew statistical analysis.",
+                "fix": "Review outliers to determine if they are errors or legitimate edge cases. Consider capping or flagging."
+            })
+        
+        # 4. Check for date format issues
+        date_issues = quality.get('date_format_issues', {})
+        if date_issues:
+            date_cols = ', '.join([f"<strong>{col}</strong>" for col in list(date_issues.keys())[:3]])
+            
+            pain_points.append({
+                "severity": "medium",
+                "issue": f"Inconsistent date formats in {len(date_issues)} columns",
+                "impact": f"Affected columns: {date_cols}. Date parsing and time-based analysis may fail.",
+                "fix": "Standardize all dates to a single format (e.g., YYYY-MM-DD)."
+            })
+        
+        # 5. Check for capitalization issues
+        cap_issues = quality.get('capitalization_issues', {})
+        if cap_issues:
+            cap_cols = ', '.join([f"<strong>{col}</strong>" for col in list(cap_issues.keys())[:3]])
+            
+            pain_points.append({
+                "severity": "low",
+                "issue": f"Inconsistent capitalization in {len(cap_issues)} columns",
+                "impact": f"Affected columns: {cap_cols}. Grouping and counting will produce incorrect results.",
+                "fix": "Standardize text to lowercase or title case for consistency."
+            })
         
         # If no issues found
         if not pain_points:
@@ -528,7 +551,7 @@ class NarrativeGenerator:
         return visualizations.get(domain_type, "Create time series and distribution charts for key metrics")
     
     # ========================================================================
-    # DAY 12: Fix Suggestions (NEW)
+    # DAY 12: Fix Suggestions (ONLY 2 TYPES - CLEAN)
     # ========================================================================
     
     def generate_fix_suggestions(
@@ -537,22 +560,9 @@ class NarrativeGenerator:
         profile: Dict
     ) -> List[Dict]:
         """
-        Generate actionable fix suggestions based on data quality issues (Day 12 ✅ NEW)
+        Generate ONLY 2 fix suggestions for clean sidebar
         
-        Returns list of fix suggestions that can be passed to DataFixer.
-        Each suggestion includes:
-        - issue: Human-readable description
-        - severity: 'critical', 'high', 'medium', 'low'
-        - fix_method: DataFixer method name
-        - fix_args: Arguments for the method
-        - preview_impact: What will change
-        
-        Args:
-            quality_report: Quality analysis results
-            profile: Data profile
-            
-        Returns:
-            List of fix suggestion dictionaries
+        Returns: 1) Duplicates, 2) Missing values (worst column only)
         """
         suggestions = []
         
@@ -571,87 +581,34 @@ class NarrativeGenerator:
                 'icon': '🔄'
             })
         
-        # 2. MISSING VALUES
+        # 2. MISSING VALUES (worst column only)
         missing = quality_report.get('missing_by_column', {})
         column_types = {c.get('name'): c.get('type') for c in profile.get('columns', [])}
         
-        for col, count in missing.items():
-            if count == 0:
-                continue
+        if missing:
+            # Find worst column
+            worst_col = max(missing.items(), key=lambda x: x[1])
+            col, count = worst_col
             
-            row_count = profile.get('rows', profile.get('overall', {}).get('rows', 1))
-            pct = (count / row_count) * 100
-            
-            if pct > 5:  # Only suggest fix if >5% missing
-                col_type = column_types.get(col, 'object')
-                
-                if col_type in ['int64', 'float64', 'int32', 'float32', 'numeric']:
-                    # Numeric column
-                    severity = 'critical' if pct > 20 else 'high' if pct > 10 else 'medium'
-                    method = 'median'
-                    
-                    suggestions.append({
-                        'issue': f'{pct:.1f}% missing values in \'{col}\'',
-                        'severity': severity,
-                        'fix_method': 'fill_missing_numeric',
-                        'fix_args': {'column': col, 'method': method},
-                        'preview_impact': f'Will fill {count} missing values with {method}',
-                        'button_text': f'Fill {col} (median)',
-                        'icon': '📊'
-                    })
-                else:
-                    # Categorical column
-                    severity = 'high' if pct > 15 else 'medium'
-                    
-                    suggestions.append({
-                        'issue': f'{pct:.1f}% missing values in \'{col}\'',
-                        'severity': severity,
-                        'fix_method': 'fill_missing_categorical',
-                        'fix_args': {'column': col, 'method': 'mode'},
-                        'preview_impact': f'Will fill {count} values with most common value',
-                        'button_text': f'Fill {col} (mode)',
-                        'icon': '📝'
-                    })
-        
-        # 3. OUTLIERS
-        outliers = quality_report.get('outliers', {})
-        for col, count in outliers.items():
             if count > 0:
                 row_count = profile.get('rows', profile.get('overall', {}).get('rows', 1))
                 pct = (count / row_count) * 100
-                severity = 'high' if pct > 5 else 'medium' if pct > 1 else 'low'
                 
-                suggestions.append({
-                    'issue': f'{count} outliers in \'{col}\'',
-                    'severity': severity,
-                    'fix_method': 'remove_outliers',
-                    'fix_args': {'column': col, 'method': 'iqr', 'threshold': 1.5},
-                    'preview_impact': f'Will remove {count} extreme values ({pct:.1f}% of data)',
-                    'button_text': f'Remove {col} outliers',
-                    'icon': '⚡'
-                })
-        
-        # 4. COLUMN NAME STANDARDIZATION
-        columns = [c.get('name') for c in profile.get('columns', [])]
-        needs_standardization = any(
-            ' ' in col or col != col.lower() or any(c in col for c in '!@#$%^&*()')
-            for col in columns
-        )
-        
-        if needs_standardization:
-            suggestions.append({
-                'issue': 'Column names need standardization',
-                'severity': 'low',
-                'fix_method': 'standardize_column_names',
-                'fix_args': {},
-                'preview_impact': 'Will convert to lowercase snake_case',
-                'button_text': 'Standardize Columns',
-                'icon': '🏷️'
-            })
-        
-        # Sort by severity
-        severity_order = {'critical': 0, 'high': 1, 'medium': 2, 'low': 3}
-        suggestions.sort(key=lambda x: severity_order.get(x['severity'], 4))
+                if pct > 5:
+                    col_type = column_types.get(col, 'object')
+                    
+                    if col_type in ['int64', 'float64', 'int32', 'float32', 'numeric']:
+                        severity = 'critical' if pct > 20 else 'high' if pct > 10 else 'medium'
+                        
+                        suggestions.append({
+                            'issue': f'{pct:.1f}% missing values in \'{col}\'',
+                            'severity': severity,
+                            'fix_method': 'fill_missing_numeric',
+                            'fix_args': {'column': col, 'method': 'median'},
+                            'preview_impact': f'Will fill {count} missing values with median',
+                            'button_text': f'Fill {col} (median)',
+                            'icon': '📊'
+                        })
         
         return suggestions
     
@@ -777,72 +734,5 @@ class NarrativeGenerator:
 
 
 
-# Test function
-def _test():
-    """Test narrative generator with realistic data"""
-    import numpy as np
-    
-    print("\n" + "="*70)
-    print("TESTING NARRATIVE GENERATOR - DAYS 7-9 + 12")
-    print("="*70)
-    
-    gen = NarrativeGenerator()
-    
-    # Create test dataframe
-    np.random.seed(42)
-    dates = pd.date_range('2023-06-01', periods=100, freq='D')
-    amount = np.random.uniform(10, 500, 100)
-    amount[::10] = None  # 10% missing
-    
-    df = pd.DataFrame({
-        'transaction_id': range(100),
-        'date': dates,
-        'amount': amount,
-        'category': np.random.choice(['Electronics', 'Clothing', 'Food'], 100)
-    })
-    df = pd.concat([df, df.iloc[:5]], ignore_index=True)  # Add duplicates
-    
-    # Test inputs
-    domain = {"type": "sales", "confidence": 0.85}
-    profile = {
-        'overall': {'rows': len(df), 'columns': 4},
-        'rows': len(df),
-        'columns': 4,
-        'columns': [
-            {'name': 'transaction_id', 'type': 'numeric'},
-            {'name': 'date', 'type': 'datetime'},
-            {'name': 'amount', 'type': 'numeric'},
-            {'name': 'category', 'type': 'categorical', 'unique': 3}
-        ]
-    }
-    quality = {
-        'missing_pct': 10.0,
-        'duplicates': 5,
-        'overall_score': 85,
-        'missing_by_column': df.isnull().sum().to_dict()
-    }
-    
-    print("\n✅ Context Section (Day 7):")
-    print(gen.generate_context(domain, profile, df)[:200] + "...")
-    
-    print("\n✅ Pain Points Section (Day 8):")
-    print(gen.generate_pain_points(quality, profile, df)[:200] + "...")
-    
-    print("\n✅ Action Plan Section (Day 9 - DOMAIN-AWARE):")
-    action_plan = gen.generate_action_plan(domain, quality, {}, profile)
-    print(action_plan[:200] + "...")
-    
-    print("\n✅ Fix Suggestions Section (Day 12 - NEW):")
-    suggestions = gen.generate_fix_suggestions(quality, profile)
-    print(f"Generated {len(suggestions)} fix suggestions:")
-    for sug in suggestions[:3]:
-        print(f"  - {sug['icon']} {sug['issue']} ({sug['severity']})")
-    
-    print("\n" + "="*70)
-    print("✅ Days 7-9 + 12 Complete: Full narrative + fix suggestions working!")
-    print("="*70)
-
-
-
 if __name__ == "__main__":
-    _test()
+    print("✅ Narrative Generator Ready (Days 7-9 + 12 - CLEAN SIDEBAR)")
