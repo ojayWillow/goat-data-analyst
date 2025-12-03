@@ -1,0 +1,58 @@
+﻿# Add these methods to narrative_generator.py after _fallback_action_plan method
+
+    def _enhanced_action_plan(
+        self,
+        domain: Dict,
+        quality: Dict,
+        analytics: Dict,
+        profile: Dict,
+        pain_points: List[Dict]
+    ) -> List[str]:
+        """Enhanced action plan with domain awareness"""
+        steps = []
+        domain_type = domain.get('type', 'unknown')
+        
+        # Phase 1: Clean (high severity first)
+        critical_points = [p for p in pain_points if p.get('severity') in ['critical', 'high']]
+        for point in sorted(critical_points, key=lambda x: 0 if x.get('severity') == 'critical' else 1):
+            issue = point.get('issue', '')
+            fix = point.get('fix', '')
+            if 'duplicate' in issue.lower():
+                steps.append(f"<strong>Clean:</strong> {fix}")
+            elif 'missing' in issue.lower():
+                steps.append(f"<strong>Fill Gaps:</strong> {fix}")
+            elif 'outlier' in issue.lower():
+                steps.append(f"<strong>Handle Outliers:</strong> {fix}")
+            else:
+                steps.append(f"<strong>Fix:</strong> {fix}")
+        
+        # Phase 2-4: Domain-specific steps
+        steps.extend(self._get_domain_steps(domain_type, profile))
+        
+        return steps if steps else self._get_generic_steps()
+    
+    def _get_domain_steps(self, domain_type: str, profile: Dict) -> List[str]:
+        """Get domain-specific analysis and viz steps"""
+        domain_steps = {
+            'sales': [
+                "<strong>Analyze:</strong> Calculate revenue, AOV, and top products.",
+                "<strong>Visualize:</strong> Build revenue trend and product performance charts."
+            ],
+            'finance': [
+                "<strong>Analyze:</strong> Calculate profit margin and ROI.",
+                "<strong>Visualize:</strong> Create P&L trend and expense breakdown."
+            ]
+        }
+        return domain_steps.get(domain_type, [
+            "<strong>Analyze:</strong> Identify key metrics and trends.",
+            "<strong>Visualize:</strong> Create time series and distribution charts."
+        ])
+    
+    def _get_generic_steps(self) -> List[str]:
+        """Fallback generic steps"""
+        return [
+            "<strong>Profile:</strong> Review column types and statistics.",
+            "<strong>Clean:</strong> Address missing values and duplicates.",
+            "<strong>Analyze:</strong> Calculate key metrics.",
+            "<strong>Visualize:</strong> Create charts."
+        ]

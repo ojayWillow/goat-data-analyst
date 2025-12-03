@@ -170,13 +170,13 @@ uvicorn main:app --reload
 **Objective**: Create the framework for human-like communication
 
 #### Tasks:
-- [ ] Create `backend/narrative/` directory
-- [ ] Create `backend/narrative/narrative_generator.py`
-- [ ] Define three main sections:
+- [✅ ] Create `backend/narrative/` directory
+- [✅ ] Create `backend/narrative/narrative_generator.py`
+- [✅ ] Define three main sections:
   - "I See You" (context recognition)
   - "What Hurts" (pain points)
   - "Your Path Forward" (action plan)
-- [ ] Stub out methods with placeholder text
+- [✅ ] Stub out methods with placeholder text
 
 #### Success Criteria:
 ```python
@@ -187,9 +187,9 @@ gen = NarrativeGenerator()
 ```
 
 #### Deliverable:
-- [ ] `backend/narrative/narrative_generator.py` exists
-- [ ] Three methods defined: `generate_context()`, `generate_pain_points()`, `generate_action_plan()`
-- [ ] File imports cleanly
+- [✅ ] `backend/narrative/narrative_generator.py` exists
+- [✅ ] Three methods defined: `generate_context()`, `generate_pain_points()`, `generate_action_plan()`
+- [✅ ] File imports cleanly
 
 **Status**: ⬜ Not Started | 🟡 In Progress | ✅ Complete
 
@@ -215,9 +215,9 @@ timestamps spanning January 2023 to December 2024."
 ```
 
 #### Deliverable:
-- [ ] `generate_context()` returns accurate, contextual intro
-- [ ] Works with sales, finance, and generic CSVs
-- [ ] Text feels human, not robotic
+- [✅ ] `generate_context()` returns accurate, contextual intro
+- [✅ ] Works with sales, finance, and generic CSVs
+- [✅ ] Text feels human, not robotic
 
 **Status**: ⬜ Not Started | 🟡 In Progress | ✅ Complete
 
@@ -227,13 +227,13 @@ timestamps spanning January 2023 to December 2024."
 **Objective**: Identify and prioritize data quality issues in plain language
 
 #### Tasks:
-- [ ] Use `AnalysisResult.quality` to detect:
+- [✅ ] Use `AnalysisResult.quality` to detect:
   - Missing values (% and which columns)
   - Duplicate rows
   - Outliers
   - Data type mismatches
-- [ ] Prioritize issues by severity
-- [ ] Generate clear, actionable descriptions
+- [✅ ] Prioritize issues by severity
+- [✅ ] Generate clear, actionable descriptions
 
 #### Example Output:
 ```
@@ -244,9 +244,9 @@ timestamps spanning January 2023 to December 2024."
 ```
 
 #### Deliverable:
-- [ ] `generate_pain_points()` returns prioritized issue list
-- [ ] Test with messy CSV (missing values, dupes, outliers)
-- [ ] Issues described clearly and actionably
+- [✅ ] `generate_pain_points()` returns prioritized issue list
+- [✅ ] Test with messy CSV (missing values, dupes, outliers)
+- [✅ ] Issues described clearly and actionably
 
 **Status**: ⬜ Not Started | 🟡 In Progress | ✅ Complete
 
@@ -256,10 +256,10 @@ timestamps spanning January 2023 to December 2024."
 **Objective**: Give users a sequenced, actionable plan
 
 #### Tasks:
-- [ ] Use pain points + domain to generate step-by-step plan
-- [ ] Sequence steps logically: clean → validate → analyze → visualize
-- [ ] Make steps specific to the actual data issues found
-- [ ] Test with multiple scenarios
+- [✅ ] Use pain points + domain to generate step-by-step plan
+- [✅ ] Sequence steps logically: clean → validate → analyze → visualize
+- [✅ ] Make steps specific to the actual data issues found
+- [✅ ] Test with multiple scenarios
 
 #### Example Output:
 ```
@@ -272,9 +272,9 @@ timestamps spanning January 2023 to December 2024."
 ```
 
 #### Deliverable:
-- [ ] `generate_action_plan()` returns ordered steps
-- [ ] Steps are specific, not generic
-- [ ] Sequence makes logical sense
+- [✅ ] `generate_action_plan()` returns ordered steps
+- [✅ ] Steps are specific, not generic
+- [✅ ] Sequence makes logical sense
 
 **Status**: ⬜ Not Started | 🟡 In Progress | ✅ Complete
 
@@ -284,13 +284,13 @@ timestamps spanning January 2023 to December 2024."
 **Objective**: Make the narrative appear in the actual HTML report
 
 #### Tasks:
-- [ ] Edit `UltimateReportGenerator` to call `NarrativeGenerator`
-- [ ] Add narrative sections to report template:
+- [✅ ] Edit `UltimateReportGenerator` to call `NarrativeGenerator`
+- [✅ ] Add narrative sections to report template:
   - At top: "I See You" context
   - After profile: "What Hurts" issues
   - Before charts: "Your Path Forward" plan
-- [ ] Style narrative sections to stand out (bold headers, clean formatting)
-- [ ] Test full report with narrative included
+- [✅ ] Style narrative sections to stand out (bold headers, clean formatting)
+- [✅ ] Test full report with narrative included
 
 #### Success Criteria:
 ```bash
@@ -303,9 +303,9 @@ timestamps spanning January 2023 to December 2024."
 ```
 
 #### Deliverable:
-- [ ] Narrative appears in HTML report
-- [ ] Sections are clearly formatted
-- [ ] Report feels more human and helpful
+- [✅ ] Narrative appears in HTML report
+- [✅ ] Sections are clearly formatted
+- [✅ ] Report feels more human and helpful
 
 **Status**: ⬜ Not Started | 🟡 In Progress | ✅ Complete
 

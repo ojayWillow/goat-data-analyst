@@ -36,7 +36,7 @@ except ImportError:
     DataProfiler = None
 
 try:
-    from backend.domain.detector import DomainDetector
+    from backend.domain_detection.detector import DomainDetector
 except ImportError:
     DomainDetector = None
 
@@ -141,7 +141,8 @@ class AnalysisEngine:
             # Step 2: DOMAIN - Detect what type of data this is
             if self.domain_detector:
                 print("  → Detecting domain...")
-                result.domain = self.domain_detector.detect(df, result.profile)
+                result.domain = self.domain_detector.detect(df)
+                print(f"[DEBUG] Engine domain detection: {result.domain}")
             else:
                 result.warnings.append("DomainDetector not available")
                 result.domain = {"type": "unknown", "confidence": 0.0}
@@ -226,7 +227,7 @@ class AnalysisEngine:
             "missing_pct": round(missing_pct, 2),
             "duplicates": int(duplicates),
             "missing_by_column": df.isnull().sum().to_dict(),
-            "overall_score": max(0, 100 - missing_pct - (duplicates / len(df) * 10))
+            "overall_score": max(0, 100 - missing_pct - (duplicates / len(df) * 100 * 2))
         }
     
     def _fallback_report(self, result: AnalysisResult) -> str:

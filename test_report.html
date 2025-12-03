@@ -1,0 +1,385 @@
+
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>GOAT Data Analysis Report</title>
+            
+        <style>
+            /* Reset and base styles */
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+            
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+                line-height: 1.6;
+                color: #333;
+                background: #f5f5f5;
+                padding: 20px;
+            }
+            
+            .report-container {
+                max-width: 1200px;
+                margin: 0 auto;
+                background: white;
+                border-radius: 12px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                overflow: hidden;
+            }
+            
+            /* Header */
+            .report-header {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 40px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            
+            .logo h1 {
+                font-size: 2.5em;
+                margin-bottom: 5px;
+            }
+            
+            .tagline {
+                font-size: 1em;
+                opacity: 0.9;
+            }
+            
+            .domain-badge {
+                background: rgba(255, 255, 255, 0.2);
+                padding: 15px 25px;
+                border-radius: 8px;
+                text-align: center;
+            }
+            
+            .domain-emoji {
+                font-size: 2em;
+                display: block;
+                margin-bottom: 5px;
+            }
+            
+            .domain-type {
+                font-size: 0.9em;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+            }
+            
+            /* Sections */
+            section {
+                padding: 40px;
+                border-bottom: 1px solid #eee;
+            }
+            
+            section:last-of-type {
+                border-bottom: none;
+            }
+            
+            h2 {
+                font-size: 1.8em;
+                margin-bottom: 25px;
+                color: #2c3e50;
+            }
+            
+            /* Summary Grid */
+            .summary-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 20px;
+            }
+            
+            .summary-card {
+                background: #f8f9fa;
+                padding: 25px;
+                border-radius: 8px;
+                display: flex;
+                align-items: center;
+                gap: 20px;
+            }
+            
+            .card-icon {
+                font-size: 3em;
+            }
+            
+            .card-content h3 {
+                font-size: 0.9em;
+                color: #6c757d;
+                margin-bottom: 10px;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+            }
+            
+            .big-number {
+                font-size: 2.5em;
+                font-weight: bold;
+                color: #2c3e50;
+                line-height: 1;
+                margin-bottom: 5px;
+            }
+            
+            .big-number.score-excellent { color: #28a745; }
+            .big-number.score-good { color: #ffc107; }
+            .big-number.score-needs-work { color: #dc3545; }
+            
+            .sub-text {
+                font-size: 0.9em;
+                color: #6c757d;
+            }
+            
+            /* Quality Dashboard */
+            .metrics-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 20px;
+            }
+            
+            .metric-card {
+                background: #f8f9fa;
+                padding: 20px;
+                border-radius: 8px;
+                border-left: 4px solid #667eea;
+            }
+            
+            .metric-header {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 15px;
+            }
+            
+            .metric-icon {
+                font-size: 1.5em;
+            }
+            
+            .metric-header h4 {
+                font-size: 1em;
+                color: #6c757d;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+            }
+            
+            .metric-value {
+                font-size: 2em;
+                font-weight: bold;
+                color: #2c3e50;
+                margin-bottom: 5px;
+            }
+            
+            .metric-status {
+                font-size: 0.9em;
+                color: #6c757d;
+            }
+            
+            /* Profile Table */
+            .profile-table-container {
+                overflow-x: auto;
+            }
+            
+            .profile-table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+            
+            .profile-table th,
+            .profile-table td {
+                padding: 12px;
+                text-align: left;
+                border-bottom: 1px solid #eee;
+            }
+            
+            .profile-table th {
+                background: #f8f9fa;
+                font-weight: 600;
+                color: #6c757d;
+                text-transform: uppercase;
+                font-size: 0.85em;
+                letter-spacing: 1px;
+            }
+            
+            .type-badge {
+                display: inline-block;
+                padding: 4px 12px;
+                border-radius: 4px;
+                font-size: 0.85em;
+                font-weight: 600;
+            }
+            
+            .type-badge.type-numeric {
+                background: #e3f2fd;
+                color: #1976d2;
+            }
+            
+            .type-badge.type-categorical {
+                background: #f3e5f5;
+                color: #7b1fa2;
+            }
+            
+            .type-badge.type-datetime {
+                background: #e8f5e9;
+                color: #388e3c;
+            }
+            
+            /* Charts */
+            .charts-grid {
+                text-align: center;
+                padding: 40px;
+                background: #f8f9fa;
+                border-radius: 8px;
+            }
+            
+            .charts-grid .placeholder {
+                font-size: 1.2em;
+                color: #6c757d;
+                margin-bottom: 10px;
+            }
+            
+            /* Footer */
+            .report-footer {
+                background: #2c3e50;
+                color: white;
+                padding: 30px 40px;
+                text-align: center;
+            }
+            
+            .footer-note {
+                font-size: 0.9em;
+                opacity: 0.8;
+                margin-top: 10px;
+            }
+            
+            /* Responsive */
+            @media (max-width: 768px) {
+                .report-header {
+                    flex-direction: column;
+                    text-align: center;
+                    gap: 20px;
+                }
+                
+                section {
+                    padding: 30px 20px;
+                }
+                
+                .logo h1 {
+                    font-size: 2em;
+                }
+            }
+        </style>
+        
+        </head>
+        <body>
+            <div class="report-container">
+                
+        <header class="report-header">
+            <div class="logo">
+                <h1>🐐 GOAT Data Analyst</h1>
+                <p class="tagline">Greatest Of All Time Data Analysis</p>
+            </div>
+            <div class="domain-badge">
+                <span class="domain-emoji">💰</span>
+                <span class="domain-type">Sales</span>
+            </div>
+        </header>
+        
+                
+        <section class="executive-summary">
+            <h2>Executive Summary</h2>
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <div class="card-icon">📊</div>
+                    <div class="card-content">
+                        <h3>Data Size</h3>
+                        <p class="big-number">100</p>
+                        <p class="sub-text">rows × 2 columns</p>
+                    </div>
+                </div>
+                <div class="summary-card">
+                    <div class="card-icon">✨</div>
+                    <div class="card-content">
+                        <h3>Quality Score</h3>
+                        <p class="big-number score-excellent">92/100</p>
+                        <p class="sub-text">Excellent quality</p>
+                    </div>
+                </div>
+                <div class="summary-card">
+                    <div class="card-icon">⚡</div>
+                    <div class="card-content">
+                        <h3>Analysis Time</h3>
+                        <p class="big-number">0.50s</p>
+                        <p class="sub-text">Lightning fast</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+                <div class='goat-narrative'><p>Test narrative</p></div>
+                
+        <section class="quality-dashboard">
+            <h2>Data Quality Dashboard</h2>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-icon">🟢</span>
+                        <h4>Missing Data</h4>
+                    </div>
+                    <p class="metric-value">2.5%</p>
+                    <p class="metric-status">Minimal missing data</p>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-icon">🟡</span>
+                        <h4>Duplicates</h4>
+                    </div>
+                    <p class="metric-value">3</p>
+                    <p class="metric-status">Few duplicates</p>
+                </div>
+            </div>
+        </section>
+        
+                
+        <section class="profile-section">
+            <h2>Data Profile</h2>
+            <div class="profile-table-container">
+                <table class="profile-table">
+                    <thead>
+                        <tr>
+                            <th>Column</th>
+                            <th>Type</th>
+                            <th>Missing</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        
+            <tr>
+                <td><strong>id</strong></td>
+                <td><span class="type-badge type-numeric">numeric</span></td>
+                <td>0</td>
+            </tr>
+            
+            <tr>
+                <td><strong>amount</strong></td>
+                <td><span class="type-badge type-numeric">numeric</span></td>
+                <td>5</td>
+            </tr>
+            
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        
+                
+                
+        <footer class="report-footer">
+            <p>Generated by GOAT Data Analyst on 2025-12-03 02:21:53</p>
+            <p class="footer-note">This report was automatically generated using AI-enhanced analysis</p>
+        </footer>
+        
+            </div>
+        </body>
+        </html>
+        
