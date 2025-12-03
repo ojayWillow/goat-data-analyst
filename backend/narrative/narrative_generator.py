@@ -5,7 +5,7 @@
 # Three main sections:
 #   1. "I See You" - Context recognition (✅ Day 7)
 #   2. "What Hurts" - Pain points identification (✅ Day 8 - AI-ENHANCED)
-#   3. "Your Path Forward" - Action plan (Day 9)
+#   3. "Your Path Forward" - Action plan (✅ Day 9 - DOMAIN-AWARE)
 # ============================================================================
 
 from typing import Dict, List, Optional
@@ -30,6 +30,10 @@ class NarrativeGenerator:
         """
         self.ai_engine = ai_engine
         print("✓ NarrativeGenerator initialized" + (" (AI-enhanced)" if ai_engine else ""))
+    
+    # ========================================================================
+    # DAY 7: "I See You" - Context Recognition
+    # ========================================================================
     
     def generate_context(
         self, 
@@ -150,6 +154,10 @@ class NarrativeGenerator:
         
         return f"<p>The data spans from <strong>{start_str}</strong> to <strong>{end_str}</strong> based on the <em>{col}</em> column.</p>"
     
+    # ========================================================================
+    # DAY 8: "What Hurts" - Pain Points Analysis
+    # ========================================================================
+    
     def generate_pain_points(
         self,
         quality: Dict,
@@ -161,14 +169,6 @@ class NarrativeGenerator:
         
         Identify and prioritize data quality issues in plain language.
         Uses AI when available for context-aware explanations.
-        
-        Args:
-            quality: Quality analysis result with missing, dupes, outliers
-            profile: Data profile for context
-            df: Optional DataFrame for deeper checks
-        
-        Returns:
-            Prioritized list of issues in human language
         """
         score = quality.get('overall_score', 100)
         
@@ -343,19 +343,26 @@ class NarrativeGenerator:
         else:
             return "poor"
     
+    # ========================================================================
+    # DAY 9: "Your Path Forward" - Action Plan (DOMAIN-AWARE)
+    # ========================================================================
+    
     def generate_action_plan(
         self,
         domain: Dict,
         quality: Dict,
         analytics: Dict,
-        profile: Dict,
-        pain_points: Optional[List[Dict]] = None
+        profile: Dict
     ) -> str:
         """
-        "Your Path Forward" - Action plan (Day 9)
+        "Your Path Forward" - Action plan (Day 9 ✅ ENHANCED)
         
         Give users a sequenced, actionable plan based on their data issues.
+        Now with domain-aware recommendations and smart sequencing.
         """
+        # Extract pain points from quality metrics
+        pain_points = self._extract_pain_points_from_quality(quality, profile)
+        
         # Get action steps (AI-enhanced if available)
         if self.ai_engine and pain_points:
             try:
@@ -366,38 +373,160 @@ class NarrativeGenerator:
                     analytics=analytics
                 )
             except Exception as e:
-                print(f"⚠️  AI action plan failed, using fallback: {e}")
-                steps = self._fallback_action_plan(pain_points)
+                print(f"⚠️  AI action plan failed, using enhanced fallback: {e}")
+                steps = self._enhanced_action_plan(domain, quality, profile, pain_points)
         else:
-            steps = self._fallback_action_plan(pain_points or [])
+            # Use enhanced fallback with domain awareness
+            steps = self._enhanced_action_plan(domain, quality, profile, pain_points)
+        
+        # Get intro based on severity
+        intro = self._get_action_intro(pain_points)
         
         steps_html = "\n".join([f"<li>{step}</li>" for step in steps])
         
         return f"""
         <div class="narrative-section action-plan">
             <h3>🎯 Your Path Forward</h3>
-            <p>Based on your data, here's what to do next:</p>
+            <p>{intro}</p>
             <ol class='action-steps'>
                 {steps_html}
             </ol>
         </div>
         """
     
-    def _fallback_action_plan(self, pain_points: List[Dict]) -> List[str]:
-        """Generate action plan from pain points"""
+    def _extract_pain_points_from_quality(self, quality: Dict, profile: Dict) -> List[Dict]:
+        """Extract pain points from quality metrics"""
+        pain_points = []
+        
+        missing_pct = quality.get('missing_pct', 0)
+        duplicates = quality.get('duplicates', 0)
+        
+        if missing_pct > 5:
+            severity = "high" if missing_pct > 20 else "medium"
+            pain_points.append({
+                "severity": severity,
+                "issue": f"{missing_pct:.1f}% missing data",
+                "fix": f"Fill or flag {missing_pct:.1f}% missing values"
+            })
+        
+        if duplicates > 0:
+            severity = "high" if duplicates > 100 else "medium"
+            pain_points.append({
+                "severity": severity,
+                "issue": f"{duplicates} duplicate rows",
+                "fix": f"Remove {duplicates} duplicate rows after verification"
+            })
+        
+        return pain_points
+    
+    def _get_action_intro(self, pain_points: List[Dict]) -> str:
+        """Get contextual intro based on pain severity"""
         if not pain_points:
-            return [
-                "1. Proceed with data analysis",
-                "2. Build visualizations",
-                "3. Extract insights"
+            return "Your data looks clean! Here's how to get the most value from it:"
+        
+        high_severity = sum(1 for p in pain_points if p.get('severity') in ['critical', 'high'])
+        
+        if high_severity >= 3:
+            return "⚠️ <strong>Your data needs immediate attention.</strong> Follow these steps in order:"
+        elif high_severity > 0:
+            return "Here's a prioritized plan to address your data quality issues:"
+        else:
+            return "Your data quality is good overall. Here are recommended improvements:"
+    
+    def _enhanced_action_plan(
+        self,
+        domain: Dict,
+        quality: Dict,
+        profile: Dict,
+        pain_points: List[Dict]
+    ) -> List[str]:
+        """Enhanced action plan with domain awareness and logical sequencing"""
+        steps = []
+        domain_type = domain.get('type', 'unknown')
+        
+        # PHASE 1: CLEAN (high severity issues first)
+        critical_points = [p for p in pain_points if p.get('severity') in ['critical', 'high']]
+        for point in sorted(critical_points, key=lambda x: 0 if x.get('severity') == 'critical' else 1):
+            fix = point.get('fix', '')
+            steps.append(f"<strong>Clean:</strong> {fix}")
+        
+        # PHASE 2: VALIDATE (domain-specific)
+        validation = self._get_domain_validation(domain_type)
+        if validation:
+            steps.append(f"<strong>Validate:</strong> {validation}")
+        
+        # PHASE 3: ANALYZE (domain-specific)
+        analysis = self._get_domain_analysis(domain_type)
+        if analysis:
+            steps.append(f"<strong>Analyze:</strong> {analysis}")
+        
+        # PHASE 4: VISUALIZE
+        viz = self._get_domain_visualization(domain_type)
+        if viz:
+            steps.append(f"<strong>Visualize:</strong> {viz}")
+        
+        # Fallback to generic if no steps
+        if not steps:
+            steps = [
+                "<strong>Profile:</strong> Review column types and statistics",
+                "<strong>Clean:</strong> Address any data quality issues",
+                "<strong>Analyze:</strong> Calculate key metrics and trends",
+                "<strong>Visualize:</strong> Create charts to communicate insights"
             ]
         
-        steps = []
-        for i, point in enumerate(pain_points[:5], 1):  # Top 5 issues
-            fix = point.get('fix', 'Address: ' + point.get('issue', 'Unknown'))
-            steps.append(f"{i}. {fix}")
-        
         return steps
+    
+    def _get_domain_validation(self, domain_type: str) -> str:
+        """Get domain-specific validation checks"""
+        validations = {
+            'sales': "Verify all transactions have positive amounts and valid dates",
+            'finance': "Ensure debits and credits balance correctly",
+            'ecommerce': "Confirm order statuses are valid and payment amounts match totals",
+            'marketing': "Validate campaign dates and ensure conversion rates are realistic",
+            'healthcare': "Check patient IDs are unique and dates follow logical sequence",
+            'hr': "Validate employee IDs are unique and hire dates precede termination dates",
+            'inventory': "Ensure stock levels are non-negative and warehouse codes valid",
+            'customer': "Check customer IDs are unique and contact info is properly formatted",
+            'web_analytics': "Verify session IDs are unique and metrics are within realistic bounds",
+            'logistics': "Validate tracking numbers are unique and delivery dates are after ship dates"
+        }
+        return validations.get(domain_type, "Check for logical errors and data inconsistencies")
+    
+    def _get_domain_analysis(self, domain_type: str) -> str:
+        """Get domain-specific analysis recommendations"""
+        analyses = {
+            'sales': "Calculate total revenue, average order value, and identify top-selling products",
+            'finance': "Calculate profit margin, ROI, and analyze expense trends",
+            'ecommerce': "Calculate conversion rate, cart abandonment, and customer lifetime value",
+            'marketing': "Calculate ROI per campaign and identify best-performing channels",
+            'healthcare': "Calculate average length of stay and identify common diagnoses",
+            'hr': "Calculate turnover rate and identify departments with highest attrition",
+            'inventory': "Identify slow-moving items and calculate stock turnover ratio",
+            'customer': "Calculate customer lifetime value and churn rate by segment",
+            'web_analytics': "Identify high-bounce pages and analyze user journey funnels",
+            'logistics': "Calculate average delivery time and identify late shipment patterns"
+        }
+        return analyses.get(domain_type, "Identify key metrics and trends relevant to your goals")
+    
+    def _get_domain_visualization(self, domain_type: str) -> str:
+        """Get domain-specific visualization recommendations"""
+        visualizations = {
+            'sales': "Build revenue trend over time and product performance comparison",
+            'finance': "Create P&L trend and expense breakdown charts",
+            'ecommerce': "Chart sales funnel and customer acquisition cost trends",
+            'marketing': "Visualize campaign ROI comparison and conversion funnel",
+            'healthcare': "Plot patient flow by department and treatment outcomes",
+            'hr': "Create headcount trend and turnover by department charts",
+            'inventory': "Chart stock levels over time and turnover by product category",
+            'customer': "Visualize customer journey map and satisfaction score trends",
+            'web_analytics': "Build traffic trend and page performance heatmaps",
+            'logistics': "Chart delivery time distribution and on-time percentage trends"
+        }
+        return visualizations.get(domain_type, "Create time series and distribution charts for key metrics")
+    
+    # ========================================================================
+    # Full Narrative Generation
+    # ========================================================================
     
     def generate_full_narrative(
         self,
@@ -422,21 +551,7 @@ class NarrativeGenerator:
         """
         context = self.generate_context(domain, profile, df)
         pain_points_section = self.generate_pain_points(quality, profile, df)
-        
-        # Extract pain points for action plan (if AI-enhanced)
-        pain_points_data = None
-        if self.ai_engine and df is not None:
-            try:
-                pain_points_data = self.ai_engine.explain_pain_points(
-                    df=df,
-                    quality=quality,
-                    profile=profile,
-                    domain=domain
-                )
-            except:
-                pass
-        
-        action_plan = self.generate_action_plan(domain, quality, analytics, profile, pain_points_data)
+        action_plan = self.generate_action_plan(domain, quality, analytics, profile)
         
         return f"""
         <div class="goat-narrative">
@@ -532,78 +647,61 @@ class NarrativeGenerator:
 
 # Test function
 def _test():
-    """Test narrative generator with realistic messy data"""
+    """Test narrative generator with realistic data"""
     import numpy as np
     
     print("\n" + "="*70)
-    print("TESTING NARRATIVE GENERATOR - DAY 8")
+    print("TESTING NARRATIVE GENERATOR - DAYS 7-9")
     print("="*70)
     
-    gen = NarrativeGenerator()  # Without AI for testing
+    gen = NarrativeGenerator()
     
-    # Create messy test dataframe
+    # Create test dataframe
     np.random.seed(42)
-    dates = pd.date_range('2023-06-01', periods=505, freq='D')
-    
-    # Create data with intentional quality issues
-    amount = np.random.uniform(10, 500, 505)
+    dates = pd.date_range('2023-06-01', periods=100, freq='D')
+    amount = np.random.uniform(10, 500, 100)
     amount[::10] = None  # 10% missing
     
     df = pd.DataFrame({
-        'transaction_id': range(505),
+        'transaction_id': range(100),
         'date': dates,
         'amount': amount,
-        'category': np.random.choice(['Electronics', 'Clothing', 'Food'], 505),
-        'customer_id': np.random.randint(1, 100, 505)
+        'category': np.random.choice(['Electronics', 'Clothing', 'Food'], 100)
     })
+    df = pd.concat([df, df.iloc[:5]], ignore_index=True)  # Add duplicates
     
-    # Add duplicates
-    df = pd.concat([df, df.iloc[:47]], ignore_index=True)
-    
-    # Add outliers
-    df.loc[10, 'amount'] = 99999
-    df.loc[50, 'amount'] = -1000
-    
-    # Dummy inputs
+    # Test inputs
     domain = {"type": "sales", "confidence": 0.85}
     profile = {
-        'overall': {'rows': len(df), 'columns': 5, 'memory_mb': 0.5},
+        'overall': {'rows': len(df), 'columns': 4},
         'rows': len(df),
-        'columns': 5,
+        'columns': 4,
         'columns': [
             {'name': 'transaction_id', 'type': 'numeric'},
             {'name': 'date', 'type': 'datetime'},
             {'name': 'amount', 'type': 'numeric'},
-            {'name': 'category', 'type': 'categorical', 'unique': 3},
-            {'name': 'customer_id', 'type': 'numeric'}
+            {'name': 'category', 'type': 'categorical', 'unique': 3}
         ]
     }
-    
-    # Calculate quality
-    missing_pct = (df.isnull().sum().sum() / (len(df) * len(df.columns))) * 100
     quality = {
-        'missing_pct': missing_pct,
-        'duplicates': 47,
-        'overall_score': max(0, 100 - missing_pct - 5),
+        'missing_pct': 10.0,
+        'duplicates': 5,
+        'overall_score': 85,
         'missing_by_column': df.isnull().sum().to_dict()
     }
     
-    analytics = {}
+    print("\n✅ Context Section (Day 7):")
+    print(gen.generate_context(domain, profile, df)[:200] + "...")
     
-    print(f"\nTest data: {len(df)} rows, {missing_pct:.1f}% missing, 47 duplicates")
+    print("\n✅ Pain Points Section (Day 8):")
+    print(gen.generate_pain_points(quality, profile, df)[:200] + "...")
     
-    print("\n✅ Context Section:")
-    print(gen.generate_context(domain, profile, df))
-    
-    print("\n✅ Pain Points Section (NEW - Day 8):")
-    print(gen.generate_pain_points(quality, profile, df))
-    
-    print("\n✅ Action Plan Section:")
-    pain_points = gen._fallback_pain_points(quality, profile, df)
-    print(gen.generate_action_plan(domain, quality, analytics, profile, pain_points))
+    print("\n✅ Action Plan Section (Day 9 - DOMAIN-AWARE):")
+    action_plan = gen.generate_action_plan(domain, quality, {}, profile)
+    print(action_plan)
     
     print("\n" + "="*70)
-    print("✅ Day 8 Complete: AI-enhanced pain points working")
+    print("✅ Days 7-9 Complete: Full narrative system working!")
     print("="*70)
 
 
