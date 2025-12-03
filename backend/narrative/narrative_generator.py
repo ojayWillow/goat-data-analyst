@@ -1,16 +1,19 @@
-# ============================================================================
+﻿# ============================================================================
 # Narrative Generator - Human-like analyst voice
 # ============================================================================
 # Makes GOAT talk like a human analyst, not a dashboard
 # Three main sections:
 #   1. "I See You" - Context recognition (✅ Day 7)
-#   2. "What Hurts" - Pain points identification (✅ Day 8 - AI-ENHANCED)
+#   2. "What Hurts" - Pain points identification (✅ Day 8 - AI-ENHANCED
 #   3. "Your Path Forward" - Action plan (✅ Day 9 - DOMAIN-AWARE)
+#   4. Fix Suggestions - Actionable fixes (✅ Day 12 - NEW)
 # ============================================================================
+
 
 from typing import Dict, List, Optional
 import pandas as pd
 from datetime import datetime
+
 
 
 class NarrativeGenerator:
@@ -525,6 +528,134 @@ class NarrativeGenerator:
         return visualizations.get(domain_type, "Create time series and distribution charts for key metrics")
     
     # ========================================================================
+    # DAY 12: Fix Suggestions (NEW)
+    # ========================================================================
+    
+    def generate_fix_suggestions(
+        self,
+        quality_report: Dict,
+        profile: Dict
+    ) -> List[Dict]:
+        """
+        Generate actionable fix suggestions based on data quality issues (Day 12 ✅ NEW)
+        
+        Returns list of fix suggestions that can be passed to DataFixer.
+        Each suggestion includes:
+        - issue: Human-readable description
+        - severity: 'critical', 'high', 'medium', 'low'
+        - fix_method: DataFixer method name
+        - fix_args: Arguments for the method
+        - preview_impact: What will change
+        
+        Args:
+            quality_report: Quality analysis results
+            profile: Data profile
+            
+        Returns:
+            List of fix suggestion dictionaries
+        """
+        suggestions = []
+        
+        # 1. DUPLICATES
+        duplicate_count = quality_report.get('duplicates', 0)
+        if duplicate_count > 0:
+            severity = 'critical' if duplicate_count > 100 else 'high' if duplicate_count > 10 else 'medium'
+            
+            suggestions.append({
+                'issue': f'{duplicate_count} duplicate rows detected',
+                'severity': severity,
+                'fix_method': 'remove_duplicates',
+                'fix_args': {'keep': 'first'},
+                'preview_impact': f'Will remove {duplicate_count} rows, keeping first occurrence',
+                'button_text': 'Remove Duplicates',
+                'icon': '🔄'
+            })
+        
+        # 2. MISSING VALUES
+        missing = quality_report.get('missing_by_column', {})
+        column_types = {c.get('name'): c.get('type') for c in profile.get('columns', [])}
+        
+        for col, count in missing.items():
+            if count == 0:
+                continue
+            
+            row_count = profile.get('rows', profile.get('overall', {}).get('rows', 1))
+            pct = (count / row_count) * 100
+            
+            if pct > 5:  # Only suggest fix if >5% missing
+                col_type = column_types.get(col, 'object')
+                
+                if col_type in ['int64', 'float64', 'int32', 'float32', 'numeric']:
+                    # Numeric column
+                    severity = 'critical' if pct > 20 else 'high' if pct > 10 else 'medium'
+                    method = 'median'
+                    
+                    suggestions.append({
+                        'issue': f'{pct:.1f}% missing values in \'{col}\'',
+                        'severity': severity,
+                        'fix_method': 'fill_missing_numeric',
+                        'fix_args': {'column': col, 'method': method},
+                        'preview_impact': f'Will fill {count} missing values with {method}',
+                        'button_text': f'Fill {col} (median)',
+                        'icon': '📊'
+                    })
+                else:
+                    # Categorical column
+                    severity = 'high' if pct > 15 else 'medium'
+                    
+                    suggestions.append({
+                        'issue': f'{pct:.1f}% missing values in \'{col}\'',
+                        'severity': severity,
+                        'fix_method': 'fill_missing_categorical',
+                        'fix_args': {'column': col, 'method': 'mode'},
+                        'preview_impact': f'Will fill {count} values with most common value',
+                        'button_text': f'Fill {col} (mode)',
+                        'icon': '📝'
+                    })
+        
+        # 3. OUTLIERS
+        outliers = quality_report.get('outliers', {})
+        for col, count in outliers.items():
+            if count > 0:
+                row_count = profile.get('rows', profile.get('overall', {}).get('rows', 1))
+                pct = (count / row_count) * 100
+                severity = 'high' if pct > 5 else 'medium' if pct > 1 else 'low'
+                
+                suggestions.append({
+                    'issue': f'{count} outliers in \'{col}\'',
+                    'severity': severity,
+                    'fix_method': 'remove_outliers',
+                    'fix_args': {'column': col, 'method': 'iqr', 'threshold': 1.5},
+                    'preview_impact': f'Will remove {count} extreme values ({pct:.1f}% of data)',
+                    'button_text': f'Remove {col} outliers',
+                    'icon': '⚡'
+                })
+        
+        # 4. COLUMN NAME STANDARDIZATION
+        columns = [c.get('name') for c in profile.get('columns', [])]
+        needs_standardization = any(
+            ' ' in col or col != col.lower() or any(c in col for c in '!@#$%^&*()')
+            for col in columns
+        )
+        
+        if needs_standardization:
+            suggestions.append({
+                'issue': 'Column names need standardization',
+                'severity': 'low',
+                'fix_method': 'standardize_column_names',
+                'fix_args': {},
+                'preview_impact': 'Will convert to lowercase snake_case',
+                'button_text': 'Standardize Columns',
+                'icon': '🏷️'
+            })
+        
+        # Sort by severity
+        severity_order = {'critical': 0, 'high': 1, 'medium': 2, 'low': 3}
+        suggestions.sort(key=lambda x: severity_order.get(x['severity'], 4))
+        
+        return suggestions
+    
+    # ========================================================================
     # Full Narrative Generation
     # ========================================================================
     
@@ -645,13 +776,14 @@ class NarrativeGenerator:
         """
 
 
+
 # Test function
 def _test():
     """Test narrative generator with realistic data"""
     import numpy as np
     
     print("\n" + "="*70)
-    print("TESTING NARRATIVE GENERATOR - DAYS 7-9")
+    print("TESTING NARRATIVE GENERATOR - DAYS 7-9 + 12")
     print("="*70)
     
     gen = NarrativeGenerator()
@@ -698,11 +830,18 @@ def _test():
     
     print("\n✅ Action Plan Section (Day 9 - DOMAIN-AWARE):")
     action_plan = gen.generate_action_plan(domain, quality, {}, profile)
-    print(action_plan)
+    print(action_plan[:200] + "...")
+    
+    print("\n✅ Fix Suggestions Section (Day 12 - NEW):")
+    suggestions = gen.generate_fix_suggestions(quality, profile)
+    print(f"Generated {len(suggestions)} fix suggestions:")
+    for sug in suggestions[:3]:
+        print(f"  - {sug['icon']} {sug['issue']} ({sug['severity']})")
     
     print("\n" + "="*70)
-    print("✅ Days 7-9 Complete: Full narrative system working!")
+    print("✅ Days 7-9 + 12 Complete: Full narrative + fix suggestions working!")
     print("="*70)
+
 
 
 if __name__ == "__main__":
