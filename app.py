@@ -16,6 +16,19 @@ from backend.reports.company_health_report import CompanyHealthReportGenerator
 
 st.set_page_config(page_title="GOAT Data Analyst", page_icon="🐐", layout="wide")
 
+# === DAY 17: LOAD CUSTOM CSS ===
+def load_css():
+    try:
+        css_file = Path(__file__).parent / '.streamlit' / 'custom.css'
+        if css_file.exists():
+            with open(css_file, encoding='utf-8') as f:
+                st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+    except Exception:
+        pass
+
+load_css()
+# === END DAY 17 ===
+
 # Session state for tracking fixed data
 if 'original_df' not in st.session_state:
     st.session_state.original_df = None
@@ -32,7 +45,7 @@ if 'auto_reanalyze' not in st.session_state:
 
 # DAY 15/16: MODE + BATCH STATE
 if 'analysis_mode' not in st.session_state:
-    st.session_state.analysis_mode = 'single'  # 'single' or 'batch'
+    st.session_state.analysis_mode = 'single'
 if 'batch_results' not in st.session_state:
     st.session_state.batch_results = None
 if 'selected_file' not in st.session_state:
@@ -65,16 +78,80 @@ with col2:
 st.markdown("---")
 
 # ============================================================================
-# SINGLE FILE MODE (existing)
+# SINGLE FILE MODE
 # ============================================================================
 if st.session_state.analysis_mode == 'single':
-    # File upload
-    uploaded_file = st.file_uploader("Upload your CSV file", type=['csv'])
+    # === DAY 17: SAMPLE DATA GALLERY ===
+    st.write("**📊 Try Sample Data:**")
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        if st.button("🔴 Messy Data", use_container_width=True, help="Duplicates, missing values, outliers"):
+            sample_path = Path(__file__).parent / 'sample_data' / 'demo_messy.csv'
+            if sample_path.exists():
+                df = pd.read_csv(sample_path)
+                st.session_state.original_df = df.copy()
+                st.session_state.current_df = df.copy()
+                st.session_state.last_uploaded_file = 'demo_messy.csv'
+                st.session_state.analysis_result = None
+                st.session_state.fix_history = []
+                progress_bar = st.progress(0, text="Analyzing messy data...")
+                progress_bar.progress(30, text="Finding issues...")
+                engine = AnalysisEngine()
+                progress_bar.progress(70, text="Generating report...")
+                result = engine.analyze(df)
+                progress_bar.progress(100, text="Complete!")
+                st.session_state.analysis_result = result
+                progress_bar.empty()
+                st.rerun()
+    
+    with col2:
+        if st.button("🟡 Medium Data", use_container_width=True, help="Some missing values"):
+            sample_path = Path(__file__).parent / 'sample_data' / 'demo_medium.csv'
+            if sample_path.exists():
+                df = pd.read_csv(sample_path)
+                st.session_state.original_df = df.copy()
+                st.session_state.current_df = df.copy()
+                st.session_state.last_uploaded_file = 'demo_medium.csv'
+                st.session_state.analysis_result = None
+                st.session_state.fix_history = []
+                progress_bar = st.progress(0, text="Analyzing medium data...")
+                progress_bar.progress(30, text="Finding issues...")
+                engine = AnalysisEngine()
+                progress_bar.progress(70, text="Generating report...")
+                result = engine.analyze(df)
+                progress_bar.progress(100, text="Complete!")
+                st.session_state.analysis_result = result
+                progress_bar.empty()
+                st.rerun()
+    
+    with col3:
+        if st.button("🟢 Clean Data", use_container_width=True, help="Perfect data"):
+            sample_path = Path(__file__).parent / 'sample_data' / 'demo_clean.csv'
+            if sample_path.exists():
+                df = pd.read_csv(sample_path)
+                st.session_state.original_df = df.copy()
+                st.session_state.current_df = df.copy()
+                st.session_state.last_uploaded_file = 'demo_clean.csv'
+                st.session_state.analysis_result = None
+                st.session_state.fix_history = []
+                progress_bar = st.progress(0, text="Analyzing clean data...")
+                progress_bar.progress(30, text="Finding issues...")
+                engine = AnalysisEngine()
+                progress_bar.progress(70, text="Generating report...")
+                result = engine.analyze(df)
+                progress_bar.progress(100, text="Complete!")
+                st.session_state.analysis_result = result
+                progress_bar.empty()
+                st.rerun()
+    
+    st.markdown("---")
+    uploaded_file = st.file_uploader("Or upload your own CSV file", type=['csv'])
+
+   
 
     if uploaded_file:
-        # Check if this is a NEW file (different from last uploaded)
         if st.session_state.last_uploaded_file != uploaded_file.name:
-            # New file detected - reset everything
             st.session_state.last_uploaded_file = uploaded_file.name
             st.session_state.original_df = None
             st.session_state.current_df = None
@@ -82,44 +159,47 @@ if st.session_state.analysis_mode == 'single':
             st.session_state.fix_history = []
             st.session_state.auto_reanalyze = False
         
-        # Load data
         df = pd.read_csv(uploaded_file)
 
-        # Store original if first load of THIS file
         if st.session_state.original_df is None:
             st.session_state.original_df = df.copy()
             st.session_state.current_df = df.copy()
 
         st.success(f"✅ Loaded {len(df)} rows × {len(df.columns)} columns")
 
-        # Show current data state
         col1, col2 = st.columns(2)
         with col1:
             st.metric("Current Rows", len(st.session_state.current_df))
         with col2:
             st.metric("Fixes Applied", len(st.session_state.fix_history))
 
-        # Auto-reanalyze after fix
+        # === DAY 17: PROGRESS BAR ===
         if st.session_state.auto_reanalyze:
             st.session_state.auto_reanalyze = False
-            with st.spinner("Re-analyzing after fix..."):
-                engine = AnalysisEngine()
-                result = engine.analyze(st.session_state.current_df)
-                st.session_state.analysis_result = result
+            progress_bar = st.progress(0, text="Re-analyzing after fix...")
+            progress_bar.progress(30, text="Profiling data...")
+            engine = AnalysisEngine()
+            progress_bar.progress(60, text="Generating insights...")
+            result = engine.analyze(st.session_state.current_df)
+            progress_bar.progress(100, text="Complete!")
+            st.session_state.analysis_result = result
+            progress_bar.empty()
 
-        # Analyze button
         if st.button("🚀 Run Analysis", type="primary"):
-            with st.spinner("Analyzing your data..."):
-                engine = AnalysisEngine()
-                result = engine.analyze(st.session_state.current_df)
-                st.session_state.analysis_result = result
+            progress_bar = st.progress(0, text="Starting analysis...")
+            progress_bar.progress(20, text="Profiling data...")
+            engine = AnalysisEngine()
+            progress_bar.progress(50, text="Analyzing quality...")
+            progress_bar.progress(70, text="Generating charts...")
+            result = engine.analyze(st.session_state.current_df)
+            progress_bar.progress(100, text="Complete!")
+            st.session_state.analysis_result = result
+            progress_bar.empty()
 
-        # Display report if available
         if st.session_state.analysis_result is not None:
             st.markdown("---")
             st.components.v1.html(st.session_state.analysis_result.report_html, height=2000, scrolling=True)
 
-        # Fix actions sidebar (only show if analysis has run)
         if st.session_state.analysis_result is not None:
             st.sidebar.title("🔧 Quick Fixes")
 
@@ -128,7 +208,6 @@ if st.session_state.analysis_mode == 'single':
 
             fixer = DataFixer()
 
-            # Fix 1: Remove duplicates
             if quality.get('duplicates', 0) > 0:
                 st.sidebar.subheader("🔄 Remove Duplicates")
                 st.sidebar.write(f"Found: **{quality['duplicates']}** duplicate rows")
@@ -140,7 +219,6 @@ if st.session_state.analysis_mode == 'single':
                     st.sidebar.success(f"✅ Removed {report['removed_rows']} duplicates")
                     st.rerun()
 
-            # Fix 2: Fill missing values
             missing_cols = [col for col, count in quality.get('missing_by_column', {}).items() if count > 0]
             if missing_cols:
                 st.sidebar.subheader("📝 Fill Missing Values")
@@ -176,7 +254,6 @@ if st.session_state.analysis_mode == 'single':
                             st.sidebar.success(f"✅ Filled {col}")
                             st.rerun()
 
-            # Fix 3: Remove outliers
             outliers = quality.get('outliers', {})
             if outliers:
                 st.sidebar.subheader("🎯 Remove Outliers")
@@ -191,7 +268,6 @@ if st.session_state.analysis_mode == 'single':
                         st.sidebar.success(f"✅ Removed {report['removed_rows']} outlier rows")
                         st.rerun()
 
-            # Fix 4: Normalize dates
             date_issues = quality.get('date_format_issues', {})
             if date_issues:
                 st.sidebar.subheader("📅 Normalize Dates")
@@ -205,7 +281,6 @@ if st.session_state.analysis_mode == 'single':
                         st.sidebar.success(f"✅ Normalized {col} to YYYY-MM-DD")
                         st.rerun()
 
-            # Fix 5: Fix capitalization
             cap_issues = quality.get('capitalization_issues', {})
             if cap_issues:
                 st.sidebar.subheader("🔤 Standardize Capitalization")
@@ -232,7 +307,6 @@ if st.session_state.analysis_mode == 'single':
                         st.sidebar.success(f"✅ Standardized {col} to {case_method}")
                         st.rerun()
 
-            # Download cleaned data
             if len(st.session_state.fix_history) > 0:
                 st.sidebar.markdown("---")
                 st.sidebar.subheader("💾 Download Cleaned Data")
@@ -241,16 +315,14 @@ if st.session_state.analysis_mode == 'single':
                 st.sidebar.download_button(
                     label="📥 Download CSV",
                     data=csv,
-                    file_name=f"cleaned_{uploaded_file.name}",
+                    file_name=f"cleaned_{st.session_state.last_uploaded_file}",
                     mime="text/csv"
                 )
 
-                # Show fix history
                 st.sidebar.markdown("**Fixes Applied:**")
                 for i, fix in enumerate(st.session_state.fix_history, 1):
                     st.sidebar.text(f"{i}. {fix.get('operation', 'fix')}")
 
-                # Reset button
                 if st.sidebar.button("↩️ Reset to Original"):
                     st.session_state.current_df = st.session_state.original_df.copy()
                     st.session_state.fix_history = []
@@ -258,11 +330,36 @@ if st.session_state.analysis_mode == 'single':
                     st.sidebar.success("Reset to original data")
                     st.rerun()
 
+    # === DAY 17: SHOW INFO IF SAMPLE DATA LOADED ===
+    elif st.session_state.original_df is not None:
+        st.success(f"✅ Loaded {len(st.session_state.current_df)} rows × {len(st.session_state.current_df.columns)} columns (Sample Data)")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric("Current Rows", len(st.session_state.current_df))
+        with col2:
+            st.metric("Fixes Applied", len(st.session_state.fix_history))
+
+        if st.button("🚀 Run Analysis", type="primary"):
+            progress_bar = st.progress(0, text="Starting analysis...")
+            progress_bar.progress(20, text="Profiling data...")
+            engine = AnalysisEngine()
+            progress_bar.progress(50, text="Analyzing quality...")
+            progress_bar.progress(70, text="Generating charts...")
+            result = engine.analyze(st.session_state.current_df)
+            progress_bar.progress(100, text="Complete!")
+            st.session_state.analysis_result = result
+            progress_bar.empty()
+
+        if st.session_state.analysis_result is not None:
+            st.markdown("---")
+            st.components.v1.html(st.session_state.analysis_result.report_html, height=2000, scrolling=True)
+
     else:
-        st.info("👆 Upload a CSV file to get started")
+        st.info("👆 Upload a CSV file or try example data to get started")
 
 # ============================================================================
-# BATCH MODE (Day 15 + 16)
+# BATCH MODE
 # ============================================================================
 elif st.session_state.analysis_mode == 'batch':
     st.subheader("📁 Multiple Files Analysis")
@@ -279,26 +376,28 @@ elif st.session_state.analysis_mode == 'batch':
         st.success(f"✅ {len(uploaded_files)} files uploaded")
         
         if st.button("🚀 Analyze All Files", type="primary"):
-            with st.spinner(f"Analyzing {len(uploaded_files)} files..."):
-                # Save files to temp directory
-                temp_dir = tempfile.mkdtemp()
-                file_paths = []
-                
-                for uploaded in uploaded_files:
-                    file_path = os.path.join(temp_dir, uploaded.name)
-                    with open(file_path, 'wb') as f:
-                        f.write(uploaded.getvalue())
-                    file_paths.append(file_path)
-                
-                # Run batch analysis
-                batch = BatchEngine()
-                st.session_state.batch_results = batch.analyze_files(file_paths)
-                
-                # Cleanup temp files
-                import shutil
-                shutil.rmtree(temp_dir)
+            # === DAY 17: PROGRESS BAR FOR BATCH ===
+            progress_bar = st.progress(0, text=f"Analyzing {len(uploaded_files)} files...")
+            
+            temp_dir = tempfile.mkdtemp()
+            file_paths = []
+            
+            for i, uploaded in enumerate(uploaded_files):
+                progress_bar.progress(int((i / len(uploaded_files)) * 50), text=f"Processing file {i+1}/{len(uploaded_files)}...")
+                file_path = os.path.join(temp_dir, uploaded.name)
+                with open(file_path, 'wb') as f:
+                    f.write(uploaded.getvalue())
+                file_paths.append(file_path)
+            
+            progress_bar.progress(60, text="Running batch analysis...")
+            batch = BatchEngine()
+            st.session_state.batch_results = batch.analyze_files(file_paths)
+            
+            progress_bar.progress(100, text="Complete!")
+            import shutil
+            shutil.rmtree(temp_dir)
+            progress_bar.empty()
         
-        # Display batch results
         if st.session_state.batch_results:
             results = st.session_state.batch_results
             summary = results['summary']
@@ -306,7 +405,6 @@ elif st.session_state.analysis_mode == 'batch':
             st.markdown("---")
             st.header("📊 Company Data Health Dashboard")
             
-            # Summary metrics
             col1, col2, col3, col4 = st.columns(4)
             with col1:
                 st.metric("Total Files", summary['total_files'])
@@ -319,7 +417,6 @@ elif st.session_state.analysis_mode == 'batch':
             with col4:
                 st.metric("Files Needing Attention", len(summary['files_needing_attention']))
 
-            # === DAY 16: DOWNLOAD COMPANY HEALTH REPORT ===
             with st.expander("📥 Download Executive Summary (HTML)", expanded=False):
                 generator = CompanyHealthReportGenerator()
                 company_html = generator.generate(results)
@@ -331,7 +428,6 @@ elif st.session_state.analysis_mode == 'batch':
                     mime="text/html"
                 )
             
-            # Top issues across all files
             if summary['top_issues']:
                 st.markdown("---")
                 st.subheader("⚠️ Top Issues Across All Files")
@@ -340,7 +436,6 @@ elif st.session_state.analysis_mode == 'batch':
                     emoji = severity_emoji.get(issue['severity'], "⚪")
                     st.markdown(f"**{emoji} {issue['description']}** - Found in {issue['count']} file(s)")
             
-            # Files needing attention
             if summary['files_needing_attention']:
                 st.markdown("---")
                 st.subheader("🚨 Files Needing Immediate Attention")
@@ -350,14 +445,12 @@ elif st.session_state.analysis_mode == 'batch':
                         for issue in file_info['issues']:
                             st.write(f"• {issue}")
             
-            # All files list
             st.markdown("---")
             st.subheader("📄 All Files")
             
             for file_result in results['files']:
                 quality_score = file_result.quality.get('overall_score', 0)
                 
-                # Color code by quality
                 if quality_score >= 80:
                     status_emoji = "🟢"
                 elif quality_score >= 60:
@@ -375,7 +468,6 @@ elif st.session_state.analysis_mode == 'batch':
                         st.session_state.selected_file = file_result
                         st.rerun()
             
-            # Show selected file report
             if st.session_state.selected_file:
                 st.markdown("---")
                 st.subheader(f"📊 Detailed Report: {st.session_state.selected_file.filename}")
@@ -393,6 +485,5 @@ elif st.session_state.analysis_mode == 'batch':
     else:
         st.info("👆 Upload multiple CSV files to analyze")
 
-# Footer
 st.markdown("---")
 st.markdown("*Made with 🐐 by GOAT Data Analyst*")
