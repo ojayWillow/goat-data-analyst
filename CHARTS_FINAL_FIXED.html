@@ -1,0 +1,908 @@
+
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>GOAT Data Analysis Report - Style A</title>
+            <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+            
+        <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                background: #f5f7fa;
+                padding: 20px;
+                font-size: 15px;
+            }
+            .report-container {
+                max-width: 1200px;
+                margin: 0 auto;
+                background: white;
+                border-radius: 16px;
+                overflow: hidden;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+            }
+            .report-header {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 48px 40px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .logo h1 { font-size: 2.8em; margin-bottom: 8px; font-weight: 700; }
+            .tagline { font-size: 1.1em; opacity: 0.95; }
+            .domain-badge {
+                background: rgba(255,255,255,0.25);
+                padding: 20px 30px;
+                border-radius: 12px;
+                text-align: center;
+            }
+            .domain-emoji { font-size: 2.5em; display: block; margin-bottom: 8px; }
+            .domain-type { font-size: 0.95em; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; }
+
+            /* BOLD BORDER SECTIONS - KEY FEATURE */
+            .section-bordered {
+                margin: 50px 40px;
+                padding: 35px;
+                background: white;
+                border-radius: 12px;
+                border-top: 5px solid #ccc;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            }
+            .section-purple { border-top-color: #667eea; }
+            .section-green { border-top-color: #10b981; }
+            .section-blue { border-top-color: #3b82f6; }
+            .section-orange { border-top-color: #f59e0b; }
+            .section-cyan { border-top-color: #06b6d4; }
+
+            .section-title {
+                font-size: 1.9em;
+                margin-bottom: 30px;
+                color: #2c3e50;
+                font-weight: 700;
+            }
+            .card-elevated {
+                background: white;
+                border-radius: 10px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+                transition: all 0.3s ease;
+            }
+            .card-elevated:hover {
+                box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+                transform: translateY(-2px);
+            }
+            .summary-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+                gap: 24px;
+            }
+            .summary-card {
+                padding: 28px;
+                display: flex;
+                align-items: center;
+                gap: 20px;
+                border: 1px solid #e8ecf1;
+            }
+            .card-icon { font-size: 3.5em; }
+            .card-content h3 {
+                font-size: 0.85em;
+                color: #8492a6;
+                margin-bottom: 12px;
+                text-transform: uppercase;
+                letter-spacing: 1.2px;
+                font-weight: 600;
+            }
+            .big-number {
+                font-size: 2.8em;
+                font-weight: 700;
+                color: #2c3e50;
+                line-height: 1;
+                margin-bottom: 8px;
+            }
+            .big-number.score-excellent { color: #10b981; }
+            .big-number.score-good { color: #f59e0b; }
+            .big-number.score-needs-work { color: #ef4444; }
+            .sub-text { font-size: 0.95em; color: #8492a6; font-weight: 500; }
+
+            .metrics-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+                gap: 24px;
+            }
+            .metric-card { padding: 24px; }
+            .metric-header {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                margin-bottom: 18px;
+            }
+            .metric-icon { font-size: 1.8em; }
+            .metric-header h4 {
+                font-size: 0.9em;
+                color: #6b7280;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                font-weight: 600;
+            }
+            .metric-value {
+                font-size: 2.4em;
+                font-weight: 700;
+                color: #2c3e50;
+                margin-bottom: 8px;
+            }
+            .metric-status { font-size: 0.95em; color: #8492a6; font-weight: 500; }
+
+            .profile-table-container { overflow-x: auto; padding: 24px; }
+            .profile-table {
+                width: 100%;
+                border-collapse: separate;
+                border-spacing: 0;
+            }
+            .profile-table th, .profile-table td {
+                padding: 16px 20px;
+                text-align: left;
+            }
+            .profile-table thead tr { background: #f8f9fb; }
+            .profile-table th {
+                font-weight: 700;
+                color: #6b7280;
+                text-transform: uppercase;
+                font-size: 0.8em;
+                letter-spacing: 1.2px;
+                border-bottom: 2px solid #e5e7eb;
+            }
+            .profile-table tbody tr {
+                border-bottom: 1px solid #f3f4f6;
+                transition: background 0.2s ease;
+            }
+            .profile-table tbody tr:hover { background: #fafbfc; }
+            .type-badge {
+                display: inline-block;
+                padding: 6px 14px;
+                border-radius: 6px;
+                font-size: 0.85em;
+                font-weight: 600;
+            }
+            .type-badge.type-numeric { background: #dbeafe; color: #1e40af; }
+            .type-badge.type-categorical { background: #f3e8ff; color: #6b21a8; }
+            .type-badge.type-datetime { background: #d1fae5; color: #065f46; }
+
+            .charts-grid {
+                text-align: center;
+                padding: 48px;
+                background: #f8f9fb;
+            }
+            .charts-grid .placeholder {
+                font-size: 1.3em;
+                color: #6b7280;
+                margin-bottom: 12px;
+                font-weight: 500;
+            }
+
+            .goat-narrative { padding: 35px; }
+            .goat-narrative h3 {
+                color: #2c3e50;
+                font-size: 1.5em;
+                margin: 32px 0 20px 0;
+            }
+            .goat-narrative p {
+                color: #4b5563;
+                margin-bottom: 16px;
+                line-height: 1.8;
+                font-size: 1.05em;
+            }
+
+            /* ========================================
+               NARRATIVE SECTIONS - BOLD BORDER THEME
+               ======================================== */
+            
+            .goat-narrative {
+                margin: 50px 40px;
+                padding: 0;
+            }
+
+            .narrative-section {
+                margin-bottom: 40px;
+                padding: 30px;
+                background: white;
+                border-radius: 12px;
+                border-top: 5px solid;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            }
+
+            .context-section {
+                border-top-color: #06b6d4;
+            }
+
+            .pain-points-section {
+                border-top-color: #f59e0b;
+            }
+
+            .action-plan-section {
+                border-top-color: #10b981;
+            }
+
+            .narrative-heading {
+                font-size: 1.7em;
+                margin-bottom: 20px;
+                color: #2c3e50;
+                font-weight: 700;
+            }
+
+            .narrative-content p {
+                color: #4b5563;
+                margin-bottom: 14px;
+                line-height: 1.7;
+                font-size: 1.08em;
+            }
+
+            .narrative-content strong {
+                color: #2c3e50;
+                font-weight: 600;
+            }
+
+            .quality-score-display {
+                margin-bottom: 20px;
+                padding: 15px 20px;
+                background: #f8f9fb;
+                border-radius: 10px;
+                border: 1px solid #e5e7eb;
+            }
+
+            .quality-score {
+                font-size: 1.3em;
+                font-weight: 700;
+            }
+
+            .quality-score.score-good { color: #10b981; }
+            .quality-score.score-okay { color: #f59e0b; }
+            .quality-score.score-poor { color: #ef4444; }
+
+            .pain-points-list {
+                display: flex;
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            .pain-point {
+                background: white;
+                border-left: 4px solid;
+                border-radius: 8px;
+                padding: 16px 20px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+                transition: all 0.3s ease;
+            }
+
+            .pain-point:hover {
+                box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                transform: translateX(4px);
+            }
+
+            .pain-point-critical {
+                border-left-color: #ef4444;
+                background: #fef2f2;
+            }
+
+            .pain-point-high {
+                border-left-color: #f59e0b;
+                background: #fffbeb;
+            }
+
+            .pain-point-medium {
+                border-left-color: #fbbf24;
+                background: #fefce8;
+            }
+
+            .pain-point-low {
+                border-left-color: #10b981;
+                background: #f0fdf4;
+            }
+
+            .pain-point-header {
+                margin-bottom: 12px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                flex-wrap: wrap;
+            }
+
+            .severity-badge {
+                display: inline-block;
+                padding: 4px 10px;
+                border-radius: 6px;
+                font-size: 0.75em;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+
+            .severity-critical {
+                background: #fee2e2;
+                color: #991b1b;
+                border: 1px solid #ef4444;
+            }
+
+            .severity-high {
+                background: #fef3c7;
+                color: #92400e;
+                border: 1px solid #f59e0b;
+            }
+
+            .severity-medium {
+                background: #fef9c3;
+                color: #854d0e;
+                border: 1px solid #fbbf24;
+            }
+
+            .severity-low {
+                background: #d1fae5;
+                color: #065f46;
+                border: 1px solid #10b981;
+            }
+
+            .pain-point-title {
+                color: #2c3e50;
+                font-size: 1.05em;
+            }
+
+            .pain-point-body {
+                font-size: 0.95em;
+                color: #6b7280;
+                line-height: 1.6;
+            }
+
+            .pain-point-body p {
+                margin: 8px 0;
+            }
+
+            .pain-impact { color: #dc2626; }
+            .pain-fix { color: #059669; }
+
+            .action-intro {
+                font-size: 1.05em;
+                margin-bottom: 20px;
+                padding: 12px 16px;
+                background: #f0fdf4;
+                border-radius: 8px;
+                border-left: 3px solid #10b981;
+            }
+
+            .action-steps-list {
+                list-style: none;
+                counter-reset: action-counter;
+                padding: 0;
+            }
+
+            .action-step {
+                counter-increment: action-counter;
+                position: relative;
+                padding: 14px 14px 14px 50px;
+                margin-bottom: 12px;
+                background: #f8f9fb;
+                border-radius: 8px;
+                border: 1px solid #e5e7eb;
+                transition: all 0.3s ease;
+                line-height: 1.6;
+            }
+
+            .action-step:hover {
+                background: white;
+                border-color: #10b981;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+                transform: translateX(4px);
+            }
+
+            .action-step::before {
+                content: counter(action-counter);
+                position: absolute;
+                left: 14px;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 28px;
+                height: 28px;
+                background: linear-gradient(135deg, #10b981, #059669);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: 700;
+                font-size: 0.9em;
+                color: white;
+                box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+            }
+
+            .report-footer {
+                background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+                color: white;
+                padding: 40px;
+                text-align: center;
+                margin-top: 60px;
+            }
+            .footer-note { font-size: 0.95em; opacity: 0.8; margin-top: 12px; }
+
+            @media (max-width: 768px) {
+                .report-header { flex-direction: column; gap: 24px; padding: 36px 24px; }
+                .section-bordered { margin: 30px 20px; }
+                .goat-narrative { margin: 30px 20px; }
+                .logo h1 { font-size: 2.2em; }
+                .summary-grid, .metrics-grid { grid-template-columns: 1fr; }
+                .action-step { padding-left: 45px; }
+            }
+
+            /* ========================================
+               NARRATIVE SECTIONS - BOLD BORDER THEME
+               ======================================== */
+            
+            .goat-narrative {
+                margin: 50px 40px;
+                padding: 0;
+            }
+
+            .narrative-section {
+                margin-bottom: 40px;
+                padding: 30px;
+                background: white;
+                border-radius: 12px;
+                border-top: 5px solid;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            }
+
+            .context-section {
+                border-top-color: #06b6d4;
+            }
+
+            .pain-points-section {
+                border-top-color: #f59e0b;
+            }
+
+            .action-plan-section {
+                border-top-color: #10b981;
+            }
+
+            .narrative-heading {
+                font-size: 1.7em;
+                margin-bottom: 20px;
+                color: #2c3e50;
+                font-weight: 700;
+            }
+
+            .narrative-content p {
+                color: #4b5563;
+                margin-bottom: 14px;
+                line-height: 1.7;
+                font-size: 1.02em;
+            }
+
+            .narrative-content strong {
+                color: #2c3e50;
+                font-weight: 600;
+            }
+
+            .quality-score-display {
+                margin-bottom: 20px;
+                padding: 15px 20px;
+                background: #f8f9fb;
+                border-radius: 10px;
+                border: 1px solid #e5e7eb;
+            }
+
+            .quality-score {
+                font-size: 1.3em;
+                font-weight: 700;
+            }
+
+            .quality-score.score-good { color: #10b981; }
+            .quality-score.score-okay { color: #f59e0b; }
+            .quality-score.score-poor { color: #ef4444; }
+
+            .pain-points-list {
+                display: flex;
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            .pain-point {
+                background: white;
+                border-left: 4px solid;
+                border-radius: 8px;
+                padding: 16px 20px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+                transition: all 0.3s ease;
+            }
+
+            .pain-point:hover {
+                box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                transform: translateX(4px);
+            }
+
+            .pain-point-critical {
+                border-left-color: #ef4444;
+                background: #fef2f2;
+            }
+
+            .pain-point-high {
+                border-left-color: #f59e0b;
+                background: #fffbeb;
+            }
+
+            .pain-point-medium {
+                border-left-color: #fbbf24;
+                background: #fefce8;
+            }
+
+            .pain-point-low {
+                border-left-color: #10b981;
+                background: #f0fdf4;
+            }
+
+            .pain-point-header {
+                margin-bottom: 12px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                flex-wrap: wrap;
+            }
+
+            .severity-badge {
+                display: inline-block;
+                padding: 4px 10px;
+                border-radius: 6px;
+                font-size: 0.75em;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+
+            .severity-critical {
+                background: #fee2e2;
+                color: #991b1b;
+                border: 1px solid #ef4444;
+            }
+
+            .severity-high {
+                background: #fef3c7;
+                color: #92400e;
+                border: 1px solid #f59e0b;
+            }
+
+            .severity-medium {
+                background: #fef9c3;
+                color: #854d0e;
+                border: 1px solid #fbbf24;
+            }
+
+            .severity-low {
+                background: #d1fae5;
+                color: #065f46;
+                border: 1px solid #10b981;
+            }
+
+            .pain-point-title {
+                color: #2c3e50;
+                font-size: 1.05em;
+            }
+
+            .pain-point-body {
+                font-size: 0.95em;
+                color: #6b7280;
+                line-height: 1.6;
+            }
+
+            .pain-point-body p {
+                margin: 8px 0;
+            }
+
+            .pain-impact { color: #dc2626; }
+            .pain-fix { color: #059669; }
+
+            .action-intro {
+                font-size: 1.05em;
+                margin-bottom: 20px;
+                padding: 12px 16px;
+                background: #f0fdf4;
+                border-radius: 8px;
+                border-left: 3px solid #10b981;
+            }
+
+            .action-steps-list {
+                list-style: none;
+                counter-reset: action-counter;
+                padding: 0;
+            }
+
+            .action-step {
+                counter-increment: action-counter;
+                position: relative;
+                padding: 14px 14px 14px 50px;
+                margin-bottom: 12px;
+                background: #f8f9fb;
+                border-radius: 8px;
+                border: 1px solid #e5e7eb;
+                transition: all 0.3s ease;
+                line-height: 1.6;
+            }
+
+            .action-step:hover {
+                background: white;
+                border-color: #10b981;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+                transform: translateX(4px);
+            }
+
+            .action-step::before {
+                content: counter(action-counter);
+                position: absolute;
+                left: 14px;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 28px;
+                height: 28px;
+                background: linear-gradient(135deg, #10b981, #059669);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: 700;
+                font-size: 0.9em;
+                color: white;
+                box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+            }
+        </style>
+        
+        </head>
+        <body>
+            <div class="report-container">
+                
+        <header class="report-header">
+            <div class="logo">
+                <h1>🐐 GOAT Data Analyst</h1>
+                <p class="tagline">Style A: Bold Accent Borders</p>
+            </div>
+            <div class="domain-badge">
+                <span class="domain-emoji">💰</span>
+                <span class="domain-type">Sales</span>
+            </div>
+        </header>
+        
+                
+        <section class="section-bordered section-purple">
+            <h2 class="section-title">Executive Summary</h2>
+            <div class="summary-grid">
+                <div class="summary-card card-elevated">
+                    <div class="card-icon">📊</div>
+                    <div class="card-content">
+                        <h3>Data Size</h3>
+                        <p class="big-number">10</p>
+                        <p class="sub-text">rows × 7 columns</p>
+                    </div>
+                </div>
+                <div class="summary-card card-elevated">
+                    <div class="card-icon">✨</div>
+                    <div class="card-content">
+                        <h3>Quality Score</h3>
+                        <p class="big-number score-excellent">100/100</p>
+                        <p class="sub-text">Excellent quality</p>
+                    </div>
+                </div>
+                <div class="summary-card card-elevated">
+                    <div class="card-icon">⚡</div>
+                    <div class="card-content">
+                        <h3>Analysis Time</h3>
+                        <p class="big-number">0.00s</p>
+                        <p class="sub-text">Lightning fast</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+                
+        <div class="goat-narrative">
+            
+        <div class="narrative-section context-section">
+            <h3 class="narrative-heading">📊 I See You</h3>
+            <div class="narrative-content">
+                <p>Hi—I can see you're working with a dataset containing <strong>10</strong> rows across <strong>7</strong> columns.</p>
+                <p>Key columns include: <strong>name</strong> (category), <strong>email</strong> (category), <strong>purchase_amount</strong> (monetary), <strong>country</strong> (category).</p>
+                <p>The data spans from <strong>January 2024</strong> to <strong>January 2024</strong> based on the <em>purchase_date</em> column.</p>
+            </div>
+        </div>
+        
+            
+        <div class="narrative-section pain-points-section">
+            <h3 class="narrative-heading">⚠️ What Hurts</h3>
+            <div class="narrative-content">
+                <div class="quality-score-display">
+                    <p>Your overall data quality score: <strong class="quality-score score-good">100/100</strong></p>
+                </div>
+                <div class='pain-points-list'>
+
+            <div class='pain-point pain-point-low'>
+                <div class='pain-point-header'>
+                    <span class='severity-badge severity-low'>🟢 LOW</span>
+                    <strong class='pain-point-title'>No issues detected in the given dataset</strong>
+                </div>
+                <div class='pain-point-body'>
+                    <p class='pain-impact'><strong>Impact:</strong> No significant business impact as no major issues were found</p>
+                    <p class='pain-fix'><strong>Fix:</strong> Continuously monitor the dataset for any new issues that may arise</p>
+                </div>
+            </div>
+            
+
+            <div class='pain-point pain-point-low'>
+                <div class='pain-point-header'>
+                    <span class='severity-badge severity-low'>🟢 LOW</span>
+                    <strong class='pain-point-title'>Unknown data quality may hide underlying issues</strong>
+                </div>
+                <div class='pain-point-body'>
+                    <p class='pain-impact'><strong>Impact:</strong> Potential issues may not be immediately apparent, affecting future analysis</p>
+                    <p class='pain-fix'><strong>Fix:</strong> Implement ongoing data quality checks to identify potential issues early</p>
+                </div>
+            </div>
+            
+
+            <div class='pain-point pain-point-low'>
+                <div class='pain-point-header'>
+                    <span class='severity-badge severity-low'>🟢 LOW</span>
+                    <strong class='pain-point-title'>Small dataset size may not be representative</strong>
+                </div>
+                <div class='pain-point-body'>
+                    <p class='pain-impact'><strong>Impact:</strong> Analysis results may not be generalizable to the larger population</p>
+                    <p class='pain-fix'><strong>Fix:</strong> Collect and analyze a larger, more diverse dataset to increase confidence in results</p>
+                </div>
+            </div>
+            
+
+            <div class='pain-point pain-point-low'>
+                <div class='pain-point-header'>
+                    <span class='severity-badge severity-low'>🟢 LOW</span>
+                    <strong class='pain-point-title'>Lack of data documentation</strong>
+                </div>
+                <div class='pain-point-body'>
+                    <p class='pain-impact'><strong>Impact:</strong> Difficulty in understanding the data and its context, potentially leading to misinterpretation</p>
+                    <p class='pain-fix'><strong>Fix:</strong> Create and maintain data documentation to ensure clarity and understanding of the dataset</p>
+                </div>
+            </div>
+            
+
+            <div class='pain-point pain-point-low'>
+                <div class='pain-point-header'>
+                    <span class='severity-badge severity-low'>🟢 LOW</span>
+                    <strong class='pain-point-title'>No data validation rules in place</strong>
+                </div>
+                <div class='pain-point-body'>
+                    <p class='pain-impact'><strong>Impact:</strong> Potential for incorrect or inconsistent data to be entered, affecting analysis results</p>
+                    <p class='pain-fix'><strong>Fix:</strong> Establish data validation rules to ensure data consistency and accuracy</p>
+                </div>
+            </div>
+            
+</div>
+            </div>
+        </div>
+        
+            
+        <div class="narrative-section action-plan-section">
+            <h3 class="narrative-heading">🎯 Your Path Forward</h3>
+            <div class="narrative-content">
+                <p class='action-intro'>Your data looks clean! Here's how to get the most value from it:</p>
+                <ol class='action-steps-list'>
+                    <li class='action-step'><strong>Validate:</strong> Verify all transactions have positive amounts and valid dates</li>
+<li class='action-step'><strong>Analyze:</strong> Calculate total revenue, average order value, and identify top-selling products</li>
+<li class='action-step'><strong>Visualize:</strong> Build revenue trend over time and product performance comparison</li>
+                </ol>
+            </div>
+        </div>
+        
+        </div>
+        
+                
+        <section class="section-bordered section-green">
+            <h2 class="section-title">Data Quality Dashboard</h2>
+            <div class="metrics-grid">
+                <div class="metric-card card-elevated">
+                    <div class="metric-header">
+                        <span class="metric-icon">🟢</span>
+                        <h4>Missing Data</h4>
+                    </div>
+                    <p class="metric-value">0.0%</p>
+                    <p class="metric-status">No missing data</p>
+                </div>
+                <div class="metric-card card-elevated">
+                    <div class="metric-header">
+                        <span class="metric-icon">🟢</span>
+                        <h4>Duplicates</h4>
+                    </div>
+                    <p class="metric-value">0</p>
+                    <p class="metric-status">No duplicates found</p>
+                </div>
+            </div>
+        </section>
+        
+                
+        <section class="section-bordered section-blue">
+            <h2 class="section-title">Data Profile</h2>
+            <div class="profile-table-container card-elevated">
+                <table class="profile-table">
+                    <thead>
+                        <tr>
+                            <th>Column</th>
+                            <th>Type</th>
+                            <th>Missing</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        
+            <tr>
+                <td><strong>customer_id</strong></td>
+                <td><span class="type-badge type-id">id</span></td>
+                <td>0</td>
+            </tr>
+            
+            <tr>
+                <td><strong>name</strong></td>
+                <td><span class="type-badge type-categorical">categorical</span></td>
+                <td>0</td>
+            </tr>
+            
+            <tr>
+                <td><strong>email</strong></td>
+                <td><span class="type-badge type-categorical">categorical</span></td>
+                <td>0</td>
+            </tr>
+            
+            <tr>
+                <td><strong>age</strong></td>
+                <td><span class="type-badge type-numeric">numeric</span></td>
+                <td>0</td>
+            </tr>
+            
+            <tr>
+                <td><strong>purchase_amount</strong></td>
+                <td><span class="type-badge type-numeric">numeric</span></td>
+                <td>0</td>
+            </tr>
+            
+            <tr>
+                <td><strong>purchase_date</strong></td>
+                <td><span class="type-badge type-datetime">datetime</span></td>
+                <td>0</td>
+            </tr>
+            
+            <tr>
+                <td><strong>country</strong></td>
+                <td><span class="type-badge type-categorical">categorical</span></td>
+                <td>0</td>
+            </tr>
+            
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        
+                
+        <section class="section-bordered section-orange">
+            <h2 class="section-title">📊 Visualizations</h2>
+            <div class="charts-grid">
+                
+            <div class="chart-container" style="margin-bottom: 24px;">
+                <div>                            <div id="chart-distribution" class="plotly-graph-div" style="height:400px; width:100%;"></div>            <script type="text/javascript">                                    window.PLOTLYENV=window.PLOTLYENV || {};                                    if (document.getElementById("chart-distribution")) {                    Plotly.newPlot(                        "chart-distribution",                        [{"marker":{"color":"#3b82f6"},"name":"purchase_amount","nbinsx":30,"x":[100.5,200.0,150.75,180.25,300.25,175.0,220.5,125.75,195.0,165.5],"type":"histogram"}],                        {"template":{"data":{"barpolar":[{"marker":{"line":{"color":"white","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"white","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"#C8D4E3","linecolor":"#C8D4E3","minorgridcolor":"#C8D4E3","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"#C8D4E3","linecolor":"#C8D4E3","minorgridcolor":"#C8D4E3","startlinecolor":"#2a3f5f"},"type":"carpet"}],"choropleth":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"choropleth"}],"contourcarpet":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"contourcarpet"}],"contour":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"contour"}],"heatmapgl":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"heatmapgl"}],"heatmap":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"heatmap"}],"histogram2dcontour":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"histogram2dcontour"}],"histogram2d":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"histogram2d"}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"mesh3d":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"mesh3d"}],"parcoords":[{"line":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"parcoords"}],"pie":[{"automargin":true,"type":"pie"}],"scatter3d":[{"line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatter3d"}],"scattercarpet":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattercarpet"}],"scattergeo":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattergeo"}],"scattergl":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattergl"}],"scattermapbox":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattermapbox"}],"scatterpolargl":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterpolargl"}],"scatterpolar":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterpolar"}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"scatterternary":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterternary"}],"surface":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"surface"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}]},"layout":{"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"autotypenumbers":"strict","coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]],"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]},"colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"geo":{"bgcolor":"white","lakecolor":"white","landcolor":"white","showlakes":true,"showland":true,"subunitcolor":"#C8D4E3"},"hoverlabel":{"align":"left"},"hovermode":"closest","mapbox":{"style":"light"},"paper_bgcolor":"white","plot_bgcolor":"white","polar":{"angularaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":""},"bgcolor":"white","radialaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":""}},"scene":{"xaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"},"yaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"},"zaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"ternary":{"aaxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""},"baxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""},"bgcolor":"white","caxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""}},"title":{"x":0.05},"xaxis":{"automargin":true,"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":"","title":{"standoff":15},"zerolinecolor":"#EBF0F8","zerolinewidth":2},"yaxis":{"automargin":true,"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":"","title":{"standoff":15},"zerolinecolor":"#EBF0F8","zerolinewidth":2}}},"margin":{"l":50,"r":50,"t":50,"b":50},"title":{"text":"Distribution of purchase_amount"},"xaxis":{"title":{"text":"purchase_amount"}},"yaxis":{"title":{"text":"Frequency"}},"showlegend":false,"height":400},                        {"responsive": true}                    )                };                            </script>        </div>
+            </div>
+            
+            <div class="chart-container" style="margin-bottom: 24px;">
+                <div>                            <div id="chart-category" class="plotly-graph-div" style="height:400px; width:100%;"></div>            <script type="text/javascript">                                    window.PLOTLYENV=window.PLOTLYENV || {};                                    if (document.getElementById("chart-category")) {                    Plotly.newPlot(                        "chart-category",                        [{"marker":{"color":"#8b5cf6"},"name":"country","x":["USA","Canada","UK","Australia"],"y":[5,2,2,1],"type":"bar"}],                        {"template":{"data":{"barpolar":[{"marker":{"line":{"color":"white","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"white","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"#C8D4E3","linecolor":"#C8D4E3","minorgridcolor":"#C8D4E3","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"#C8D4E3","linecolor":"#C8D4E3","minorgridcolor":"#C8D4E3","startlinecolor":"#2a3f5f"},"type":"carpet"}],"choropleth":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"choropleth"}],"contourcarpet":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"contourcarpet"}],"contour":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"contour"}],"heatmapgl":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"heatmapgl"}],"heatmap":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"heatmap"}],"histogram2dcontour":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"histogram2dcontour"}],"histogram2d":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"histogram2d"}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"mesh3d":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"mesh3d"}],"parcoords":[{"line":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"parcoords"}],"pie":[{"automargin":true,"type":"pie"}],"scatter3d":[{"line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatter3d"}],"scattercarpet":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattercarpet"}],"scattergeo":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattergeo"}],"scattergl":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattergl"}],"scattermapbox":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattermapbox"}],"scatterpolargl":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterpolargl"}],"scatterpolar":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterpolar"}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"scatterternary":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterternary"}],"surface":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"surface"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}]},"layout":{"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"autotypenumbers":"strict","coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]],"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]},"colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"geo":{"bgcolor":"white","lakecolor":"white","landcolor":"white","showlakes":true,"showland":true,"subunitcolor":"#C8D4E3"},"hoverlabel":{"align":"left"},"hovermode":"closest","mapbox":{"style":"light"},"paper_bgcolor":"white","plot_bgcolor":"white","polar":{"angularaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":""},"bgcolor":"white","radialaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":""}},"scene":{"xaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"},"yaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"},"zaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"ternary":{"aaxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""},"baxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""},"bgcolor":"white","caxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""}},"title":{"x":0.05},"xaxis":{"automargin":true,"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":"","title":{"standoff":15},"zerolinecolor":"#EBF0F8","zerolinewidth":2},"yaxis":{"automargin":true,"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":"","title":{"standoff":15},"zerolinecolor":"#EBF0F8","zerolinewidth":2}}},"margin":{"l":50,"r":50,"t":50,"b":50},"title":{"text":"Top Categories in country"},"xaxis":{"title":{"text":"country"}},"yaxis":{"title":{"text":"Count"}},"showlegend":false,"height":400},                        {"responsive": true}                    )                };                            </script>        </div>
+            </div>
+            
+            </div>
+        </section>
+        
+                
+        <footer class="report-footer">
+            <p>Generated by GOAT Data Analyst on 2025-12-04 23:50:55</p>
+            <p class="footer-note">Style A: Bold Accent Borders</p>
+        </footer>
+        
+            </div>
+        </body>
+        </html>
+        

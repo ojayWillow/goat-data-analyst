@@ -1,242 +1,11 @@
-# Style A: Bold Accent Borders
-# Each section gets a unique colored top border (4px thick)
 
-from typing import Dict, List, Optional
-from backend.core.models import AnalysisResult
-
-
-class UltimateReportGenerator:
-    def __init__(self):
-        print("✅ Style A: Bold Accent Borders")
-
-    def generate(self, result: AnalysisResult) -> str:
-        header = self._build_header(result)
-        summary = self._build_summary(result)
-        narrative = result.narrative if result.narrative else self._placeholder_narrative()
-        quality_dashboard = self._build_quality_dashboard(result)
-        profile_section = self._build_profile_section(result)
-        charts_section = self._build_charts_section(result)
-        footer = self._build_footer(result)
-
-        return f"""
         <!DOCTYPE html>
         <html lang="en">
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>GOAT Data Analysis Report - Style A</title>
-            <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
-            {self._get_styles()}
-        </head>
-        <body>
-            <div class="report-container">
-                {header}
-                {summary}
-                {narrative}
-                {quality_dashboard}
-                {profile_section}
-                {charts_section}
-                {footer}
-            </div>
-        </body>
-        </html>
-        """
-
-    def _build_header(self, result: AnalysisResult) -> str:
-        domain_type = result.domain.get('type', 'unknown')
-        domain_emoji = self._get_domain_emoji(domain_type)
-        return f"""
-        <header class="report-header">
-            <div class="logo">
-                <h1>🐐 GOAT Data Analyst</h1>
-                <p class="tagline">Style A: Bold Accent Borders</p>
-            </div>
-            <div class="domain-badge">
-                <span class="domain-emoji">{domain_emoji}</span>
-                <span class="domain-type">{domain_type.replace('_', ' ').title()}</span>
-            </div>
-        </header>
-        """
-
-    def _build_summary(self, result: AnalysisResult) -> str:
-        rows = result.profile.get('overall', {}).get('rows', result.profile.get('rows', 0))
-        cols = result.profile.get('overall', {}).get('columns', result.profile.get('columns', 0))
-        quality_score = result.quality.get('overall_score', 0)
-        score_class = "excellent" if quality_score >= 80 else "good" if quality_score >= 60 else "needs-work"
-
-        return f"""
-        <section class="section-bordered section-purple">
-            <h2 class="section-title">Executive Summary</h2>
-            <div class="summary-grid">
-                <div class="summary-card card-elevated">
-                    <div class="card-icon">📊</div>
-                    <div class="card-content">
-                        <h3>Data Size</h3>
-                        <p class="big-number">{rows:,}</p>
-                        <p class="sub-text">rows × {cols} columns</p>
-                    </div>
-                </div>
-                <div class="summary-card card-elevated">
-                    <div class="card-icon">✨</div>
-                    <div class="card-content">
-                        <h3>Quality Score</h3>
-                        <p class="big-number score-{score_class}">{quality_score:.0f}/100</p>
-                        <p class="sub-text">{self._get_quality_label(quality_score)}</p>
-                    </div>
-                </div>
-                <div class="summary-card card-elevated">
-                    <div class="card-icon">⚡</div>
-                    <div class="card-content">
-                        <h3>Analysis Time</h3>
-                        <p class="big-number">{result.execution_time_seconds:.2f}s</p>
-                        <p class="sub-text">Lightning fast</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-        """
-
-    def _build_quality_dashboard(self, result: AnalysisResult) -> str:
-        missing_pct = result.quality.get('missing_pct', 0)
-        duplicates = result.quality.get('duplicates', 0)
-        return f"""
-        <section class="section-bordered section-green">
-            <h2 class="section-title">Data Quality Dashboard</h2>
-            <div class="metrics-grid">
-                <div class="metric-card card-elevated">
-                    <div class="metric-header">
-                        <span class="metric-icon">{"🟢" if missing_pct < 5 else "🟡" if missing_pct < 20 else "🔴"}</span>
-                        <h4>Missing Data</h4>
-                    </div>
-                    <p class="metric-value">{missing_pct:.1f}%</p>
-                    <p class="metric-status">{self._get_missing_status(missing_pct)}</p>
-                </div>
-                <div class="metric-card card-elevated">
-                    <div class="metric-header">
-                        <span class="metric-icon">{"🟢" if duplicates == 0 else "🟡" if duplicates < 100 else "🔴"}</span>
-                        <h4>Duplicates</h4>
-                    </div>
-                    <p class="metric-value">{duplicates:,}</p>
-                    <p class="metric-status">{self._get_duplicate_status(duplicates)}</p>
-                </div>
-            </div>
-        </section>
-        """
-
-    def _build_profile_section(self, result: AnalysisResult) -> str:
-        columns = result.profile.get('columns', [])
-        if not columns:
-            return ""
-        columns_html = ""
-        for col in columns[:10]:
-            col_name = col.get('name', 'Unknown')
-            col_type = col.get('type', 'unknown')
-            missing = col.get('missing', 0)
-            columns_html += f"""
-            <tr>
-                <td><strong>{col_name}</strong></td>
-                <td><span class="type-badge type-{col_type}">{col_type}</span></td>
-                <td>{missing}</td>
-            </tr>
-            """
-        return f"""
-        <section class="section-bordered section-blue">
-            <h2 class="section-title">Data Profile</h2>
-            <div class="profile-table-container card-elevated">
-                <table class="profile-table">
-                    <thead>
-                        <tr>
-                            <th>Column</th>
-                            <th>Type</th>
-                            <th>Missing</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {columns_html}
-                    </tbody>
-                </table>
-            </div>
-        </section>
-        """
-
-    def _build_charts_section(self, result: AnalysisResult) -> str:
-        """Build the charts section with actual chart HTML"""
-        if not result.charts or len(result.charts) == 0:
-            return ""
-        
-        # Render actual charts
-        charts_html = ""
-        for chart_id, chart_html in result.charts.items():
-            charts_html += f'''
-            <div class="chart-container" style="margin-bottom: 24px;">
-                {chart_html}
-            </div>
-            '''
-        
-        return f"""
-        <section class="section-bordered section-orange">
-            <h2 class="section-title">📊 Visualizations</h2>
-            <div class="charts-grid">
-                {charts_html}
-            </div>
-        </section>
-        """
-
-
-
-    def _build_footer(self, result: AnalysisResult) -> str:
-        import datetime
-        now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        return f"""
-        <footer class="report-footer">
-            <p>Generated by GOAT Data Analyst on {now}</p>
-            <p class="footer-note">Style A: Bold Accent Borders</p>
-        </footer>
-        """
-
-    def _placeholder_narrative(self) -> str:
-        return """<div class="goat-narrative section-bordered section-cyan"><p><em>Narrative generation in progress...</em></p></div>"""
-
-    def _get_domain_emoji(self, domain_type: str) -> str:
-        """Get emoji for domain type"""
-        domain_emojis = {
-            'sales': '💰',
-            'ecommerce': '🛒',
-            'finance': '💵',
-            'marketing': '📊',
-            'customer': '👥',
-            'product': '📦',
-            'inventory': '📦',
-            'hr': '👔',
-            'health': '🏥',
-            'education': '🎓',
-            'logistics': '🚚',
-            'unknown': '📋'
-        }
-        return domain_emojis.get(domain_type, '📋')
-
-
-    def _get_quality_label(self, score: float) -> str:
-        if score >= 90: return "Excellent quality"
-        elif score >= 80: return "Very good quality"
-        elif score >= 70: return "Good quality"
-        elif score >= 60: return "Acceptable quality"
-        else: return "Needs improvement"
-
-    def _get_missing_status(self, missing_pct: float) -> str:
-        if missing_pct == 0: return "No missing data"
-        elif missing_pct < 5: return "Minimal missing data"
-        elif missing_pct < 20: return "Some missing data"
-        else: return "Significant missing data"
-
-    def _get_duplicate_status(self, duplicates: int) -> str:
-        if duplicates == 0: return "No duplicates found"
-        elif duplicates < 10: return "Few duplicates"
-        elif duplicates < 100: return "Some duplicates"
-        else: return "Many duplicates found"
-
-    def _get_styles(self) -> str:
-        return """
+            
         <style>
             * { margin: 0; padding: 0; box-sizing: border-box; }
             body {
@@ -880,4 +649,252 @@ class UltimateReportGenerator:
                 box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
             }
         </style>
-        """
+        
+        </head>
+        <body>
+            <div class="report-container">
+                
+        <header class="report-header">
+            <div class="logo">
+                <h1>🐐 GOAT Data Analyst</h1>
+                <p class="tagline">Style A: Bold Accent Borders</p>
+            </div>
+            <div class="domain-badge">
+                <span class="domain-emoji">💰</span>
+                <span class="domain-type">Sales</span>
+            </div>
+        </header>
+        
+                
+        <section class="section-bordered section-purple">
+            <h2 class="section-title">Executive Summary</h2>
+            <div class="summary-grid">
+                <div class="summary-card card-elevated">
+                    <div class="card-icon">📊</div>
+                    <div class="card-content">
+                        <h3>Data Size</h3>
+                        <p class="big-number">10</p>
+                        <p class="sub-text">rows × 7 columns</p>
+                    </div>
+                </div>
+                <div class="summary-card card-elevated">
+                    <div class="card-icon">✨</div>
+                    <div class="card-content">
+                        <h3>Quality Score</h3>
+                        <p class="big-number score-excellent">100/100</p>
+                        <p class="sub-text">Excellent quality</p>
+                    </div>
+                </div>
+                <div class="summary-card card-elevated">
+                    <div class="card-icon">⚡</div>
+                    <div class="card-content">
+                        <h3>Analysis Time</h3>
+                        <p class="big-number">0.00s</p>
+                        <p class="sub-text">Lightning fast</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+                
+        <div class="goat-narrative">
+            
+        <div class="narrative-section context-section">
+            <h3 class="narrative-heading">📊 I See You</h3>
+            <div class="narrative-content">
+                <p>Hi—I can see you're working with a dataset containing <strong>10</strong> rows across <strong>7</strong> columns.</p>
+                <p>Key columns include: <strong>name</strong> (category), <strong>email</strong> (category), <strong>purchase_amount</strong> (monetary), <strong>country</strong> (category).</p>
+                <p>The data spans from <strong>January 2024</strong> to <strong>January 2024</strong> based on the <em>purchase_date</em> column.</p>
+            </div>
+        </div>
+        
+            
+        <div class="narrative-section pain-points-section">
+            <h3 class="narrative-heading">⚠️ What Hurts</h3>
+            <div class="narrative-content">
+                <div class="quality-score-display">
+                    <p>Your overall data quality score: <strong class="quality-score score-good">100/100</strong></p>
+                </div>
+                <div class='pain-points-list'>
+
+            <div class='pain-point pain-point-low'>
+                <div class='pain-point-header'>
+                    <span class='severity-badge severity-low'>🟢 LOW</span>
+                    <strong class='pain-point-title'>No data quality issues detected in the given dataset</strong>
+                </div>
+                <div class='pain-point-body'>
+                    <p class='pain-impact'><strong>Impact:</strong> No significant business impact as the dataset appears to be clean</p>
+                    <p class='pain-fix'><strong>Fix:</strong> Continue to monitor the dataset for any potential issues that may arise in the future</p>
+                </div>
+            </div>
+            
+
+            <div class='pain-point pain-point-low'>
+                <div class='pain-point-header'>
+                    <span class='severity-badge severity-low'>🟢 LOW</span>
+                    <strong class='pain-point-title'>Unknown data source may lead to potential issues in the future</strong>
+                </div>
+                <div class='pain-point-body'>
+                    <p class='pain-impact'><strong>Impact:</strong> Potential issues may impact business decisions if the data is not reliable</p>
+                    <p class='pain-fix'><strong>Fix:</strong> Identify the data source and implement data validation checks to ensure data quality</p>
+                </div>
+            </div>
+            
+
+            <div class='pain-point pain-point-low'>
+                <div class='pain-point-header'>
+                    <span class='severity-badge severity-low'>🟢 LOW</span>
+                    <strong class='pain-point-title'>Small dataset size may not be representative of the population</strong>
+                </div>
+                <div class='pain-point-body'>
+                    <p class='pain-impact'><strong>Impact:</strong> Insights gained from the dataset may not be generalizable to the larger population</p>
+                    <p class='pain-fix'><strong>Fix:</strong> Collect more data to increase the sample size and improve the accuracy of insights</p>
+                </div>
+            </div>
+            
+
+            <div class='pain-point pain-point-low'>
+                <div class='pain-point-header'>
+                    <span class='severity-badge severity-low'>🟢 LOW</span>
+                    <strong class='pain-point-title'>No data profiling or exploratory data analysis has been performed</strong>
+                </div>
+                <div class='pain-point-body'>
+                    <p class='pain-impact'><strong>Impact:</strong> Hidden patterns or trends in the data may not be discovered</p>
+                    <p class='pain-fix'><strong>Fix:</strong> Perform data profiling and exploratory data analysis to gain a deeper understanding of the data</p>
+                </div>
+            </div>
+            
+
+            <div class='pain-point pain-point-low'>
+                <div class='pain-point-header'>
+                    <span class='severity-badge severity-low'>🟢 LOW</span>
+                    <strong class='pain-point-title'>No data quality metrics have been established</strong>
+                </div>
+                <div class='pain-point-body'>
+                    <p class='pain-impact'><strong>Impact:</strong> Data quality issues may not be detected in a timely manner</p>
+                    <p class='pain-fix'><strong>Fix:</strong> Establish data quality metrics and monitor them regularly to ensure data quality</p>
+                </div>
+            </div>
+            
+</div>
+            </div>
+        </div>
+        
+            
+        <div class="narrative-section action-plan-section">
+            <h3 class="narrative-heading">🎯 Your Path Forward</h3>
+            <div class="narrative-content">
+                <p class='action-intro'>Your data looks clean! Here's how to get the most value from it:</p>
+                <ol class='action-steps-list'>
+                    <li class='action-step'><strong>Validate:</strong> Verify all transactions have positive amounts and valid dates</li>
+<li class='action-step'><strong>Analyze:</strong> Calculate total revenue, average order value, and identify top-selling products</li>
+<li class='action-step'><strong>Visualize:</strong> Build revenue trend over time and product performance comparison</li>
+                </ol>
+            </div>
+        </div>
+        
+        </div>
+        
+                
+        <section class="section-bordered section-green">
+            <h2 class="section-title">Data Quality Dashboard</h2>
+            <div class="metrics-grid">
+                <div class="metric-card card-elevated">
+                    <div class="metric-header">
+                        <span class="metric-icon">🟢</span>
+                        <h4>Missing Data</h4>
+                    </div>
+                    <p class="metric-value">0.0%</p>
+                    <p class="metric-status">No missing data</p>
+                </div>
+                <div class="metric-card card-elevated">
+                    <div class="metric-header">
+                        <span class="metric-icon">🟢</span>
+                        <h4>Duplicates</h4>
+                    </div>
+                    <p class="metric-value">0</p>
+                    <p class="metric-status">No duplicates found</p>
+                </div>
+            </div>
+        </section>
+        
+                
+        <section class="section-bordered section-blue">
+            <h2 class="section-title">Data Profile</h2>
+            <div class="profile-table-container card-elevated">
+                <table class="profile-table">
+                    <thead>
+                        <tr>
+                            <th>Column</th>
+                            <th>Type</th>
+                            <th>Missing</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        
+            <tr>
+                <td><strong>customer_id</strong></td>
+                <td><span class="type-badge type-id">id</span></td>
+                <td>0</td>
+            </tr>
+            
+            <tr>
+                <td><strong>name</strong></td>
+                <td><span class="type-badge type-categorical">categorical</span></td>
+                <td>0</td>
+            </tr>
+            
+            <tr>
+                <td><strong>email</strong></td>
+                <td><span class="type-badge type-categorical">categorical</span></td>
+                <td>0</td>
+            </tr>
+            
+            <tr>
+                <td><strong>age</strong></td>
+                <td><span class="type-badge type-numeric">numeric</span></td>
+                <td>0</td>
+            </tr>
+            
+            <tr>
+                <td><strong>purchase_amount</strong></td>
+                <td><span class="type-badge type-numeric">numeric</span></td>
+                <td>0</td>
+            </tr>
+            
+            <tr>
+                <td><strong>purchase_date</strong></td>
+                <td><span class="type-badge type-datetime">datetime</span></td>
+                <td>0</td>
+            </tr>
+            
+            <tr>
+                <td><strong>country</strong></td>
+                <td><span class="type-badge type-categorical">categorical</span></td>
+                <td>0</td>
+            </tr>
+            
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        
+                
+        <section class="section-bordered section-orange">
+            <h2 class="section-title">Visualizations</h2>
+            <div class="charts-grid card-elevated">
+                <p class="placeholder">📊 Charts will be rendered here</p>
+                <p class="sub-text">2 charts generated</p>
+            </div>
+        </section>
+        
+                
+        <footer class="report-footer">
+            <p>Generated by GOAT Data Analyst on 2025-12-04 22:41:13</p>
+            <p class="footer-note">Style A: Bold Accent Borders</p>
+        </footer>
+        
+            </div>
+        </body>
+        </html>
+        

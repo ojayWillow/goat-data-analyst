@@ -62,4 +62,4 @@ class TimeSeriesChart(BaseChart):
             margin=dict(l=50, r=50, t=50, b=50)
         )
         
-        return fig.to_html(include_plotlyjs=False, div_id=f"chart-{self.chart_name}")
+        return fig.to_html(include_plotlyjs=False, full_html=False, div_id=f"chart-{self.chart_name}")
