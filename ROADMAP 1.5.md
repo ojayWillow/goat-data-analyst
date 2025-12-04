@@ -135,14 +135,14 @@ curl -H "Authorization: Bearer <token>" https://api.goat.com/analyze/html
 **Objective**: Prevent abuse and spam
 
 #### Tasks:
-- [ ] Install slowapi: `pip install slowapi`
-- [ ] Add rate limiter to FastAPI:
+- [✅ ] Install slowapi: `pip install slowapi`
+- [✅ ] Add rate limiter to FastAPI:
   - 10 requests/minute per user (analysis endpoints)
   - 100 requests/minute per user (auth endpoints)
-- [ ] Add rate limit headers to responses
-- [ ] Return 429 Too Many Requests when exceeded
-- [ ] Log rate limit violations
-- [ ] Add usage counter to user dashboard
+- [✅ ] Add rate limit headers to responses
+- [✅ ] Return 429 Too Many Requests when exceeded
+- [✅ ] Log rate limit violations
+- [✅ ] Add usage counter to user dashboard
 
 #### Success Criteria:
 \`\`\`bash
@@ -152,10 +152,10 @@ curl -H "Authorization: Bearer <token>" https://api.goat.com/analyze/html
 \`\`\`
 
 #### Deliverable:
-- [ ] Rate limiting active on all endpoints
-- [ ] Users see clear error when rate limited
-- [ ] Rate limit counters tracked
-- [ ] Violations logged
+- [✅ ] Rate limiting active on all endpoints
+- [✅ ] Users see clear error when rate limited
+- [✅ ] Rate limit counters tracked
+- [✅m ] Violations logged
 
 **Status**: ⬜ Not Started | 🟡 In Progress | ✅ Complete
 

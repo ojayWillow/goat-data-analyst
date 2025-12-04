@@ -1,13 +1,26 @@
-
 from datetime import datetime
 import io
+import os
 import pandas as pd
 from fastapi import FastAPI, File, UploadFile, HTTPException, Depends, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
+from backend.utils.error_mapper import get_user_friendly_error
 from pydantic import BaseModel, EmailStr
 from typing import Optional
+import sentry_sdk
+from dotenv import load_dotenv
 
+load_dotenv()
+
+# Initialize Sentry for error tracking
+sentry_sdk.init(
+    dsn=os.getenv("SENTRY_DSN"),
+    traces_sample_rate=1.0,
+    profiles_sample_rate=1.0,
+    send_default_pii=True,
+    environment="production"
+)
 
 from backend.core.engine import AnalysisEngine
 from backend.auth.auth_manager import AuthManager
@@ -224,7 +237,6 @@ async def analyze_csv_html(
         if not is_valid:
             raise HTTPException(status_code=400, detail=error_msg)
 
-
         # Read file
         contents = await file.read()
         
@@ -235,37 +247,32 @@ async def analyze_csv_html(
             # Try with latin-1 encoding
             try:
                 df = pd.read_csv(io.BytesIO(contents), encoding='latin-1')
-            except:
-                raise HTTPException(
-                    status_code=400, 
-                    detail="File encoding issue. Please save as UTF-8 CSV."
-                )
+            except Exception as e:
+                user_error = get_user_friendly_error(e)
+                raise HTTPException(status_code=400, detail=user_error)
         
         # Validate CSV structure
         is_valid, error_msg = file_validator.validate_csv_structure(df)
         if not is_valid:
             raise HTTPException(status_code=400, detail=error_msg)
 
-
         # THE ONE BRAIN does everything
         engine = AnalysisEngine()
         result = engine.analyze(df)
 
-
         # Return HTML report
         return HTMLResponse(content=result.report_html)
 
-
-    except pd.errors.EmptyDataError:
-        raise HTTPException(status_code=400, detail="CSV file is empty")
-    except pd.errors.ParserError as e:
-        raise HTTPException(status_code=400, detail=f"CSV parsing error: {str(e)}")
     except HTTPException:
         raise
     except Exception as e:
-        print("ERROR in /analyze/html:", repr(e))
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Report generation failed: {str(e)}")
+        # Log to Sentry
+        import sentry_sdk
+        sentry_sdk.capture_exception(e)
+        
+        # Return user-friendly error
+        user_error = get_user_friendly_error(e)
+        raise HTTPException(status_code=500, detail=user_error)
 
 
 
@@ -285,6 +292,13 @@ async def http_exception_handler(request, exc):
             "status_code": exc.status_code
         }
     )
+
+
+@app.get("/sentry-debug", tags=["Debug"])
+async def trigger_error():
+    """Test endpoint to verify Sentry error tracking"""
+    division_by_zero = 1 / 0
+
 
 
 
