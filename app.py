@@ -13,6 +13,7 @@ from backend.core.engine import AnalysisEngine
 from backend.core.batch_engine import BatchEngine
 from backend.data_processing.data_fixer import DataFixer
 from backend.reports.company_health_report import CompanyHealthReportGenerator
+from backend.auth.streamlit_auth import StreamlitAuth
 
 st.set_page_config(page_title="GOAT Data Analyst", page_icon="🐐", layout="wide")
 
@@ -27,7 +28,72 @@ def load_css():
         pass
 
 load_css()
+
 # === END DAY 17 ===
+
+
+# === DAY 23: AUTHENTICATION ===
+auth = StreamlitAuth(api_url="http://localhost:8000")
+
+# Check if logged in
+if not auth.is_logged_in():
+    # Center the login form
+    col1, col2, col3 = st.columns([1, 2, 1])
+    
+    with col2:
+        st.title("🐐 GOAT Data Analyst")
+        st.markdown("### 🔐 Login Required")
+        
+        tab1, tab2 = st.tabs(["Login", "Sign Up"])
+        
+        with tab1:
+            st.subheader("Login to Your Account")
+            login_email = st.text_input("Email", key="login_email")
+            login_password = st.text_input("Password", type="password", key="login_password")
+            
+            if st.button("Login", type="primary", use_container_width=True):
+                if login_email and login_password:
+                    result = auth.login(login_email, login_password)
+                    if result['success']:
+                        st.success("✅ Logged in successfully!")
+                        st.rerun()
+                    else:
+                        st.error(f"❌ {result['error']}")
+                else:
+                    st.warning("Please enter email and password")
+        
+        with tab2:
+            st.subheader("Create New Account")
+            signup_email = st.text_input("Email", key="signup_email")
+            signup_password = st.text_input("Password (min 6 characters)", type="password", key="signup_password")
+            signup_password2 = st.text_input("Confirm Password", type="password", key="signup_password2")
+            
+            if st.button("Sign Up", type="primary", use_container_width=True):
+                if signup_email and signup_password and signup_password2:
+                    if signup_password != signup_password2:
+                        st.error("❌ Passwords don't match")
+                    elif len(signup_password) < 6:
+                        st.error("❌ Password must be at least 6 characters")
+                    else:
+                        result = auth.signup(signup_email, signup_password)
+                        if result['success']:
+                            st.success("✅ Account created! Please login.")
+                        else:
+                            st.error(f"❌ {result['error']}")
+                else:
+                    st.warning("Please fill all fields")
+    
+    st.stop()  # Stop here if not logged in
+
+# User is logged in - show email in sidebar
+st.sidebar.markdown(f"👤 **{auth.get_user_email()}**")
+if st.sidebar.button("🚪 Logout"):
+    auth.logout()
+    st.rerun()
+st.sidebar.markdown("---")
+# === END DAY 23 ===
+
+
 
 # Session state for tracking fixed data
 if 'original_df' not in st.session_state:
