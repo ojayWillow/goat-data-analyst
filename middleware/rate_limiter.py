@@ -1,10 +1,18 @@
-# backend/middleware/rate_limiter.py
+
+# ========================
+# Rate Limiting Middleware
+# ========================
+
 from fastapi import Request, HTTPException
 from fastapi.responses import JSONResponse
 from datetime import datetime, timedelta
 from collections import defaultdict
 from typing import Dict, Tuple
-import asyncio
+import logging
+
+# Setup logging
+logger = logging.getLogger(__name__)
+
 
 class RateLimiter:
     """
@@ -75,34 +83,38 @@ class RateLimiter:
         remaining = limit - len(recent_requests) - 1
         return False, max(0, remaining)
 
+
 # Global instance
 rate_limiter = RateLimiter()
+
 
 async def rate_limit_middleware(request: Request, call_next):
     """
     Middleware to enforce rate limiting
     
-    Priority:
-    1. Use user email if authenticated
-    2. Fallback to IP address if not authenticated
+    Uses IP address for all requests (simpler approach)
+    Auth endpoints have stricter limits
     """
     # Skip rate limiting for health check
     if request.url.path == "/health":
         return await call_next(request)
     
-    # Get identifier (user email or IP)
-    user = getattr(request.state, "user", None)
-    if user and hasattr(user, "email"):
-        identifier = user.email
-        limit = 10  # Authenticated users: 10 req/min
+    # Get IP address as identifier
+    identifier = request.client.host
+    
+    # Set limit based on endpoint
+    if request.url.path.startswith("/auth"):
+        limit = 5  # Auth endpoints: 5 req/min
     else:
-        identifier = request.client.host
-        limit = 5  # Anonymous users: 5 req/min
+        limit = 10  # Other endpoints: 10 req/min
     
     # Check rate limit
     is_limited, remaining = rate_limiter.is_rate_limited(identifier, limit)
     
     if is_limited:
+        # Log violation
+        logger.warning(f"Rate limit exceeded for {identifier} on {request.url.path} (limit: {limit}/min)")
+        
         return JSONResponse(
             status_code=429,
             content={
@@ -116,9 +128,12 @@ async def rate_limit_middleware(request: Request, call_next):
             }
         )
     
-    # Add rate limit headers to response
+    # Process request
     response = await call_next(request)
+    
+    # Add rate limit headers to response
     response.headers["X-RateLimit-Limit"] = str(limit)
     response.headers["X-RateLimit-Remaining"] = str(remaining)
     
     return response
+
