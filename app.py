@@ -33,7 +33,8 @@ load_css()
 
 
 # === DAY 23: AUTHENTICATION ===
-auth = StreamlitAuth(api_url="http://localhost:8000")
+API_URL = os.getenv("API_URL", "goat-data-analyst-production.up.railway.app")
+auth = StreamlitAuth(api_url=API_URL)
 
 # Check if logged in
 if not auth.is_logged_in():
