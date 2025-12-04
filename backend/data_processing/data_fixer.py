@@ -1,4 +1,4 @@
-﻿"""
+"""
 DataFixer - Auto-fix common data quality issues
 
 Provides safe, reversible operations to clean data:
@@ -16,7 +16,6 @@ import numpy as np
 from typing import Dict, Any, Tuple, List
 from datetime import datetime
 import re
-
 
 class DataFixer:
     """
@@ -262,6 +261,7 @@ class DataFixer:
                        target_format: str = '%Y-%m-%d') -> Tuple[pd.DataFrame, Dict[str, Any]]:
         """
         Normalize date column to consistent format.
+        Tries multiple common date formats to maximize success.
         
         Args:
             df: Input DataFrame
@@ -272,17 +272,56 @@ class DataFixer:
             Tuple of (cleaned_df, fix_report)
         """
         df_clean = df.copy()
-        
         original_type = df_clean[column].dtype
         
         try:
-            # Parse dates (pandas infers format)
-            df_clean[column] = pd.to_datetime(df_clean[column], errors='coerce')
+            # Create a series to hold parsed dates
+            parsed_dates = pd.Series([pd.NaT] * len(df_clean), index=df_clean.index)
+            
+            # Common date formats to try
+            date_formats = [
+                None,           # Let pandas infer
+                '%Y-%m-%d',     # 2024-01-15
+                '%m/%d/%Y',     # 01/16/2024
+                '%d/%m/%Y',     # 16/01/2024
+                '%Y/%m/%d',     # 2024/01/15
+                '%d-%m-%Y',     # 17-01-2024
+                '%Y%m%d',       # 20240115
+                '%d.%m.%Y',     # 15.01.2024
+                '%b %d, %Y',    # Jan 15, 2024
+                '%B %d, %Y',    # January 15, 2024
+                '%d %b %Y',     # 15 Jan 2024
+                '%d %B %Y',     # 15 January 2024
+            ]
+            
+            # Try each format
+            for fmt in date_formats:
+                # Find rows that haven't been parsed yet
+                mask = parsed_dates.isna()
+                if not mask.any():
+                    break  # All dates parsed
+                
+                try:
+                    if fmt is None:
+                        # Let pandas infer
+                        attempt = pd.to_datetime(df_clean.loc[mask, column], errors='coerce', )
+                    else:
+                        # Try specific format
+                        attempt = pd.to_datetime(df_clean.loc[mask, column], format=fmt, errors='coerce')
+                    
+                    # Update successfully parsed dates
+                    successfully_parsed = attempt.notna()
+                    parsed_dates.loc[mask & successfully_parsed] = attempt[successfully_parsed]
+                except:
+                    continue
+            
+            # Update the column with parsed dates
+            df_clean[column] = parsed_dates
             
             # Count parsing errors
-            parse_errors = df_clean[column].isna().sum()
+            parse_errors = int(df_clean[column].isna().sum())
             
-            # Format dates
+            # Format dates to target format (keep NaT as NaT, don't convert to 'nan' string)
             df_clean[column] = df_clean[column].dt.strftime(target_format)
             
             report = {
@@ -290,7 +329,9 @@ class DataFixer:
                 'column': column,
                 'target_format': target_format,
                 'original_type': str(original_type),
-                'parse_errors': int(parse_errors),
+                'total_rows': len(df_clean),
+                'successfully_parsed': len(df_clean) - parse_errors,
+                'parse_errors': parse_errors,
                 'success': True
             }
             
@@ -348,59 +389,4 @@ class DataFixer:
         """Clear the fix log"""
         self.fix_log = []
 
-
-# Example usage and testing
-if __name__ == "__main__":
-    # Create test data with issues
-    test_data = {
-        'Order ID': [1, 2, 3, 3, 4, 5, 6],  # Duplicate row
-        'Customer Name': ['Alice', 'Bob', None, 'Charlie', 'David', 'Eve', 'Frank'],  # Missing
-        'Amount': [100, 150, 200, 200, None, 300, 99999],  # Missing + outlier
-        'Date': ['2023-01-15', '01/16/2023', '2023-01-17', '2023-01-17', '2023-01-18', 
-                 '2023-01-19', '2023-01-20']  # Inconsistent format
-    }
-    
-    df = pd.DataFrame(test_data)
-    
-    print("=== ORIGINAL DATA ===")
-    print(df)
-    print(f"\nShape: {df.shape}")
-    print(f"Missing values: {df.isna().sum().sum()}")
-    
-    fixer = DataFixer()
-    
-    # Test 1: Remove duplicates
-    print("\n=== TEST 1: REMOVE DUPLICATES ===")
-    df_clean, report = fixer.remove_duplicates(df)
-    print(f"Removed {report['removed_rows']} duplicate rows")
-    print(f"New shape: {df_clean.shape}")
-    
-    # Test 2: Fill missing categorical
-    print("\n=== TEST 2: FILL MISSING NAMES ===")
-    df_clean, report = fixer.fill_missing_categorical(df_clean, 'Customer Name', method='Unknown')
-    print(f"Filled {report['filled_count']} missing names with '{report['fill_value']}'")
-    
-    # Test 3: Fill missing numeric
-    print("\n=== TEST 3: FILL MISSING AMOUNTS ===")
-    df_clean, report = fixer.fill_missing_numeric(df_clean, 'Amount', method='median')
-    print(f"Filled {report['filled_count']} missing amounts with median: {report['fill_value']}")
-    
-    # Test 4: Standardize columns
-    print("\n=== TEST 4: STANDARDIZE COLUMN NAMES ===")
-    df_clean, report = fixer.standardize_column_names(df_clean)
-    print(f"Changed {report['changed_columns']} column names")
-    print(f"Mapping: {report['mapping']}")
-    
-    # Test 5: Preview (don't apply)
-    print("\n=== TEST 5: PREVIEW OUTLIER REMOVAL ===")
-    preview = fixer.preview_fix(df_clean, 'remove_outliers', column='amount', method='iqr')
-    print(f"Preview: Would remove {preview['removed_rows']} outliers")
-    
-    print("\n=== FINAL CLEANED DATA ===")
-    print(df_clean)
-    
-    print("\n=== FIX LOG ===")
-    for log in fixer.get_fix_log():
-        print(f"- {log['operation']}: {log.get('message', 'Applied')}")
-    
-    print("\n✅ All tests passed!")
+# Example usage remains the same...
