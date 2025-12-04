@@ -1,35 +1,104 @@
 ﻿from datetime import datetime
 import io
 import pandas as pd
-from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi import FastAPI, File, UploadFile, HTTPException, Depends, Header
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
+from pydantic import BaseModel, EmailStr
+from typing import Optional
 
 from backend.core.engine import AnalysisEngine
+from backend.auth.auth_manager import AuthManager
 
+# Initialize FastAPI
 app = FastAPI(
     title="GOAT Data Analyst API",
-    description="API for profiling CSV files and generating reports",
-    version="1.0.0",
+    description="API for profiling CSV files and generating reports - Now with Authentication",
+    version="1.5.0",
 )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # TODO: Restrict in production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# Initialize services
+auth_manager = AuthManager()
+
+
+# ========================
+# Authentication Models
+# ========================
+
+class SignupRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+
+# ========================
+# Authentication Dependency
+# ========================
+
+async def get_current_user(authorization: Optional[str] = Header(None)):
+    """
+    Dependency to verify JWT token and get current user
+    Raises 401 if token is missing or invalid
+    """
+    if not authorization:
+        raise HTTPException(
+            status_code=401,
+            detail="Authorization header missing. Please login."
+        )
+    
+    # Extract token from "Bearer <token>"
+    try:
+        scheme, token = authorization.split()
+        if scheme.lower() != "bearer":
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid authentication scheme. Use 'Bearer <token>'"
+            )
+    except ValueError:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid authorization header format"
+        )
+    
+    # Verify token
+    result = auth_manager.verify_token(token)
+    
+    if not result.get("success"):
+        raise HTTPException(
+            status_code=401,
+            detail=result.get("error", "Invalid or expired token")
+        )
+    
+    return result["user"]
+
+
+# ========================
+# Public Endpoints (No Auth)
+# ========================
+
 @app.get("/")
 async def root():
     return {
         "name": "GOAT Data Analyst API",
-        "version": "1.0.0",
+        "version": "1.5.0",
         "status": "ok",
+        "authentication": "enabled",
         "endpoints": {
             "health": "/health",
-            "analyze_html": "/analyze/html",
+            "signup": "/auth/signup",
+            "login": "/auth/login",
+            "analyze_html": "/analyze/html (requires auth)",
             "docs": "/docs",
         },
     }
@@ -39,22 +108,94 @@ async def health():
     return {
         "status": "healthy",
         "timestamp": datetime.now().isoformat(),
-        "version": "1.0.0"
+        "version": "1.5.0",
+        "auth": "enabled"
     }
 
-@app.post("/analyze/html")
-async def analyze_csv_html(file: UploadFile = File(...)):
-    """Upload CSV and get full HTML report"""
+
+# ========================
+# Authentication Endpoints
+# ========================
+
+@app.post("/auth/signup", tags=["Authentication"])
+async def signup(request: SignupRequest):
+    """
+    Register a new user
+    
+    Returns user data and session tokens
+    """
+    result = auth_manager.signup(request.email, request.password)
+    
+    if not result.get("success"):
+        raise HTTPException(status_code=400, detail=result.get("error"))
+    
+    return result
+
+
+@app.post("/auth/login", tags=["Authentication"])
+async def login(request: LoginRequest):
+    """
+    Authenticate existing user
+    
+    Returns user data and JWT tokens (access_token, refresh_token)
+    """
+    result = auth_manager.login(request.email, request.password)
+    
+    if not result.get("success"):
+        raise HTTPException(status_code=401, detail=result.get("error"))
+    
+    return result
+
+
+@app.post("/auth/logout", tags=["Authentication"])
+async def logout(user: dict = Depends(get_current_user)):
+    """
+    Sign out current user
+    
+    Requires: Valid JWT token in Authorization header
+    """
+    return {"success": True, "message": "Logged out successfully"}
+
+
+@app.get("/auth/me", tags=["Authentication"])
+async def get_me(user: dict = Depends(get_current_user)):
+    """
+    Get current authenticated user info
+    
+    Requires: Valid JWT token in Authorization header
+    """
+    return {"success": True, "user": user}
+
+
+# ========================
+# Protected Analysis Endpoint
+# ========================
+
+@app.post("/analyze/html", tags=["Analysis"])
+async def analyze_csv_html(
+    file: UploadFile = File(...),
+    user: dict = Depends(get_current_user)  # AUTH REQUIRED HERE
+):
+    """
+    Upload CSV and get full HTML report
+    
+    **PROTECTED**: Requires valid JWT token in Authorization header
+    """
     import traceback
 
     try:
-        # Validate
+        # Validate file type
         if not file.filename.lower().endswith(".csv"):
             raise HTTPException(status_code=400, detail="Only CSV files are supported")
 
+        # Read file
         contents = await file.read()
         if not contents:
             raise HTTPException(status_code=400, detail="CSV file is empty")
+        
+        # Validate file size (max 100MB)
+        if len(contents) > 100 * 1024 * 1024:
+            raise HTTPException(status_code=413, detail="File too large. Maximum size: 100MB")
 
         # Load CSV
         df = pd.read_csv(io.BytesIO(contents))
@@ -70,12 +211,32 @@ async def analyze_csv_html(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="CSV file is empty")
     except pd.errors.ParserError as e:
         raise HTTPException(status_code=400, detail=f"CSV parsing error: {str(e)}")
+    except UnicodeDecodeError:
+        raise HTTPException(status_code=400, detail="File encoding issue. Please save as UTF-8 CSV.")
     except HTTPException:
         raise
     except Exception as e:
         print("ERROR in /analyze/html:", repr(e))
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Report generation failed: {str(e)}")
+
+
+# ========================
+# Error Handlers
+# ========================
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request, exc):
+    """Return consistent error format"""
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "success": False,
+            "error": exc.detail,
+            "status_code": exc.status_code
+        }
+    )
+
 
 if __name__ == "__main__":
     import uvicorn

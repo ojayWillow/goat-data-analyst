@@ -126,24 +126,29 @@ class AuthManager:
             Dict with user data if valid, error otherwise
         """
         try:
-            response = self.client.auth.get_user(token)
+            # Set the token in the client's auth context
+            self.client.auth.set_session(token, token)
             
-            if response.user:
-                logger.info(f"Token verified for user: {response.user.email}")
+            # Get the user associated with this token
+            user = self.client.auth.get_user()
+            
+            if user and user.user:
+                logger.info(f"Token verified for user: {user.user.email}")
                 return {
                     "success": True,
                     "user": {
-                        "id": response.user.id,
-                        "email": response.user.email
+                        "id": user.user.id,
+                        "email": user.user.email
                     }
                 }
             else:
-                logger.error("Token verification failed")
+                logger.error("Token verification failed - no user found")
                 return {"success": False, "error": "Invalid token"}
                 
         except Exception as e:
             logger.error(f"Token verification error: {str(e)}")
             return {"success": False, "error": str(e)}
+
     
     def logout(self, token: str) -> Dict:
         """
