@@ -148,8 +148,6 @@ if st.session_state.analysis_mode == 'single':
     st.markdown("---")
     uploaded_file = st.file_uploader("Or upload your own CSV file", type=['csv'])
 
-   
-
     if uploaded_file:
         if st.session_state.last_uploaded_file != uploaded_file.name:
             st.session_state.last_uploaded_file = uploaded_file.name
@@ -198,6 +196,18 @@ if st.session_state.analysis_mode == 'single':
 
         if st.session_state.analysis_result is not None:
             st.markdown("---")
+            
+            # Download report button
+            col1, col2 = st.columns([1, 4])
+            with col1:
+                st.download_button(
+                    label="📥 Download Report",
+                    data=st.session_state.analysis_result.report_html,
+                    file_name=f"analysis_{st.session_state.last_uploaded_file.replace('.csv', '')}.html",
+                    mime="text/html",
+                    use_container_width=True
+                )
+            
             st.components.v1.html(st.session_state.analysis_result.report_html, height=2000, scrolling=True)
 
         if st.session_state.analysis_result is not None:
@@ -353,6 +363,18 @@ if st.session_state.analysis_mode == 'single':
 
         if st.session_state.analysis_result is not None:
             st.markdown("---")
+            
+            # Download report button
+            col1, col2 = st.columns([1, 4])
+            with col1:
+                st.download_button(
+                    label="📥 Download Report",
+                    data=st.session_state.analysis_result.report_html,
+                    file_name=f"analysis_{st.session_state.last_uploaded_file.replace('.csv', '')}.html",
+                    mime="text/html",
+                    use_container_width=True
+                )
+            
             st.components.v1.html(st.session_state.analysis_result.report_html, height=2000, scrolling=True)
 
     else:
@@ -475,6 +497,14 @@ elif st.session_state.analysis_mode == 'batch':
                 if st.button("⬅️ Back to Dashboard"):
                     st.session_state.selected_file = None
                     st.rerun()
+                
+                # Download individual file report
+                st.download_button(
+                    label="📥 Download This Report",
+                    data=st.session_state.selected_file.report_html,
+                    file_name=f"analysis_{st.session_state.selected_file.filename.replace('.csv', '')}.html",
+                    mime="text/html"
+                )
                 
                 st.components.v1.html(
                     st.session_state.selected_file.report_html, 

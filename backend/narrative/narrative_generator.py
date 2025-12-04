@@ -7,14 +7,12 @@
 #   2. "What Hurts" - Pain points identification (✅ Day 8 - AI-ENHANCED)
 #   3. "Your Path Forward" - Action plan (✅ Day 9 - DOMAIN-AWARE)
 #   4. Fix Suggestions - Actionable fixes (✅ Day 12 - NEW)
+# Day 18: THEME-AWARE - No hardcoded styles, inherits from parent theme
 # ============================================================================
-
 
 from typing import Dict, List, Optional
 import pandas as pd
 from datetime import datetime
-
-
 
 class NarrativeGenerator:
     """
@@ -32,7 +30,7 @@ class NarrativeGenerator:
             ai_engine: Optional AIEngine instance for enhanced generation
         """
         self.ai_engine = ai_engine
-        print("✓ NarrativeGenerator initialized" + (" (AI-enhanced)" if ai_engine else ""))
+        print("✓ NarrativeGenerator initialized" + (" (AI-enhanced)" if ai_engine else "") + " [THEME-AWARE]")
     
     # ========================================================================
     # DAY 7: "I See You" - Context Recognition
@@ -67,11 +65,13 @@ class NarrativeGenerator:
         time_context = self._build_time_context(date_info) if date_info else ""
         
         return f"""
-        <div class="narrative-section context">
-            <h3>📊 I See You</h3>
-            {intro}
-            {column_context}
-            {time_context}
+        <div class="narrative-section context-section">
+            <h3 class="narrative-heading">📊 I See You</h3>
+            <div class="narrative-content">
+                {intro}
+                {column_context}
+                {time_context}
+            </div>
         </div>
         """
     
@@ -194,12 +194,14 @@ class NarrativeGenerator:
         pain_points_html = self._build_pain_points_html(pain_points)
         
         return f"""
-        <div class="narrative-section pain-points">
-            <h3>⚠️ What Hurts</h3>
-            <div class="quality-score">
-                <p>Your overall data quality score: <strong class="score-{self._get_score_class(score)}">{score:.0f}/100</strong></p>
+        <div class="narrative-section pain-points-section">
+            <h3 class="narrative-heading">⚠️ What Hurts</h3>
+            <div class="narrative-content">
+                <div class="quality-score-display">
+                    <p>Your overall data quality score: <strong class="quality-score score-{self._get_score_class(score)}">{score:.0f}/100</strong></p>
+                </div>
+                {pain_points_html}
             </div>
-            {pain_points_html}
         </div>
         """
     
@@ -318,7 +320,7 @@ class NarrativeGenerator:
     def _build_pain_points_html(self, pain_points: List[Dict]) -> str:
         """Convert pain points to formatted HTML"""
         if not pain_points:
-            return "<p>No issues detected. Your data looks good!</p>"
+            return "<p class='no-issues'>No issues detected. Your data looks good!</p>"
         
         html_parts = ["<div class='pain-points-list'>"]
         
@@ -334,14 +336,14 @@ class NarrativeGenerator:
             icon = self._get_severity_icon(severity)
             
             html_parts.append(f"""
-            <div class='pain-point severity-{severity}'>
+            <div class='pain-point pain-point-{severity}'>
                 <div class='pain-point-header'>
-                    <span class='severity-badge'>{icon} {severity.upper()}</span>
-                    <strong>{point.get('issue', 'Unknown issue')}</strong>
+                    <span class='severity-badge severity-{severity}'>{icon} {severity.upper()}</span>
+                    <strong class='pain-point-title'>{point.get('issue', 'Unknown issue')}</strong>
                 </div>
                 <div class='pain-point-body'>
-                    <p class='impact'><strong>Impact:</strong> {point.get('impact', 'Unknown impact')}</p>
-                    <p class='fix'><strong>Fix:</strong> {point.get('fix', 'No fix suggested')}</p>
+                    <p class='pain-impact'><strong>Impact:</strong> {point.get('impact', 'Unknown impact')}</p>
+                    <p class='pain-fix'><strong>Fix:</strong> {point.get('fix', 'No fix suggested')}</p>
                 </div>
             </div>
             """)
@@ -408,15 +410,17 @@ class NarrativeGenerator:
         # Get intro based on severity
         intro = self._get_action_intro(pain_points)
         
-        steps_html = "\n".join([f"<li>{step}</li>" for step in steps])
+        steps_html = "\n".join([f"<li class='action-step'>{step}</li>" for step in steps])
         
         return f"""
-        <div class="narrative-section action-plan">
-            <h3>🎯 Your Path Forward</h3>
-            <p>{intro}</p>
-            <ol class='action-steps'>
-                {steps_html}
-            </ol>
+        <div class="narrative-section action-plan-section">
+            <h3 class="narrative-heading">🎯 Your Path Forward</h3>
+            <div class="narrative-content">
+                <p class='action-intro'>{intro}</p>
+                <ol class='action-steps-list'>
+                    {steps_html}
+                </ol>
+            </div>
         </div>
         """
     
@@ -613,7 +617,7 @@ class NarrativeGenerator:
         return suggestions
     
     # ========================================================================
-    # Full Narrative Generation
+    # Full Narrative Generation - DAY 18: NO INLINE STYLES (THEME-AWARE)
     # ========================================================================
     
     def generate_full_narrative(
@@ -627,6 +631,8 @@ class NarrativeGenerator:
         """
         Generate complete narrative combining all three sections
         
+        NO INLINE STYLES - Inherits from parent theme (Style A/B/C/D)
+        
         Args:
             domain: Domain detection result
             profile: Data profile
@@ -635,7 +641,7 @@ class NarrativeGenerator:
             df: Optional DataFrame
         
         Returns:
-            Complete HTML narrative with all sections
+            Complete HTML narrative with all sections (THEME-AWARE)
         """
         context = self.generate_context(domain, profile, df)
         pain_points_section = self.generate_pain_points(quality, profile, df)
@@ -643,96 +649,11 @@ class NarrativeGenerator:
         
         return f"""
         <div class="goat-narrative">
-            <style>
-                .goat-narrative {{
-                    background: #f9f9f9;
-                    border-left: 4px solid #2196F3;
-                    padding: 20px;
-                    margin: 20px 0;
-                    border-radius: 4px;
-                }}
-                .narrative-section {{
-                    margin-bottom: 25px;
-                }}
-                .narrative-section h3 {{
-                    color: #1976D2;
-                    margin-bottom: 10px;
-                }}
-                .narrative-section p {{
-                    line-height: 1.6;
-                    margin: 8px 0;
-                }}
-                .narrative-section ul, .narrative-section ol {{
-                    margin: 10px 0;
-                    padding-left: 25px;
-                }}
-                
-                /* Quality Score */
-                .quality-score {{
-                    font-size: 1.1em;
-                    margin-bottom: 15px;
-                }}
-                .score-good {{ color: #4CAF50; }}
-                .score-okay {{ color: #FF9800; }}
-                .score-poor {{ color: #F44336; }}
-                
-                /* Pain Points */
-                .pain-points-list {{
-                    display: flex;
-                    flex-direction: column;
-                    gap: 15px;
-                }}
-                .pain-point {{
-                    background: white;
-                    border-left: 4px solid #ccc;
-                    padding: 12px;
-                    border-radius: 4px;
-                }}
-                .pain-point.severity-critical {{ border-left-color: #F44336; }}
-                .pain-point.severity-high {{ border-left-color: #FF9800; }}
-                .pain-point.severity-medium {{ border-left-color: #FFC107; }}
-                .pain-point.severity-low {{ border-left-color: #4CAF50; }}
-                
-                .pain-point-header {{
-                    margin-bottom: 8px;
-                }}
-                .severity-badge {{
-                    display: inline-block;
-                    padding: 2px 8px;
-                    border-radius: 3px;
-                    font-size: 0.75em;
-                    font-weight: bold;
-                    margin-right: 8px;
-                }}
-                .pain-point-body {{
-                    font-size: 0.95em;
-                    color: #555;
-                }}
-                .pain-point-body p {{
-                    margin: 6px 0;
-                }}
-                .impact {{ color: #d32f2f; }}
-                .fix {{ color: #1976d2; }}
-                
-                /* Action Steps */
-                .action-steps {{
-                    background: white;
-                    padding: 15px 15px 15px 35px;
-                    border-radius: 4px;
-                }}
-                .action-steps li {{
-                    margin: 8px 0;
-                    line-height: 1.5;
-                }}
-            </style>
-            
             {context}
             {pain_points_section}
             {action_plan}
         </div>
         """
 
-
-
 if __name__ == "__main__":
-    print("✅ Narrative Generator Ready (Days 7-9 + 12 - CLEAN SIDEBAR)")
+    print("✅ Narrative Generator Ready (Days 7-9 + 12 + 18 - THEME-AWARE)")
