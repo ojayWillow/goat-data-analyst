@@ -4,6 +4,7 @@ import sys
 import tempfile
 import os
 from pathlib import Path
+import io
 
 # Add backend to path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -11,6 +12,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from backend.core.engine import AnalysisEngine
 from backend.core.batch_engine import BatchEngine
 from backend.data_processing.data_fixer import DataFixer
+from backend.reports.company_health_report import CompanyHealthReportGenerator
 
 st.set_page_config(page_title="GOAT Data Analyst", page_icon="🐐", layout="wide")
 
@@ -28,7 +30,7 @@ if 'last_uploaded_file' not in st.session_state:
 if 'auto_reanalyze' not in st.session_state:
     st.session_state.auto_reanalyze = False
 
-# === DAY 15: NEW SESSION STATE ===
+# DAY 15/16: MODE + BATCH STATE
 if 'analysis_mode' not in st.session_state:
     st.session_state.analysis_mode = 'single'  # 'single' or 'batch'
 if 'batch_results' not in st.session_state:
@@ -39,11 +41,11 @@ if 'selected_file' not in st.session_state:
 st.title("🐐 GOAT Data Analyst")
 st.markdown("*The AI analyst that understands context, identifies pain points, and provides clear guidance*")
 
-# === DAY 15: MODE SELECTOR ===
+# Mode selector
 st.markdown("---")
 col1, col2 = st.columns(2)
 with col1:
-    if st.button("📄 Single File Analysis", use_container_width=True, 
+    if st.button("📄 Single File Analysis", use_container_width=True,
                  type="primary" if st.session_state.analysis_mode == 'single' else "secondary"):
         st.session_state.analysis_mode = 'single'
         st.session_state.batch_results = None
@@ -53,12 +55,17 @@ with col2:
     if st.button("📁 Multiple Files Analysis", use_container_width=True,
                  type="primary" if st.session_state.analysis_mode == 'batch' else "secondary"):
         st.session_state.analysis_mode = 'batch'
+        st.session_state.analysis_result = None
+        st.session_state.original_df = None
+        st.session_state.current_df = None
+        st.session_state.fix_history = []
+        st.session_state.last_uploaded_file = None
         st.rerun()
 
 st.markdown("---")
 
 # ============================================================================
-# SINGLE FILE MODE (Your existing code - Days 1-13)
+# SINGLE FILE MODE (existing)
 # ============================================================================
 if st.session_state.analysis_mode == 'single':
     # File upload
@@ -255,7 +262,7 @@ if st.session_state.analysis_mode == 'single':
         st.info("👆 Upload a CSV file to get started")
 
 # ============================================================================
-# BATCH MODE (Day 15 NEW)
+# BATCH MODE (Day 15 + 16)
 # ============================================================================
 elif st.session_state.analysis_mode == 'batch':
     st.subheader("📁 Multiple Files Analysis")
@@ -277,10 +284,10 @@ elif st.session_state.analysis_mode == 'batch':
                 temp_dir = tempfile.mkdtemp()
                 file_paths = []
                 
-                for uploaded_file in uploaded_files:
-                    file_path = os.path.join(temp_dir, uploaded_file.name)
+                for uploaded in uploaded_files:
+                    file_path = os.path.join(temp_dir, uploaded.name)
                     with open(file_path, 'wb') as f:
-                        f.write(uploaded_file.getvalue())
+                        f.write(uploaded.getvalue())
                     file_paths.append(file_path)
                 
                 # Run batch analysis
@@ -311,6 +318,18 @@ elif st.session_state.analysis_mode == 'batch':
                 st.metric("Avg Quality", f"{score_color} {score:.0f}/100")
             with col4:
                 st.metric("Files Needing Attention", len(summary['files_needing_attention']))
+
+            # === DAY 16: DOWNLOAD COMPANY HEALTH REPORT ===
+            with st.expander("📥 Download Executive Summary (HTML)", expanded=False):
+                generator = CompanyHealthReportGenerator()
+                company_html = generator.generate(results)
+                buffer = io.BytesIO(company_html.encode("utf-8"))
+                st.download_button(
+                    label="Download Company Health Report",
+                    data=buffer,
+                    file_name="company_data_health_report.html",
+                    mime="text/html"
+                )
             
             # Top issues across all files
             if summary['top_issues']:
