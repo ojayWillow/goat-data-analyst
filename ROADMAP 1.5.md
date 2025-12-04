@@ -35,16 +35,16 @@
 **Objective**: Users must log in to use GOAT
 
 #### Tasks:
-- [ ] Choose auth provider: Supabase Auth (recommended) or Auth0
-- [ ] Create Supabase project (free tier is fine)
-- [ ] Install supabase-py: `pip install supabase`
-- [ ] Create `backend/auth/` directory
-- [ ] Create `backend/auth/auth_manager.py` with:
+- [✅ ] Choose auth provider: Supabase Auth (recommended) or Auth0
+- [✅ ] Create Supabase project (free tier is fine)
+- [✅ ] Install supabase-py: `pip install supabase`
+- [✅ ] Create `backend/auth/` directory
+- [✅ ] Create `backend/auth/auth_manager.py` with:
   - `signup(email, password)`
   - `login(email, password)`
   - `verify_token(token)`
   - `logout(token)`
-- [ ] Add environment variables: `SUPABASE_URL`, `SUPABASE_KEY`
+- [✅ ] Add environment variables: `SUPABASE_URL`, `SUPABASE_KEY`
 
 #### Success Criteria:
 \`\`\`python
@@ -56,10 +56,10 @@ print(result)  # Should return user object
 \`\`\`
 
 #### Deliverable:
-- [ ] `backend/auth/auth_manager.py` exists
-- [ ] Can signup, login, verify token
-- [ ] Credentials stored securely in Supabase
-- [ ] Environment variables configured
+- [✅ ] `backend/auth/auth_manager.py` exists
+- [✅ ] Can signup, login, verify token
+- [✅ ] Credentials stored securely in Supabase
+- [✅ ] Environment variables configured
 
 **Status**: ⬜ Not Started | 🟡 In Progress | ✅ Complete
 
@@ -103,13 +103,13 @@ curl -H "Authorization: Bearer <token>" https://api.goat.com/analyze/html
 **Objective**: Users must log in before uploading CSVs
 
 #### Tasks:
-- [ ] Add login page to Streamlit (`pages/login.py`)
-- [ ] Store auth token in `st.session_state`
-- [ ] Check auth status on app load
-- [ ] Redirect to login if not authenticated
-- [ ] Add logout button
-- [ ] Add signup form
-- [ ] Show user email in sidebar
+- [✅ ] Add login page to Streamlit (`pages/login.py`)
+- [✅ ] Store auth token in `st.session_state`
+- [✅ ] Check auth status on app load
+- [✅ ] Redirect to login if not authenticated
+- [✅ ] Add logout button
+- [✅ ] Add signup form
+- [✅ ] Show user email in sidebar
 
 #### Success Criteria:
 \`\`\`bash
@@ -122,10 +122,10 @@ curl -H "Authorization: Bearer <token>" https://api.goat.com/analyze/html
 \`\`\`
 
 #### Deliverable:
-- [ ] Login page functional
-- [ ] Can't access app without auth
-- [ ] Logout works
-- [ ] User email displayed
+- [✅ ] Login page functional
+- [✅ ] Can't access app without auth
+- [✅ ] Logout works
+- [✅ ] User email displayed
 
 **Status**: ⬜ Not Started | 🟡 In Progress | ✅ Complete
 
