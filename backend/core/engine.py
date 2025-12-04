@@ -259,31 +259,3 @@ class AnalysisEngine:
         </body>
         </html>
         """
-
-
-# Quick test function
-def _test():
-    """Test the engine with dummy data"""
-    df = pd.DataFrame({
-        "id": range(100),
-        "amount": [100 + i * 5 for i in range(100)],
-        "category": ["A", "B", "C"] * 33 + ["A"]
-    })
-    
-    engine = AnalysisEngine()
-    result = engine.analyze(df)
-    
-    print("\n" + "="*50)
-    print("TEST RESULTS:")
-    print("="*50)
-    print(f"Profile: {result.profile}")
-    print(f"Domain: {result.domain}")
-    print(f"Quality: {result.quality}")
-    print(f"Narrative length: {len(result.narrative)} chars")
-    print(f"Execution time: {result.execution_time_seconds:.2f}s")
-    print(f"Report HTML length: {len(result.report_html)} chars")
-    print("="*50)
-
-
-if __name__ == "__main__":
-    _test()
