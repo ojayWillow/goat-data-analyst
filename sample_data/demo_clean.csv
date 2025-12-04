@@ -1,0 +1,11 @@
+﻿customer_id,name,email,age,purchase_amount,purchase_date,country
+1,John Doe,john.doe@email.com,25,100.50,2024-01-15,USA
+2,Jane Smith,jane.smith@email.com,32,200.00,2024-01-16,USA
+3,Bob Johnson,bob.johnson@email.com,35,150.75,2024-01-17,Canada
+4,Alice Brown,alice.brown@email.com,28,180.25,2024-01-18,UK
+5,Charlie Davis,charlie.davis@email.com,45,300.25,2024-01-19,USA
+6,Emily Wilson,emily.wilson@email.com,42,175.00,2024-01-21,Australia
+7,Frank Miller,frank.miller@email.com,50,220.50,2024-01-22,USA
+8,Grace Lee,grace.lee@email.com,31,125.75,2024-01-23,Canada
+9,Henry Taylor,henry.taylor@email.com,38,195.00,2024-01-24,UK
+10,Iris Wang,iris.wang@email.com,29,165.50,2024-01-25,USA
