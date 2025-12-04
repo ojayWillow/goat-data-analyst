@@ -61,7 +61,7 @@ except ImportError:
     ChartOrchestrator = None
 
 try:
-    from backend.reports.style_c_color_coded import UltimateReportGenerator
+    from backend.reports.style_a_bold_borders import UltimateReportGenerator
 except ImportError:
     UltimateReportGenerator = None
 

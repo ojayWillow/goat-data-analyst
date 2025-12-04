@@ -215,6 +215,7 @@ class UltimateReportGenerator:
                 background: #0a0e27;
                 color: #e0e6ed;
                 padding: 20px;
+                font-size: 15px;
             }
             .report-container {
                 max-width: 1200px;
@@ -519,7 +520,7 @@ class UltimateReportGenerator:
                 color: #cbd5e1;
                 margin-bottom: 14px;
                 line-height: 1.7;
-                font-size: 1.02em;
+                font-size: 1.08em;
             }
 
             .narrative-content strong {

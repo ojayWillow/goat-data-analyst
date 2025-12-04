@@ -1,4 +1,4 @@
-﻿# Style A: Bold Accent Borders
+# Style A: Bold Accent Borders
 # Each section gets a unique colored top border (4px thick)
 
 from typing import Dict, List, Optional
@@ -215,6 +215,7 @@ class UltimateReportGenerator:
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
                 background: #f5f7fa;
                 padding: 20px;
+                font-size: 15px;
             }
             .report-container {
                 max-width: 1200px;
@@ -395,6 +396,225 @@ class UltimateReportGenerator:
                 font-size: 1.05em;
             }
 
+            /* ========================================
+               NARRATIVE SECTIONS - BOLD BORDER THEME
+               ======================================== */
+            
+            .goat-narrative {
+                margin: 50px 40px;
+                padding: 0;
+            }
+
+            .narrative-section {
+                margin-bottom: 40px;
+                padding: 30px;
+                background: white;
+                border-radius: 12px;
+                border-top: 5px solid;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            }
+
+            .context-section {
+                border-top-color: #06b6d4;
+            }
+
+            .pain-points-section {
+                border-top-color: #f59e0b;
+            }
+
+            .action-plan-section {
+                border-top-color: #10b981;
+            }
+
+            .narrative-heading {
+                font-size: 1.7em;
+                margin-bottom: 20px;
+                color: #2c3e50;
+                font-weight: 700;
+            }
+
+            .narrative-content p {
+                color: #4b5563;
+                margin-bottom: 14px;
+                line-height: 1.7;
+                font-size: 1.08em;
+            }
+
+            .narrative-content strong {
+                color: #2c3e50;
+                font-weight: 600;
+            }
+
+            .quality-score-display {
+                margin-bottom: 20px;
+                padding: 15px 20px;
+                background: #f8f9fb;
+                border-radius: 10px;
+                border: 1px solid #e5e7eb;
+            }
+
+            .quality-score {
+                font-size: 1.3em;
+                font-weight: 700;
+            }
+
+            .quality-score.score-good { color: #10b981; }
+            .quality-score.score-okay { color: #f59e0b; }
+            .quality-score.score-poor { color: #ef4444; }
+
+            .pain-points-list {
+                display: flex;
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            .pain-point {
+                background: white;
+                border-left: 4px solid;
+                border-radius: 8px;
+                padding: 16px 20px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+                transition: all 0.3s ease;
+            }
+
+            .pain-point:hover {
+                box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                transform: translateX(4px);
+            }
+
+            .pain-point-critical {
+                border-left-color: #ef4444;
+                background: #fef2f2;
+            }
+
+            .pain-point-high {
+                border-left-color: #f59e0b;
+                background: #fffbeb;
+            }
+
+            .pain-point-medium {
+                border-left-color: #fbbf24;
+                background: #fefce8;
+            }
+
+            .pain-point-low {
+                border-left-color: #10b981;
+                background: #f0fdf4;
+            }
+
+            .pain-point-header {
+                margin-bottom: 12px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                flex-wrap: wrap;
+            }
+
+            .severity-badge {
+                display: inline-block;
+                padding: 4px 10px;
+                border-radius: 6px;
+                font-size: 0.75em;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+
+            .severity-critical {
+                background: #fee2e2;
+                color: #991b1b;
+                border: 1px solid #ef4444;
+            }
+
+            .severity-high {
+                background: #fef3c7;
+                color: #92400e;
+                border: 1px solid #f59e0b;
+            }
+
+            .severity-medium {
+                background: #fef9c3;
+                color: #854d0e;
+                border: 1px solid #fbbf24;
+            }
+
+            .severity-low {
+                background: #d1fae5;
+                color: #065f46;
+                border: 1px solid #10b981;
+            }
+
+            .pain-point-title {
+                color: #2c3e50;
+                font-size: 1.05em;
+            }
+
+            .pain-point-body {
+                font-size: 0.95em;
+                color: #6b7280;
+                line-height: 1.6;
+            }
+
+            .pain-point-body p {
+                margin: 8px 0;
+            }
+
+            .pain-impact { color: #dc2626; }
+            .pain-fix { color: #059669; }
+
+            .action-intro {
+                font-size: 1.05em;
+                margin-bottom: 20px;
+                padding: 12px 16px;
+                background: #f0fdf4;
+                border-radius: 8px;
+                border-left: 3px solid #10b981;
+            }
+
+            .action-steps-list {
+                list-style: none;
+                counter-reset: action-counter;
+                padding: 0;
+            }
+
+            .action-step {
+                counter-increment: action-counter;
+                position: relative;
+                padding: 14px 14px 14px 50px;
+                margin-bottom: 12px;
+                background: #f8f9fb;
+                border-radius: 8px;
+                border: 1px solid #e5e7eb;
+                transition: all 0.3s ease;
+                line-height: 1.6;
+            }
+
+            .action-step:hover {
+                background: white;
+                border-color: #10b981;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+                transform: translateX(4px);
+            }
+
+            .action-step::before {
+                content: counter(action-counter);
+                position: absolute;
+                left: 14px;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 28px;
+                height: 28px;
+                background: linear-gradient(135deg, #10b981, #059669);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: 700;
+                font-size: 0.9em;
+                color: white;
+                box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+            }
+
             .report-footer {
                 background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
                 color: white;
@@ -407,11 +627,11 @@ class UltimateReportGenerator:
             @media (max-width: 768px) {
                 .report-header { flex-direction: column; gap: 24px; padding: 36px 24px; }
                 .section-bordered { margin: 30px 20px; }
+                .goat-narrative { margin: 30px 20px; }
                 .logo h1 { font-size: 2.2em; }
                 .summary-grid, .metrics-grid { grid-template-columns: 1fr; }
+                .action-step { padding-left: 45px; }
             }
-        </style>
-        """
 
             /* ========================================
                NARRATIVE SECTIONS - BOLD BORDER THEME
@@ -631,3 +851,5 @@ class UltimateReportGenerator:
                 color: white;
                 box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
             }
+        </style>
+        """
