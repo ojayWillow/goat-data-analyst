@@ -1,0 +1,82 @@
+﻿/* GOAT Data Analyst - Custom Theme */
+
+/* Main container */
+.main {
+    background-color: #f8f9fa;
+}
+
+/* Headers */
+h1, h2, h3 {
+    font-family: 'Inter', sans-serif;
+    color: #1a1a1a;
+}
+
+h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+/* Metric cards */
+div[data-testid="metric-container"] {
+    background-color: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+/* Buttons */
+button[kind="primary"] {
+    background-color: #2563eb !important;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+}
+
+button[kind="secondary"] {
+    background-color: #f3f4f6 !important;
+    color: #374151 !important;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+}
+
+/* File uploader */
+section[data-testid="stFileUploader"] {
+    background-color: white;
+    border: 2px dashed #d1d5db;
+    border-radius: 8px;
+    padding: 32px;
+}
+
+/* Success/info messages */
+div[data-testid="stSuccess"] {
+    background-color: #ecfdf5;
+    border-left: 4px solid #10b981;
+    border-radius: 4px;
+}
+
+div[data-testid="stInfo"] {
+    background-color: #eff6ff;
+    border-left: 4px solid #3b82f6;
+    border-radius: 4px;
+}
+
+/* Progress bar */
+.stProgress > div > div {
+    background-color: #2563eb;
+}
+
+/* Sidebar */
+section[data-testid="stSidebar"] {
+    background-color: #ffffff;
+    border-right: 1px solid #e5e7eb;
+}
+
+/* Expander */
+details {
+    background-color: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    margin-bottom: 8px;
+}
