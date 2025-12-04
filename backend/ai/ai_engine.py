@@ -30,7 +30,7 @@ class AIEngine:
             api_key: Groq API key (or use GROQ_API_KEY env var)
         """
         self.api_key = api_key or os.getenv("GROQ_API_KEY", "")
-        self.model = "mixtral-8x7b-32768"  # Fast, capable, free tier
+        self.model = "llama-3.3-70b-versatile"  # Replacement for mixtral (better performance)
         self.enabled = bool(self.api_key and self.api_key != "your-groq-api-key-here")
         
         if self.enabled:

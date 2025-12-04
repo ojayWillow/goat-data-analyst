@@ -1,4 +1,5 @@
-﻿from datetime import datetime
+
+from datetime import datetime
 import io
 import pandas as pd
 from fastapi import FastAPI, File, UploadFile, HTTPException, Depends, Header
@@ -10,20 +11,21 @@ from typing import Optional
 
 from backend.core.engine import AnalysisEngine
 from backend.auth.auth_manager import AuthManager
-from backend.middleware.rate_limiter import rate_limit_middleware
+from middleware.rate_limiter import rate_limit_middleware
+from middleware.file_validator import file_validator
 
 
 # Initialize FastAPI
 app = FastAPI(
     title="GOAT Data Analyst API",
-    description="API for profiling CSV files and generating reports - Now with Authentication & Rate Limiting",
+    description="API for profiling CSV files and generating reports - Now with Authentication, Rate Limiting & File Validation",
     version="1.5.0",
 )
 
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # TODO: Restrict in production
+    allow_origins=["http://localhost:8501", "https://*.streamlit.app"],  # Restricted for production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -111,6 +113,7 @@ async def root():
         "status": "ok",
         "authentication": "enabled",
         "rate_limiting": "enabled",
+        "file_validation": "enabled",
         "endpoints": {
             "health": "/health",
             "signup": "/auth/signup",
@@ -128,7 +131,8 @@ async def health():
         "timestamp": datetime.now().isoformat(),
         "version": "1.5.0",
         "auth": "enabled",
-        "rate_limiting": "enabled"
+        "rate_limiting": "enabled",
+        "file_validation": "enabled"
     }
 
 
@@ -207,28 +211,40 @@ async def analyze_csv_html(
     
     **PROTECTED**: Requires valid JWT token in Authorization header
     **RATE LIMITED**: 10 requests per minute for authenticated users
+    **FILE VALIDATION**: Only CSV files, max 100MB
     """
     import traceback
 
 
     try:
-        # Validate file type
-        if not file.filename.lower().endswith(".csv"):
-            raise HTTPException(status_code=400, detail="Only CSV files are supported")
+        # Validate file with file_validator
+        user_id = user.get("id") if user else None
+        is_valid, error_msg = file_validator.validate_file(file.file, file.filename, user_id)
+        
+        if not is_valid:
+            raise HTTPException(status_code=400, detail=error_msg)
 
 
         # Read file
         contents = await file.read()
-        if not contents:
-            raise HTTPException(status_code=400, detail="CSV file is empty")
         
-        # Validate file size (max 100MB)
-        if len(contents) > 100 * 1024 * 1024:
-            raise HTTPException(status_code=413, detail="File too large. Maximum size: 100MB")
-
-
-        # Load CSV
-        df = pd.read_csv(io.BytesIO(contents))
+        # Load CSV with encoding handling
+        try:
+            df = pd.read_csv(io.BytesIO(contents))
+        except UnicodeDecodeError:
+            # Try with latin-1 encoding
+            try:
+                df = pd.read_csv(io.BytesIO(contents), encoding='latin-1')
+            except:
+                raise HTTPException(
+                    status_code=400, 
+                    detail="File encoding issue. Please save as UTF-8 CSV."
+                )
+        
+        # Validate CSV structure
+        is_valid, error_msg = file_validator.validate_csv_structure(df)
+        if not is_valid:
+            raise HTTPException(status_code=400, detail=error_msg)
 
 
         # THE ONE BRAIN does everything
@@ -244,8 +260,6 @@ async def analyze_csv_html(
         raise HTTPException(status_code=400, detail="CSV file is empty")
     except pd.errors.ParserError as e:
         raise HTTPException(status_code=400, detail=f"CSV parsing error: {str(e)}")
-    except UnicodeDecodeError:
-        raise HTTPException(status_code=400, detail="File encoding issue. Please save as UTF-8 CSV.")
     except HTTPException:
         raise
     except Exception as e:
@@ -277,3 +291,4 @@ async def http_exception_handler(request, exc):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
