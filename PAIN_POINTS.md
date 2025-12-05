@@ -347,3 +347,12 @@
 ## Notes
 *(Track blockers, ideas, or questions here)*
 "@ | Out-File -FilePath "PAIN_POINTS.md" -Encoding UTF8
+
+### 🔴 Railway API Monitor 405 Error
+**Status**: Active Issue  
+**Impact**: UptimeRobot shows 405 Method Not Allowed for Railway API health endpoint  
+**Root Cause**: Health endpoint may require POST instead of GET, or CORS/rate limiting blocking UptimeRobot  
+**Workaround**: Railway is actually running fine - API responds correctly to direct browser/curl requests  
+**Fix Needed**: Either create GET-only /health endpoint or configure UptimeRobot to use different monitoring method  
+**Priority**: Medium (monitoring issue, not service issue)
+
