@@ -372,6 +372,46 @@ async def trigger_error():
     """Test endpoint to verify Sentry error tracking"""
     division_by_zero = 1 / 0
 
+# === AUTH ENDPOINTS (Day 22) ===
+from backend.auth.auth_manager import AuthManager
+from pydantic import BaseModel, EmailStr
+
+class SignupRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+auth_manager = AuthManager()
+
+@app.post("/auth/signup", tags=["Authentication"])
+async def signup(request: SignupRequest):
+    """Sign up a new user"""
+    try:
+        result = auth_manager.signup(request.email, request.password)
+        return {"success": True, "data": result}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.post("/auth/login", tags=["Authentication"])
+async def login(request: LoginRequest):
+    """Login an existing user"""
+    try:
+        result = auth_manager.login(request.email, request.password)
+        return {"success": True, "data": result}
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=str(e))
+
+@app.post("/auth/logout", tags=["Authentication"])
+async def logout(token: str):
+    """Logout user"""
+    try:
+        result = auth_manager.logout(token)
+        return {"success": True}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 

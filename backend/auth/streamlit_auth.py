@@ -27,9 +27,9 @@ class StreamlitAuth:
             
             if response.status_code == 200:
                 data = response.json()
-                st.session_state.access_token = data['session']['access_token']
-                st.session_state.user_email = data['user']['email']
-                st.session_state.user_id = data['user']['id']
+                st.session_state.access_token = data['data']['session']['access_token']
+                st.session_state.user_email = data['data']['user']['email']
+                st.session_state.user_id = data['data']['user']['id']
                 return {"success": True}
             else:
                 return {"success": False, "error": response.json().get('error', 'Login failed')}
