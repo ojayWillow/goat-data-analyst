@@ -5,6 +5,16 @@ import tempfile
 import os
 from pathlib import Path
 import io
+import sentry_sdk
+
+# Initialize Sentry
+sentry_sdk.init(
+    dsn=os.getenv("SENTRY_DSN"),
+    traces_sample_rate=1.0,
+    profiles_sample_rate=1.0,
+    send_default_pii=True,
+    environment="production"
+)
 
 # Add backend to path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -28,9 +38,7 @@ def load_css():
         pass
 
 load_css()
-
 # === END DAY 17 ===
-
 
 # === DAY 23: AUTHENTICATION ===
 API_URL = os.getenv("API_URL", "goat-data-analyst-production.up.railway.app")
@@ -43,7 +51,7 @@ if not auth.is_logged_in():
     
     with col2:
         st.title("🐐 GOAT Data Analyst")
-        st.markdown("### 🔐 Login Required")
+        st.markdown("### 🔒 Login Required")
         
         tab1, tab2 = st.tabs(["Login", "Sign Up"])
         
@@ -93,8 +101,6 @@ if st.sidebar.button("🚪 Logout"):
     st.rerun()
 st.sidebar.markdown("---")
 # === END DAY 23 ===
-
-
 
 # Session state for tracking fixed data
 if 'original_df' not in st.session_state:
@@ -149,7 +155,7 @@ st.markdown("---")
 # ============================================================================
 if st.session_state.analysis_mode == 'single':
     # === DAY 17: SAMPLE DATA GALLERY ===
-    st.write("**📊 Try Sample Data:**")
+    st.write("**🎯 Try Sample Data:**")
     col1, col2, col3 = st.columns(3)
     
     with col1:
@@ -250,7 +256,7 @@ if st.session_state.analysis_mode == 'single':
             st.session_state.analysis_result = result
             progress_bar.empty()
 
-        if st.button("🚀 Run Analysis", type="primary"):
+        if st.button("🔍 Run Analysis", type="primary"):
             progress_bar = st.progress(0, text="Starting analysis...")
             progress_bar.progress(20, text="Profiling data...")
             engine = AnalysisEngine()
@@ -286,7 +292,7 @@ if st.session_state.analysis_mode == 'single':
             fixer = DataFixer()
 
             if quality.get('duplicates', 0) > 0:
-                st.sidebar.subheader("🔄 Remove Duplicates")
+                st.sidebar.subheader("🔁 Remove Duplicates")
                 st.sidebar.write(f"Found: **{quality['duplicates']}** duplicate rows")
                 if st.sidebar.button("Remove Duplicates", key="fix_duplicates"):
                     df_fixed, report = fixer.remove_duplicates(st.session_state.current_df)
@@ -298,7 +304,7 @@ if st.session_state.analysis_mode == 'single':
 
             missing_cols = [col for col, count in quality.get('missing_by_column', {}).items() if count > 0]
             if missing_cols:
-                st.sidebar.subheader("📝 Fill Missing Values")
+                st.sidebar.subheader("🩹 Fill Missing Values")
                 for col in missing_cols[:3]:
                     col_type = st.session_state.current_df[col].dtype
                     missing_count = st.session_state.current_df[col].isna().sum()
@@ -333,7 +339,7 @@ if st.session_state.analysis_mode == 'single':
 
             outliers = quality.get('outliers', {})
             if outliers:
-                st.sidebar.subheader("🎯 Remove Outliers")
+                st.sidebar.subheader("📊 Remove Outliers")
                 for col, info in list(outliers.items())[:2]:
                     st.sidebar.write(f"**{col}**: {info['count']} outliers")
                     st.sidebar.write(f"Extreme values: {info['extreme_values'][:2]}")
@@ -400,7 +406,7 @@ if st.session_state.analysis_mode == 'single':
                 for i, fix in enumerate(st.session_state.fix_history, 1):
                     st.sidebar.text(f"{i}. {fix.get('operation', 'fix')}")
 
-                if st.sidebar.button("↩️ Reset to Original"):
+                if st.sidebar.button("🔄 Reset to Original"):
                     st.session_state.current_df = st.session_state.original_df.copy()
                     st.session_state.fix_history = []
                     st.session_state.auto_reanalyze = True
@@ -417,7 +423,7 @@ if st.session_state.analysis_mode == 'single':
         with col2:
             st.metric("Fixes Applied", len(st.session_state.fix_history))
 
-        if st.button("🚀 Run Analysis", type="primary"):
+        if st.button("🔍 Run Analysis", type="primary"):
             progress_bar = st.progress(0, text="Starting analysis...")
             progress_bar.progress(20, text="Profiling data...")
             engine = AnalysisEngine()
@@ -464,7 +470,7 @@ elif st.session_state.analysis_mode == 'batch':
     if uploaded_files and len(uploaded_files) > 0:
         st.success(f"✅ {len(uploaded_files)} files uploaded")
         
-        if st.button("🚀 Analyze All Files", type="primary"):
+        if st.button("🔍 Analyze All Files", type="primary"):
             # === DAY 17: PROGRESS BAR FOR BATCH ===
             progress_bar = st.progress(0, text=f"Analyzing {len(uploaded_files)} files...")
             
@@ -522,7 +528,7 @@ elif st.session_state.analysis_mode == 'batch':
                 st.subheader("⚠️ Top Issues Across All Files")
                 for issue in summary['top_issues']:
                     severity_emoji = {"high": "🔴", "medium": "🟡", "low": "🟢"}
-                    emoji = severity_emoji.get(issue['severity'], "⚪")
+                    emoji = severity_emoji.get(issue['severity'], "ℹ")
                     st.markdown(f"**{emoji} {issue['description']}** - Found in {issue['count']} file(s)")
             
             if summary['files_needing_attention']:
@@ -535,7 +541,7 @@ elif st.session_state.analysis_mode == 'batch':
                             st.write(f"• {issue}")
             
             st.markdown("---")
-            st.subheader("📄 All Files")
+            st.subheader("📋 All Files")
             
             for file_result in results['files']:
                 quality_score = file_result.quality.get('overall_score', 0)
@@ -559,7 +565,7 @@ elif st.session_state.analysis_mode == 'batch':
             
             if st.session_state.selected_file:
                 st.markdown("---")
-                st.subheader(f"📊 Detailed Report: {st.session_state.selected_file.filename}")
+                st.subheader(f"📄 Detailed Report: {st.session_state.selected_file.filename}")
                 
                 if st.button("⬅️ Back to Dashboard"):
                     st.session_state.selected_file = None
@@ -583,4 +589,4 @@ elif st.session_state.analysis_mode == 'batch':
         st.info("👆 Upload multiple CSV files to analyze")
 
 st.markdown("---")
-st.markdown("*Made with 🐐 by GOAT Data Analyst*")
+st.markdown("*Made with 💚 by GOAT Data Analyst*")

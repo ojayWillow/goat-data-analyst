@@ -1,0 +1,2 @@
+﻿# Add after line 10 (after imports)
+from backend.utils.cache import narrative_cache

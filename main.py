@@ -11,6 +11,7 @@ from typing import Optional
 from backend.utils.analytics import track_event, identify_user
 
 import sentry_sdk
+import posthog
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -24,10 +25,16 @@ sentry_sdk.init(
     environment="production"
 )
 
+# === DAY 34: INITIALIZE POSTHOG ===
+posthog.api_key = os.getenv("POSTHOG_API_KEY")
+posthog.host = os.getenv("POSTHOG_HOST", "https://app.posthog.com")
+# === END DAY 34 ===
+
 from backend.core.engine import AnalysisEngine
 from backend.auth.auth_manager import AuthManager
 from middleware.rate_limiter import rate_limit_middleware
 from middleware.file_validator import file_validator
+
 
 
 # Initialize FastAPI
@@ -157,68 +164,96 @@ async def health():
 # ========================
 
 
-@app.post("/auth/signup", tags=["Authentication"])
-async def signup(request: SignupRequest):
+@app.post("/analyze/html", tags=["Analysis"])
+async def analyze_csv_html(
+    file: UploadFile = File(...),
+    user: dict = Depends(get_current_user)  # AUTH REQUIRED HERE
+):
     """
-    Register a new user
-
-    Returns user data and session tokens
-    """
-    result = auth_manager.signup(request.email, request.password)
-
-    if not result.get("success"):
-        raise HTTPException(status_code=400, detail=result.get("error"))
-
-    # Track signup event
-    user_id = result['user']['id']
-    identify_user(user_id, request.email)
-    track_event(user_id, 'user_signup', {'email': request.email})
+    Upload CSV and get full HTML report
     
-    return result
-
-
-
-
-@app.post("/auth/login", tags=["Authentication"])
-async def login(request: LoginRequest):
+    **PROTECTED**: Requires valid JWT token in Authorization header
+    **RATE LIMITED**: 10 requests per minute for authenticated users
+    **FILE VALIDATION**: Only CSV files, max 100MB
     """
-    Authenticate existing user
+    import traceback
+    import time
 
-    Returns user data and JWT tokens (access_token, refresh_token)
-    """
-    result = auth_manager.login(request.email, request.password)
+    start_time = time.time()
 
-    if not result.get("success"):
-        raise HTTPException(status_code=401, detail=result.get("error"))
+    try:
+        # Validate file with file_validator
+        user_id = user.get("id") if user else None
+        
+        # === DAY 33: ADD SENTRY CONTEXT ===
+        sentry_sdk.set_context("user", {
+            "id": user_id,
+            "email": user.get("email") if user else None
+        })
+        sentry_sdk.set_context("file", {
+            "filename": file.filename,
+            "size": file.size if file.size else "unknown"
+        })
+        # === END DAY 33 ===
+        
+        is_valid, error_msg = file_validator.validate_file(file.file, file.filename, user_id)
+        
+        if not is_valid:
+            raise HTTPException(status_code=400, detail=error_msg)
 
-    # Track login event
-    user_id = result['user']['id']
-    track_event(user_id, 'user_login', {'email': request.email})
-    
-    return result
+        # Read file
+        contents = await file.read()
+        
+        # Load CSV with encoding handling
+        try:
+            df = pd.read_csv(io.BytesIO(contents))
+        except UnicodeDecodeError:
+            # Try with latin-1 encoding
+            try:
+                df = pd.read_csv(io.BytesIO(contents), encoding='latin-1')
+            except Exception as e:
+                user_error = get_user_friendly_error(e)
+                raise HTTPException(status_code=400, detail=user_error)
+        
+        # Validate CSV structure
+        is_valid, error_msg = file_validator.validate_csv_structure(df)
+        if not is_valid:
+            raise HTTPException(status_code=400, detail=error_msg)
 
+        # THE ONE BRAIN does everything
+        engine = AnalysisEngine()
+        result = engine.analyze(df)
+        
+        # === DAY 33: ADD ANALYSIS DURATION TO SENTRY ===
+        analysis_duration = time.time() - start_time
+        sentry_sdk.set_context("analysis", {
+            "duration_seconds": round(analysis_duration, 2),
+            "rows": len(df),
+            "columns": len(df.columns)
+        })
+        # === END DAY 33 ===
+   
+        # Track analysis completed
+        user_id = user.get("id") if user else "anonymous"
+        track_event(user_id, 'analysis_completed', {
+            'filename': file.filename,
+            'rows': len(df),
+            'columns': len(df.columns)
+        })
 
+        # Return HTML report
+        return HTMLResponse(content=result.report_html)
 
-
-@app.post("/auth/logout", tags=["Authentication"])
-async def logout(user: dict = Depends(get_current_user)):
-    """
-    Sign out current user
-    
-    Requires: Valid JWT token in Authorization header
-    """
-    return {"success": True, "message": "Logged out successfully"}
-
-
-
-@app.get("/auth/me", tags=["Authentication"])
-async def get_me(user: dict = Depends(get_current_user)):
-    """
-    Get current authenticated user info
-    
-    Requires: Valid JWT token in Authorization header
-    """
-    return {"success": True, "user": user}
+    except HTTPException:
+        raise
+    except Exception as e:
+        # Log to Sentry
+        import sentry_sdk
+        sentry_sdk.capture_exception(e)
+        
+        # Return user-friendly error
+        user_error = get_user_friendly_error(e)
+        raise HTTPException(status_code=500, detail=user_error)
 
 
 

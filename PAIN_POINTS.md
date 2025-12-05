@@ -136,6 +136,7 @@
 
 **Fix Tasks**:
 - [ ] Add Sentry for error tracking
+- [ ] Set up Discord webhook for Sentry alerts (real-time notifications)
 - [ ] Add PostHog or Mixpanel for usage analytics
 - [ ] Add UptimeRobot for uptime monitoring
 - [ ] Set up email alerts for critical errors

@@ -16,7 +16,6 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-
 class AuthManager:
     """Manages authentication operations using Supabase"""
     
@@ -53,6 +52,14 @@ class AuthManager:
             
             if response.user:
                 logger.info(f"User signed up successfully: {email}")
+                
+                # === DAY 34: TRACK SIGNUP EVENT ===
+                from backend.utils.analytics import track_event, identify_user
+                user_id = response.user.id
+                track_event(user_id, 'user_signup', {'email': email})
+                identify_user(user_id, email, {'signup_date': response.user.created_at})
+                # === END DAY 34 ===
+                
                 return {
                     "success": True,
                     "user": {
@@ -95,6 +102,12 @@ class AuthManager:
             
             if response.user:
                 logger.info(f"User logged in successfully: {email}")
+                
+                # === DAY 34: TRACK LOGIN EVENT ===
+                from backend.utils.analytics import track_event
+                track_event(response.user.id, 'user_login', {'email': email})
+                # === END DAY 34 ===
+                
                 return {
                     "success": True,
                     "user": {
@@ -148,7 +161,6 @@ class AuthManager:
         except Exception as e:
             logger.error(f"Token verification error: {str(e)}")
             return {"success": False, "error": str(e)}
-
     
     def logout(self, token: str) -> Dict:
         """
@@ -204,7 +216,6 @@ class AuthManager:
             logger.error(f"Session refresh error: {str(e)}")
             return {"success": False, "error": str(e)}
 
-
 # Quick test function
 def test_auth():
     """Test authentication functions"""
@@ -215,7 +226,6 @@ def test_auth():
     except Exception as e:
         print(f"❌ Error: {e}")
         return None
-
 
 if __name__ == "__main__":
     # Run test

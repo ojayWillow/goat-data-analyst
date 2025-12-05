@@ -1,5 +1,9 @@
 ﻿import os
 from posthog import Posthog
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Initialize PostHog client
 posthog = Posthog(

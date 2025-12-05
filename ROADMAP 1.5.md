@@ -1,8 +1,8 @@
-@"
-# GOAT Data Analyst V1.5 — Production-Ready Roadmap
+﻿@"
+# GOAT Data Analyst V1.5 â€” Production-Ready Roadmap
 
-**Current Version**: V1.0 (Demo-ready) ✅
-**Target Version**: V1.5 (Production-ready, monetization-enabled) 🎯
+**Current Version**: V1.0 (Demo-ready) âœ…
+**Target Version**: V1.5 (Production-ready, monetization-enabled) ðŸŽ¯
 **Timeline**: 20 working days (~3-4 weeks)
 **Start Date**: December 5, 2025
 **Target Launch**: December 30, 2025
@@ -12,16 +12,16 @@
 ## Overview
 
 **What Changed from V1 to V1.5:**
-- V1.0 = Demo / MVP ✅
-- V1.5 = Production-ready, can charge money 💰
+- V1.0 = Demo / MVP âœ…
+- V1.5 = Production-ready, can charge money ðŸ’°
 
 **Key Improvements:**
-- 🔒 Security hardened (auth, rate limiting, encryption)
-- ✅ Automated testing (80%+ coverage)
-- ⚡ Performance optimized (handles 100k+ rows)
-- 📊 Monitoring and alerting
-- 📖 Complete documentation
-- 💳 Payment integration ready
+- ðŸ”’ Security hardened (auth, rate limiting, encryption)
+- âœ… Automated testing (80%+ coverage)
+- âš¡ Performance optimized (handles 100k+ rows)
+- ðŸ“Š Monitoring and alerting
+- ðŸ“– Complete documentation
+- ðŸ’³ Payment integration ready
 
 ---
 
@@ -35,16 +35,16 @@
 **Objective**: Users must log in to use GOAT
 
 #### Tasks:
-- [✅ ] Choose auth provider: Supabase Auth (recommended) or Auth0
-- [✅ ] Create Supabase project (free tier is fine)
-- [✅ ] Install supabase-py: `pip install supabase`
-- [✅ ] Create `backend/auth/` directory
-- [✅ ] Create `backend/auth/auth_manager.py` with:
+- [âœ… ] Choose auth provider: Supabase Auth (recommended) or Auth0
+- [âœ… ] Create Supabase project (free tier is fine)
+- [âœ… ] Install supabase-py: `pip install supabase`
+- [âœ… ] Create `backend/auth/` directory
+- [âœ… ] Create `backend/auth/auth_manager.py` with:
   - `signup(email, password)`
   - `login(email, password)`
   - `verify_token(token)`
   - `logout(token)`
-- [✅ ] Add environment variables: `SUPABASE_URL`, `SUPABASE_KEY`
+- [âœ… ] Add environment variables: `SUPABASE_URL`, `SUPABASE_KEY`
 
 #### Success Criteria:
 \`\`\`python
@@ -56,12 +56,12 @@ print(result)  # Should return user object
 \`\`\`
 
 #### Deliverable:
-- [✅ ] `backend/auth/auth_manager.py` exists
-- [✅ ] Can signup, login, verify token
-- [✅ ] Credentials stored securely in Supabase
-- [✅ ] Environment variables configured
+- [âœ… ] `backend/auth/auth_manager.py` exists
+- [âœ… ] Can signup, login, verify token
+- [âœ… ] Credentials stored securely in Supabase
+- [âœ… ] Environment variables configured
 
-**Status**: ⬜ Not Started | 🟡 In Progress | ✅ Complete
+**Status**: â¬œ Not Started | ðŸŸ¡ In Progress | âœ… Complete
 
 ---
 
@@ -95,7 +95,7 @@ curl -H "Authorization: Bearer <token>" https://api.goat.com/analyze/html
 - [ ] JWT tokens issued and validated
 - [ ] Unauthorized requests rejected
 
-**Status**: ⬜ Not Started | 🟡 In Progress | ✅ Complete
+**Status**: â¬œ Not Started | ðŸŸ¡ In Progress | âœ… Complete
 
 ---
 
@@ -103,13 +103,13 @@ curl -H "Authorization: Bearer <token>" https://api.goat.com/analyze/html
 **Objective**: Users must log in before uploading CSVs
 
 #### Tasks:
-- [✅ ] Add login page to Streamlit (`pages/login.py`)
-- [✅ ] Store auth token in `st.session_state`
-- [✅ ] Check auth status on app load
-- [✅ ] Redirect to login if not authenticated
-- [✅ ] Add logout button
-- [✅ ] Add signup form
-- [✅ ] Show user email in sidebar
+- [âœ… ] Add login page to Streamlit (`pages/login.py`)
+- [âœ… ] Store auth token in `st.session_state`
+- [âœ… ] Check auth status on app load
+- [âœ… ] Redirect to login if not authenticated
+- [âœ… ] Add logout button
+- [âœ… ] Add signup form
+- [âœ… ] Show user email in sidebar
 
 #### Success Criteria:
 \`\`\`bash
@@ -122,12 +122,12 @@ curl -H "Authorization: Bearer <token>" https://api.goat.com/analyze/html
 \`\`\`
 
 #### Deliverable:
-- [✅ ] Login page functional
-- [✅ ] Can't access app without auth
-- [✅ ] Logout works
-- [✅ ] User email displayed
+- [âœ… ] Login page functional
+- [âœ… ] Can't access app without auth
+- [âœ… ] Logout works
+- [âœ… ] User email displayed
 
-**Status**: ⬜ Not Started | 🟡 In Progress | ✅ Complete
+**Status**: â¬œ Not Started | ðŸŸ¡ In Progress | âœ… Complete
 
 ---
 
@@ -135,14 +135,14 @@ curl -H "Authorization: Bearer <token>" https://api.goat.com/analyze/html
 **Objective**: Prevent abuse and spam
 
 #### Tasks:
-- [✅ ] Install slowapi: `pip install slowapi`
-- [✅ ] Add rate limiter to FastAPI:
+- [âœ… ] Install slowapi: `pip install slowapi`
+- [âœ… ] Add rate limiter to FastAPI:
   - 10 requests/minute per user (analysis endpoints)
   - 100 requests/minute per user (auth endpoints)
-- [✅ ] Add rate limit headers to responses
-- [✅ ] Return 429 Too Many Requests when exceeded
-- [✅ ] Log rate limit violations
-- [✅ ] Add usage counter to user dashboard
+- [âœ… ] Add rate limit headers to responses
+- [âœ… ] Return 429 Too Many Requests when exceeded
+- [âœ… ] Log rate limit violations
+- [âœ… ] Add usage counter to user dashboard
 
 #### Success Criteria:
 \`\`\`bash
@@ -152,12 +152,12 @@ curl -H "Authorization: Bearer <token>" https://api.goat.com/analyze/html
 \`\`\`
 
 #### Deliverable:
-- [✅ ] Rate limiting active on all endpoints
-- [✅ ] Users see clear error when rate limited
-- [✅ ] Rate limit counters tracked
-- [✅m ] Violations logged
+- [âœ… ] Rate limiting active on all endpoints
+- [âœ… ] Users see clear error when rate limited
+- [âœ… ] Rate limit counters tracked
+- [âœ…m ] Violations logged
 
-**Status**: ⬜ Not Started | 🟡 In Progress | ✅ Complete
+**Status**: â¬œ Not Started | ðŸŸ¡ In Progress | âœ… Complete
 
 ---
 
@@ -165,16 +165,16 @@ curl -H "Authorization: Bearer <token>" https://api.goat.com/analyze/html
 **Objective**: No hardcoded secrets in code
 
 #### Tasks:
-- [ ] Create `.env.example` template
-- [ ] Move all API keys to `.env`:
+- [âœ… ] Create `.env.example` template
+- [âœ… ] Move all API keys to `.env`:
   - `OPENAI_API_KEY`
   - `SUPABASE_URL`
   - `SUPABASE_KEY`
   - `SECRET_KEY` (for JWT)
-- [ ] Update Railway environment variables
-- [ ] Update Streamlit secrets
-- [ ] Add `.env` to `.gitignore` (verify it's there)
-- [ ] Document environment setup in README
+- [âœ… ] Update Railway environment variables
+- [âœ… ] Update Streamlit secrets
+- [âœ… ] Add `.env` to `.gitignore` (verify it's there)
+- [âœ…] Document environment setup in README
 
 #### Success Criteria:
 \`\`\`bash
@@ -184,12 +184,12 @@ grep -r "sk-" .
 \`\`\`
 
 #### Deliverable:
-- [ ] All secrets in environment variables
-- [ ] `.env.example` documented
-- [ ] Railway and Streamlit configured
-- [ ] No secrets in git history
+- [âœ… ] All secrets in environment variables
+- [âœ… ] `.env.example` documented
+- [âœ… ] Railway and Streamlit configured
+- [âœ… ] No secrets in git history
 
-**Status**: ⬜ Not Started | 🟡 In Progress | ✅ Complete
+**Status**: â¬œ Not Started | ðŸŸ¡ In Progress | âœ… Complete
 
 ---
 
@@ -197,13 +197,13 @@ grep -r "sk-" .
 **Objective**: Only accept safe files
 
 #### Tasks:
-- [ ] Add file type validation (only .csv)
-- [ ] Add file size limit (max 100MB)
-- [ ] Add malware scanning (optional: use VirusTotal API)
-- [ ] Validate CSV structure before processing
-- [ ] Sanitize filenames (remove special characters)
-- [ ] Add file upload logging (who uploaded what)
-- [ ] Add CORS restrictions (only allow specific domains)
+- [âœ… ] Add file type validation (only .csv)
+- [âœ… ] Add file size limit (max 100MB)
+- [âœ… ] Add malware scanning (optional: use VirusTotal API)
+- [âœ… ] Validate CSV structure before processing
+- [âœ… ] Sanitize filenames (remove special characters)
+- [âœ… ] Add file upload logging (who uploaded what)
+- [âœ… ] Add CORS restrictions (only allow specific domains)
 
 #### Success Criteria:
 \`\`\`bash
@@ -215,12 +215,12 @@ grep -r "sk-" .
 \`\`\`
 
 #### Deliverable:
-- [ ] File validation working
-- [ ] Size limits enforced
-- [ ] File uploads logged
-- [ ] CORS configured
+- [âœ… ] File validation working
+- [âœ… ] Size limits enforced
+- [âœ… ] File uploads logged
+- [âœ… ] CORS configured
 
-**Status**: ⬜ Not Started | 🟡 In Progress | ✅ Complete
+**Status**: â¬œ Not Started | ðŸŸ¡ In Progress | âœ… Complete
 
 ---
 
@@ -228,14 +228,14 @@ grep -r "sk-" .
 **Objective**: Never show cryptic errors to users
 
 #### Tasks:
-- [ ] Add try-catch to all file upload handlers
-- [ ] Add try-catch to all analysis functions
-- [ ] Create error message mapper:
-  - Technical error → User-friendly message
-- [ ] Add error logging to Sentry (setup below)
-- [ ] Add timeout handling (30 seconds max)
-- [ ] Add encoding error handling
-- [ ] Test with intentionally bad files
+- [âœ… ] Add try-catch to all file upload handlers
+- [âœ… ] Add try-catch to all analysis functions
+- [âœ… ] Create error message mapper:
+  - Technical error â†’ User-friendly message
+- [âœ… ] Add error logging to Sentry (setup below)
+- [âœ… ] Add timeout handling (30 seconds max)
+- [âœ… ] Add encoding error handling
+- [âœ…] Test with intentionally bad files
 
 #### Example Mappings:
 \`\`\`python
@@ -247,12 +247,12 @@ grep -r "sk-" .
 \`\`\`
 
 #### Deliverable:
-- [ ] All user-facing errors are clear
-- [ ] No stack traces shown to users
-- [ ] Errors logged to Sentry
-- [ ] Timeouts handled gracefully
+- [âœ… ] All user-facing errors are clear
+- [âœ… ] No stack traces shown to users
+- [âœ…] Errors logged to Sentry
+- [âœ… ] Timeouts handled gracefully
 
-**Status**: ⬜ Not Started | 🟡 In Progress | ✅ Complete
+**Status**: â¬œ Not Started | ðŸŸ¡ In Progress | âœ… Complete
 
 ---
 
@@ -266,18 +266,18 @@ grep -r "sk-" .
 **Objective**: Create testing infrastructure
 
 #### Tasks:
-- [ ] Install pytest: `pip install pytest pytest-cov`
-- [ ] Create `tests/` directory structure:
+- [âœ… ] Install pytest: `pip install pytest pytest-cov`
+- [âœ… ] Create `tests/` directory structure:
   - `tests/unit/` (for individual functions)
   - `tests/integration/` (for full workflows)
   - `tests/fixtures/` (for test CSVs)
-- [ ] Create test fixtures:
+- [âœ… ] Create test fixtures:
   - `fixtures/clean.csv`
   - `fixtures/messy.csv`
   - `fixtures/large_10k.csv`
   - `fixtures/large_100k.csv`
   - `fixtures/malformed.csv`
-- [ ] Add pytest configuration to `pytest.ini`
+- [âœ… ] Add pytest configuration to `pytest.ini`
 
 #### Success Criteria:
 \`\`\`bash
@@ -286,12 +286,12 @@ pytest tests/ -v
 \`\`\`
 
 #### Deliverable:
-- [ ] Test framework installed
-- [ ] Test directories created
-- [ ] Test fixtures prepared
-- [ ] Can run pytest
+- [âœ… ] Test framework installed
+- [âœ… ] Test directories created
+- [âœ… ] Test fixtures prepared
+- [âœ… ] Can run pytest
 
-**Status**: ⬜ Not Started | 🟡 In Progress | ✅ Complete
+**Status**: â¬œ Not Started | ðŸŸ¡ In Progress | âœ… Complete
 
 ---
 
@@ -299,18 +299,18 @@ pytest tests/ -v
 **Objective**: Test AnalysisEngine with various inputs
 
 #### Tasks:
-- [ ] Test `engine.analyze()` with:
-  - Clean CSV → Should return valid AnalysisResult
-  - Messy CSV → Should detect issues
-  - Empty CSV → Should handle gracefully
-  - Large CSV (10k rows) → Should complete
-  - Missing columns → Should error clearly
-  - Non-numeric in numeric columns → Should detect
-- [ ] Test `DataFixer` operations:
-  - `remove_duplicates()` → Verify count
-  - `fill_missing_numeric()` → Verify fill
-  - `remove_outliers()` → Verify removal
-- [ ] Aim for 80%+ code coverage
+- [âœ… ] Test `engine.analyze()` with:
+  - Clean CSV â†’ Should return valid AnalysisResult
+  - Messy CSV â†’ Should detect issues
+  - Empty CSV â†’ Should handle gracefully
+  - Large CSV (10k rows) â†’ Should complete
+  - Missing columns â†’ Should error clearly
+  - Non-numeric in numeric columns â†’ Should detect
+- [âœ… ] Test `DataFixer` operations:
+  - `remove_duplicates()` â†’ Verify count
+  - `fill_missing_numeric()` â†’ Verify fill
+  - `remove_outliers()` â†’ Verify removal
+- [âœ… ] Aim for 80%+ code coverage
 
 #### Success Criteria:
 \`\`\`bash
@@ -320,12 +320,12 @@ pytest tests/unit/test_engine.py -v --cov=backend/core
 \`\`\`
 
 #### Deliverable:
-- [ ] 15+ unit tests written
-- [ ] All tests passing
-- [ ] 80%+ coverage on core modules
-- [ ] Edge cases covered
+- [âœ… ] 15+ unit tests written
+- [âœ… ] All tests passing
+- [âœ… ] 80%+ coverage on core modules
+- [âœ… ] Edge cases covered
 
-**Status**: ⬜ Not Started | 🟡 In Progress | ✅ Complete
+**Status**: â¬œ Not Started | ðŸŸ¡ In Progress | âœ… Complete
 
 ---
 
@@ -333,17 +333,17 @@ pytest tests/unit/test_engine.py -v --cov=backend/core
 **Objective**: Test full workflows end-to-end
 
 #### Tasks:
-- [ ] Test API workflow:
-  - POST CSV → Receive HTML report
-- [ ] Test Streamlit workflow (using Selenium or playwright):
-  - Login → Upload CSV → View report → Download
-- [ ] Test batch analysis:
-  - Upload folder → See dashboard → View individual reports
-- [ ] Test auto-fix workflow:
-  - Analyze → Click fix → Download cleaned CSV
-- [ ] Test error scenarios:
-  - Upload invalid file → See clear error
-  - Exceed rate limit → See 429 error
+- [âœ… ] Test API workflow:
+  - POST CSV â†’ Receive HTML report
+- [âœ… ] Test Streamlit workflow (using Selenium or playwright):
+  - Login â†’ Upload CSV â†’ View report â†’ Download
+- [âœ… ] Test batch analysis:
+  - Upload folder â†’ See dashboard â†’ View individual reports
+- [âœ… ] Test auto-fix workflow:
+  - Analyze â†’ Click fix â†’ Download cleaned CSV
+- [âœ… ] Test error scenarios:
+  - Upload invalid file â†’ See clear error
+  - Exceed rate limit â†’ See 429 error
 
 #### Success Criteria:
 \`\`\`bash
@@ -352,12 +352,12 @@ pytest tests/integration/ -v
 \`\`\`
 
 #### Deliverable:
-- [ ] 5+ integration tests written
-- [ ] All critical workflows tested
-- [ ] Tests pass consistently
-- [ ] Error scenarios covered
+- [âœ… ] 5+ integration tests written
+- [âœ… ] All critical workflows tested
+- [âœ… ] Tests pass consistently
+- [âœ… ] Error scenarios covered
 
-**Status**: ⬜ Not Started | 🟡 In Progress | ✅ Complete
+**Status**: â¬œ Not Started | ðŸŸ¡ In Progress | âœ… Complete
 
 ---
 
@@ -365,15 +365,15 @@ pytest tests/integration/ -v
 **Objective**: Automate testing on every commit
 
 #### Tasks:
-- [ ] Create `.github/workflows/test.yml`
-- [ ] Configure GitHub Actions to:
+- [âœ… ] Create `.github/workflows/test.yml`
+- [âœ… ] Configure GitHub Actions to:
   - Run pytest on every push
   - Check code coverage
   - Fail if coverage <80%
   - Run on Python 3.10, 3.11, 3.12
-- [ ] Add status badge to README
-- [ ] Set up automatic deployment to staging on `develop` branch
-- [ ] Set up manual deployment to production on `main` branch
+- [âœ… ] Add status badge to README
+- [âœ… ] Set up automatic deployment to staging on `develop` branch
+- [âœ… ] Set up manual deployment to production on `main` branch
 
 #### Success Criteria:
 \`\`\`bash
@@ -384,12 +384,12 @@ git push origin main
 \`\`\`
 
 #### Deliverable:
-- [ ] GitHub Actions workflow configured
-- [ ] Tests run automatically
-- [ ] Coverage tracked
-- [ ] Status badge in README
+- [âœ… ] GitHub Actions workflow configured
+- [âœ… ] Tests run automatically
+- [âœ… ] Coverage tracked
+- [âœ… ] Status badge in README
 
-**Status**: ⬜ Not Started | 🟡 In Progress | ✅ Complete
+**Status**: â¬œ Not Started | ðŸŸ¡ In Progress | âœ… Complete
 
 ---
 
@@ -403,16 +403,16 @@ git push origin main
 **Objective**: Handle large files smoothly
 
 #### Tasks:
-- [ ] Add caching for AI narrative generation:
-  - Same data hash → Return cached narrative
-- [ ] Optimize chart generation:
+- [âœ… ] Add caching for AI narrative generation:
+  - Same data hash â†’ Return cached narrative
+- [âœ… ] Optimize chart generation:
   - Generate charts in parallel (ThreadPoolExecutor)
-- [ ] Add streaming for large HTML reports:
+- [âœ… ] Add streaming for large HTML reports:
   - Don't load entire report in memory
-- [ ] Add file size warnings:
+- [âœ… ] Add file size warnings:
   - >10MB: "This may take a minute"
   - >50MB: "This will take 2-3 minutes"
-- [ ] Test with 100k+ row files:
+- [âœ… ] Test with 100k+ row files:
   - Should complete in <2 minutes
 
 #### Success Criteria:
@@ -424,12 +424,12 @@ git push origin main
 \`\`\`
 
 #### Deliverable:
-- [ ] Caching implemented
-- [ ] Charts generated in parallel
-- [ ] Tested with large files
-- [ ] Performance benchmarks documented
+- [âœ… ] Caching implemented
+- [âœ… ] Charts generated in parallel
+- [âœ… ] Tested with large files
+- [âœ… ] Performance benchmarks documented
 
-**Status**: ⬜ Not Started | 🟡 In Progress | ✅ Complete
+**Status**: â¬œ Not Started | ðŸŸ¡ In Progress | âœ… Complete
 
 ---
 
@@ -462,7 +462,7 @@ raise Exception("Test error")
 - [ ] Context included in reports
 - [ ] Email alerts working
 
-**Status**: ⬜ Not Started | 🟡 In Progress | ✅ Complete
+**Status**: â¬œ Not Started | ðŸŸ¡ In Progress | âœ… Complete
 
 ---
 
@@ -499,7 +499,7 @@ raise Exception("Test error")
 - [ ] User properties tracked
 - [ ] Dashboard shows data
 
-**Status**: ⬜ Not Started | 🟡 In Progress | ✅ Complete
+**Status**: â¬œ Not Started | ðŸŸ¡ In Progress | âœ… Complete
 
 ---
 
@@ -530,7 +530,7 @@ raise Exception("Test error")
 - [ ] Status page public
 - [ ] Link in footer
 
-**Status**: ⬜ Not Started | 🟡 In Progress | ✅ Complete
+**Status**: â¬œ Not Started | ðŸŸ¡ In Progress | âœ… Complete
 
 ---
 
@@ -562,7 +562,7 @@ raise Exception("Test error")
 - [ ] Link accessible in app
 - [ ] PDF available
 
-**Status**: ⬜ Not Started | 🟡 In Progress | ✅ Complete
+**Status**: â¬œ Not Started | ðŸŸ¡ In Progress | âœ… Complete
 
 ---
 
@@ -591,7 +591,7 @@ https://api.goat.com/docs
 - [ ] Postman collection available
 - [ ] Auth instructions clear
 
-**Status**: ⬜ Not Started | 🟡 In Progress | ✅ Complete
+**Status**: â¬œ Not Started | ðŸŸ¡ In Progress | âœ… Complete
 
 ---
 
@@ -619,7 +619,7 @@ https://api.goat.com/docs
 - [ ] Screenshots captured
 - [ ] Feature list written
 
-**Status**: ⬜ Not Started | 🟡 In Progress | ✅ Complete
+**Status**: â¬œ Not Started | ðŸŸ¡ In Progress | âœ… Complete
 
 ---
 
@@ -649,7 +649,7 @@ https://api.goat.com/docs
 - [ ] Backups automated
 - [ ] Staging environment live
 
-**Status**: ⬜ Not Started | 🟡 In Progress | ✅ Complete
+**Status**: â¬œ Not Started | ðŸŸ¡ In Progress | âœ… Complete
 
 ---
 
@@ -687,11 +687,11 @@ https://api.goat.com/docs
 - [ ] Payment flow working
 - [ ] Test transactions complete
 
-**Status**: ⬜ Not Started | 🟡 In Progress | ✅ Complete
+**Status**: â¬œ Not Started | ðŸŸ¡ In Progress | âœ… Complete
 
 ---
 
-## Phase 6: Launch! 🚀
+## Phase 6: Launch! ðŸš€
 **Goal**: Go live and get first paying users
 **Duration**: 1-2 days
 
@@ -722,7 +722,7 @@ https://api.goat.com/docs
 - [ ] Monitor PostHog for user activity
 - [ ] Respond to comments/questions
 - [ ] Fix any critical bugs immediately
-- [ ] Track first paying user! 💰
+- [ ] Track first paying user! ðŸ’°
 
 ---
 
@@ -760,7 +760,7 @@ https://api.goat.com/docs
 4. Get code snippets from AI assistant
 5. Test after each change
 6. Check off completed items
-7. Mark status: ⬜ → 🟡 → ✅
+7. Mark status: â¬œ â†’ ðŸŸ¡ â†’ âœ…
 8. Commit and push changes
 
 **If stuck:**
