@@ -175,6 +175,21 @@ async def analyze_csv_html(
     **PROTECTED**: Requires valid JWT token in Authorization header
     **RATE LIMITED**: 10 requests per minute for authenticated users
     **FILE VALIDATION**: Only CSV files, max 100MB
+    
+    **Example Request (cURL):**
+    ```
+    curl -X POST "https://goat-data-analyst-production.up.railway.app/analyze/html" \
+      -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+      -F "file=@data.csv"
+    ```
+    
+    **Example Response:**
+    ```
+    <!DOCTYPE html>
+    <html>
+      <!-- Full HTML report with charts and insights -->
+    </html>
+    ```
     """
     import traceback
     import time
