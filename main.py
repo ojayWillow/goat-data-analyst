@@ -8,6 +8,8 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from backend.utils.error_mapper import get_user_friendly_error
 from pydantic import BaseModel, EmailStr
 from typing import Optional
+from backend.utils.analytics import track_event, identify_user
+
 import sentry_sdk
 from dotenv import load_dotenv
 
@@ -159,15 +161,21 @@ async def health():
 async def signup(request: SignupRequest):
     """
     Register a new user
-    
+
     Returns user data and session tokens
     """
     result = auth_manager.signup(request.email, request.password)
-    
+
     if not result.get("success"):
         raise HTTPException(status_code=400, detail=result.get("error"))
+
+    # Track signup event
+    user_id = result['user']['id']
+    identify_user(user_id, request.email)
+    track_event(user_id, 'user_signup', {'email': request.email})
     
     return result
+
 
 
 
@@ -175,15 +183,20 @@ async def signup(request: SignupRequest):
 async def login(request: LoginRequest):
     """
     Authenticate existing user
-    
+
     Returns user data and JWT tokens (access_token, refresh_token)
     """
     result = auth_manager.login(request.email, request.password)
-    
+
     if not result.get("success"):
         raise HTTPException(status_code=401, detail=result.get("error"))
+
+    # Track login event
+    user_id = result['user']['id']
+    track_event(user_id, 'user_login', {'email': request.email})
     
     return result
+
 
 
 
@@ -259,9 +272,19 @@ async def analyze_csv_html(
         # THE ONE BRAIN does everything
         engine = AnalysisEngine()
         result = engine.analyze(df)
+   
+        # Track analysis completed
+        user_id = user.get("id") if user else "anonymous"
+        track_event(user_id, 'analysis_completed', {
+            'filename': file.filename,
+            'rows': len(df),
+            'columns': len(df.columns)
+        })
 
         # Return HTML report
         return HTMLResponse(content=result.report_html)
+
+
 
     except HTTPException:
         raise
