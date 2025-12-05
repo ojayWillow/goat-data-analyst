@@ -1,4 +1,4 @@
-# ============================================================================
+﻿# ============================================================================
 # AI Engine - Central AI wrapper for GOAT
 # ============================================================================
 # Handles all LLM interactions (Groq API initially)
@@ -9,6 +9,7 @@ import os
 import json
 from typing import Optional, Dict, Any, List
 import pandas as pd
+from backend.utils.cache import narrative_cache
 
 
 class AIEngine:
@@ -62,6 +63,12 @@ class AIEngine:
         Returns:
             {"type": str, "confidence": float, "reasoning": str}
         """
+        # Check cache first
+        cache_key = {"columns": df.columns.tolist(), "head": df.head(3).to_dict('records')}
+        cached = narrative_cache.get(cache_key)
+        if cached:
+            return json.loads(cached)
+        
         # If AI disabled or rule-based is confident, use that
         if not self.enabled or rule_based_guess.get("confidence", 0) > 0.8:
             return rule_based_guess
@@ -102,6 +109,8 @@ Respond ONLY with JSON:
             
             # Validate response
             if "type" in result and "confidence" in result:
+                # Store in cache
+                narrative_cache.set(cache_key, json.dumps(result))
                 return result
             else:
                 return rule_based_guess
@@ -130,6 +139,12 @@ Respond ONLY with JSON:
             List of pain points with severity, explanation, and fix suggestion
             [{"severity": "high", "issue": "...", "impact": "...", "fix": "..."}]
         """
+        # Check cache first
+        cache_key = {"quality": quality, "domain": domain.get('type')}
+        cached = narrative_cache.get(cache_key)
+        if cached:
+            return json.loads(cached)
+        
         if not self.enabled:
             return self._rule_based_pain_points(quality, profile)
         
@@ -167,6 +182,8 @@ Focus on the TOP 5 most important issues. Be specific and actionable."""
             result = json.loads(response)
             
             if isinstance(result, list) and len(result) > 0:
+                # Store in cache
+                narrative_cache.set(cache_key, json.dumps(result))
                 return result
             else:
                 return self._rule_based_pain_points(quality, profile)
@@ -194,6 +211,12 @@ Focus on the TOP 5 most important issues. Be specific and actionable."""
         Returns:
             List of ordered action steps
         """
+        # Check cache first
+        cache_key = {"domain": domain, "pain_points": pain_points}
+        cached = narrative_cache.get(cache_key)
+        if cached:
+            return json.loads(cached)
+        
         if not self.enabled:
             return self._rule_based_action_plan(pain_points)
         
@@ -217,6 +240,8 @@ Respond ONLY with JSON array of strings:
             result = json.loads(response)
             
             if isinstance(result, list) and len(result) > 0:
+                # Store in cache
+                narrative_cache.set(cache_key, json.dumps(result))
                 return result
             else:
                 return self._rule_based_action_plan(pain_points)
