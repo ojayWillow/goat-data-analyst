@@ -722,21 +722,33 @@ if st.session_state.analysis_mode == 'single':
             for col in cap_issues.keys():
                 medium_issues.append(f"🔤 **{col}**: Capitalization inconsistencies")
             
-            # Display by severity
-            if critical_issues:
-                st.error(f"🔴 **CRITICAL** ({len(critical_issues)} issues)")
-                for issue in critical_issues:
-                    st.markdown(f"  {issue}")
-            
-            if high_issues:
-                st.warning(f"🟡 **HIGH** ({len(high_issues)} issues)")
-                for issue in high_issues:
-                    st.markdown(f"  {issue}")
-            
-            if medium_issues:
-                st.info(f"🟢 **MEDIUM** ({len(medium_issues)} issues)")
-                for issue in medium_issues:
-                    st.markdown(f"  {issue}")
+            # Display by severity - THREE COLUMNS
+            col1, col2, col3 = st.columns(3)
+
+            with col1:
+                if critical_issues:
+                    with st.expander(f"🔴 CRITICAL ({len(critical_issues)} issues)"):
+                        for issue in critical_issues:
+                            st.markdown(f"  {issue}")
+                else:
+                    st.success("✅ No critical issues")
+
+            with col2:
+                if high_issues:
+                    with st.expander(f"🟡 HIGH ({len(high_issues)} issues)", expanded=True):
+                        for issue in high_issues:
+                            st.markdown(f"  {issue}")
+                else:
+                    st.success("✅ No high issues")
+
+            with col3:
+                if medium_issues:
+                    with st.expander(f"🟢 MEDIUM ({len(medium_issues)} issues)"):
+                        for issue in medium_issues:
+                            st.markdown(f"  {issue}")
+                else:
+                    st.success("✅ No medium issues")
+
             
             if not critical_issues and not high_issues and not medium_issues:
                 st.success("✅ No major issues found! Your data looks clean.")
@@ -887,8 +899,12 @@ if st.session_state.analysis_mode == 'single':
                 )
             
             # Show HTML report
-            st.components.v1.html(st.session_state.analysis_result.report_html, height=2000, scrolling=True)
-            
+            if st.session_state.analysis_result.report_html:
+                st.components.v1.html(st.session_state.analysis_result.report_html, height=2000, scrolling=True)
+            else:
+                st.error("Report HTML is empty. Analysis may have failed.")
+                st.write(f"Report generator status: {st.session_state.analysis_result}")
+
             # === SIDEBAR: INDIVIDUAL FIX CONTROLS (ONLY IN FULL VIEW) ===
             render_sidebar_fixes(quality, st.session_state.current_df)
     

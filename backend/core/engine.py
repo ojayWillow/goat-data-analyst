@@ -58,7 +58,7 @@ except ImportError:
     ChartOrchestrator = None
 
 try:
-    from backend.reports.ultimate_report_generator import UltimateReportGenerator
+    from backend.reports.style_a_bold_borders import UltimateReportGenerator
 except ImportError:
     UltimateReportGenerator = None
 
@@ -159,7 +159,7 @@ class AnalysisEngine:
             # Step 5: AI INSIGHTS - LLM-generated insights (optional, can be slow)
             if self.insight_generator and not options.get("skip_ai", False):
                 print("  → Generating AI insights...")
-                result.ai_insights = self.insight_generator.generate(df, result.profile, result.domain)
+                result.ai_insights = self.insight_generator.generate_insights(df, result.domain.get('type') if isinstance(result.domain, dict) else result.domain)
             else:
                 result.ai_insights = {"summary": "AI insights disabled or unavailable"}
             

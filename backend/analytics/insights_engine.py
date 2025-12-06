@@ -229,6 +229,12 @@ class InsightsEngine:
                 facts["cpc"] = round(cpc, 2)
 
         return facts
+    
+
+    def analyze(self, df: pd.DataFrame, domain: str = None) -> Dict[str, Any]:
+        """Wrapper for generate_insights - called by engine.py"""
+        return self.generate_insights(df, domain)
+
 
     # -------------- Helpers -------------- #
 
